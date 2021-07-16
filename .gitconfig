@@ -1,5 +1,0 @@
-[user]
-	email = clovis@synapse-medicine.com
-	name = clovis
-[credential]
-	helper = "!f() { /pleroma/.vscode-server/bin/2d23c42a936db1c7b3b06f918cde29561cc47cd6/node /tmp/vscode-remote-containers-2567caaec42ef55e3b5284e04ef2517306eb2a7f.js $*; }; f"
