@@ -100,8 +100,8 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
 
     test "works for bare text/markdown" do
 
-      text = "#test\n\nbonjour #tag\n\n#bye"
-      expected = "<p> <a class=\"hashtag\" data-tag=\"test\" href=\"http://localhost:4001/tag/test\">#test</a> </p><p>bonjour  <a class=\"hashtag\" data-tag=\"tag\" href=\"http://localhost:4001/tag/tag\">#tag</a> </p><p> <a class=\"hashtag\" data-tag=\"bye\" href=\"http://localhost:4001/tag/bye\">#bye</a> </p>"
+      text = "#test\n\nbonjour #tag\n\n#tag#second @mention#tag\n\n#bye"
+      expected = "<p> <a class=\"hashtag\" data-tag=\"test\" href=\"http://localhost:4001/tag/test\">#test</a> \nbonjour <a class=\"hashtag\" data-tag=\"tag\" href=\"http://localhost:4001/tag/tag\">#tag</a> \n<a class=\"hashtag\" data-tag=\"tag\" href=\"http://localhost:4001/tag/tag\">#tag</a>#second @mention#tag\n <a class=\"hashtag\" data-tag=\"bye\" href=\"http://localhost:4001/tag/bye\">#bye</a> </p>"
 
       {output, _, _} = Utils.format_input(text, "text/markdown")
 
