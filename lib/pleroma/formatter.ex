@@ -7,6 +7,7 @@ defmodule Pleroma.Formatter do
   alias Pleroma.User
 
   @safe_mention_regex ~r/^(\s*(?<mentions>(@.+?\s+){1,})+)(?<rest>.*)/s
+  @tag_regex ~r/(?<tag>\#[[:word:]_]*[[:alpha:]_·][[:word:]_·\p{M}]*)/
   @link_regex ~r"((?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~%:/?#[\]@!\$&'\(\)\*\+,;=.]+)|[0-9a-z+\-\.]+:[0-9a-z$-_.+!*'(),]+"ui
   @markdown_characters_regex ~r/(`|\*|_|{|}|[|]|\(|\)|#|\+|-|\.|!)/
 
@@ -119,6 +120,12 @@ defmodule Pleroma.Formatter do
     else
       Linkify.link(text, options)
     end
+  end
+
+  def markdown_to_html(text) do
+    #inserting spaces before and after tag to avoid a bug in Pleroma's Linkify
+    text = Regex.replace(@tag_regex, text, " \\1 ")
+    Earmark.as_html!(text, %Earmark.Options{compact_output: true})
   end
 
   def html_escape({text, mentions, hashtags}, type) do
