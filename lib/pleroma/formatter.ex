@@ -7,7 +7,7 @@ defmodule Pleroma.Formatter do
   alias Pleroma.User
 
   @safe_mention_regex ~r/^(\s*(?<mentions>(@.+?\s+){1,})+)(?<rest>.*)/s
-  @tag_regex ~r/(?<tag>\#[[:word:]_]*[[:alpha:]_·][[:word:]_·\p{M}]*)/
+  @tag_regex ~r/(?>^|\s)(\#(?>[A-Za-z0-9])+)(?>$|\s)/
   @link_regex ~r"((?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~%:/?#[\]@!\$&'\(\)\*\+,;=.]+)|[0-9a-z+\-\.]+:[0-9a-z$-_.+!*'(),]+"ui
   @markdown_characters_regex ~r/(`|\*|_|{|}|[|]|\(|\)|#|\+|-|\.|!)/
 
