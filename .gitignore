@@ -1,4 +1,9 @@
 # App artifacts
+.vscode-server
+.cache
+.hex
+.mix
+.gitconfig
 /_build
 /db
 /deps
