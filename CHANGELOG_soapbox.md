@@ -6,6 +6,11 @@ For changes to Pleroma, see `CHANGELOG.md`
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.2] - 2021-08-02
+
+### Fixed 
+- Broken hashtags in markdown
+
 ## [1.1.1] - 2021-05-21
 
 Based on Pleroma 2.3.0-stable.
