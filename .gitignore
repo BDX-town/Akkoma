@@ -4,6 +4,7 @@
 .hex
 .mix
 .gitconfig
+.ash_history
 /_build
 /db
 /deps
