@@ -14,6 +14,11 @@
 /doc
 /instance
 /priv/ssh_keys
+.mix 
+.config 
+.vscode-server
+.hex
+.cache
 
 # Prevent committing custom emojis
 /priv/static/emoji/custom/*
