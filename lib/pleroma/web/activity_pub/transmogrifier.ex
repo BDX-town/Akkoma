@@ -857,16 +857,14 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   @doc "Rewrite EmojiReact into misskey like to keep compatibility with Mastodon, Misskey and other Pleromas"
   def prepare_outgoing(%{"type" => "EmojiReact", "content" => content} = data) do
-    IO.puts "outgoing convert !"
     data =
       data
       |> Map.replace("type", "Like")
       |> Map.put("_misskey_reaction", @pleroma_reactions[content] || content)
+      |> Map.delete("content")
       |> strip_internal_fields
       |> maybe_fix_object_url
       |> Map.merge(Utils.make_json_ld_header())
-
-    IO.puts data
 
     {:ok, data}
   end
