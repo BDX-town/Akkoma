@@ -1,7 +1,0 @@
-[user]
-	email = clovis@bdx.town
-	name = clovis
-[core]
-	editor = nano
-[credential]
-	helper = "!f() { /pleroma/.vscode-server/bin/7f6ab5485bbc008386c4386d08766667e155244e/node /tmp/vscode-remote-containers-bcb6b790248bf687a234ef51db93a1eaa39082c3.js $*; }; f"
