@@ -12,7 +12,7 @@ RUN apk add git gcc g++ musl-dev make cmake file-dev &&\
 	mkdir release &&\
 	mix release --path release
 
-FROM alpine:3.11
+FROM alpine:3.14
 
 ARG BUILD_DATE
 ARG VCS_REF
