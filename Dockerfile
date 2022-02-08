@@ -43,7 +43,7 @@ RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/
 
 RUN apk update && apk add curl unzip &&\
     curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
-    unzip ${DATA}/static.zip -d ${DATA}/static
+    unzip ${DATA}/static.zip -d ${DATA}/static/frontends/soapbox-fe/vendor/
 
 USER pleroma
 
