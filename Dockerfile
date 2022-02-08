@@ -41,6 +41,10 @@ RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/
 	mkdir -p /etc/pleroma &&\
 	chown -R pleroma /etc/pleroma
 
+RUN apk update && apk add curl unzip &&\
+    curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
+    unzip ${DATA}/static.zip -d ${DATA}/static
+
 USER pleroma
 
 COPY --from=build --chown=pleroma:0 /release ${HOME}
