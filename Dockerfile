@@ -33,7 +33,7 @@ ARG DATA=/var/lib/pleroma
 
 RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/repositories &&\
 	apk update &&\
-	apk add exiftool ffmpeg imagemagick libmagic ncurses postgresql-client &&\
+	apk add exiftool ffmpeg imagemagick libmagic ncurses postgresql-client curl unzip &&\
 	adduser --system --shell /bin/false --home ${HOME} pleroma &&\
 	mkdir -p ${DATA}/uploads &&\
 	mkdir -p ${DATA}/static &&\
@@ -41,11 +41,11 @@ RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/
 	mkdir -p /etc/pleroma &&\
 	chown -R pleroma /etc/pleroma
 
-RUN apk update && apk add curl unzip &&\
-    curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
-    unzip ${DATA}/static.zip -d ${DATA}/static/frontends/soapbox-fe/vendor/
-
 USER pleroma
+ 
+RUN curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
+	mkdir -p ${DATA}/static/frontends/soapbox-fe/vendor/ &&\
+    unzip ${DATA}/static.zip -d ${DATA}/static/frontends/soapbox-fe/vendor/
 
 COPY --from=build --chown=pleroma:0 /release ${HOME}
 
