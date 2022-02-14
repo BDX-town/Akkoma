@@ -9,10 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Added
 - Officially supported docker release
 - Ability to remove followers unilaterally without a block
+- Uploadfilter `Pleroma.Upload.Filter.Exiftool.ReadDescription` returns description values to the FE so they can pre fill the image description field
 
 ## Changes
 - Follows no longer override domain blocks, a domain block is final
 - Deletes are now the lowest priority to publish and will be handled after creates
+- Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripLocation`
 
 ## 2022.10
 
