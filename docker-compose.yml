@@ -1,0 +1,26 @@
+version: "1.0"
+
+services:
+  pleroma:
+    image: mangane:latest
+    container_name: "mangane"
+    restart: always
+    labels:
+        - "org.label-schema.group=pleroma"
+    depends_on:
+      - pleroma-db
+    ports:
+        - "127.0.0.1:4000:4000"
+    env_file: ./test.env
+
+  pleroma-db:
+    image: postgres:12.1-alpine
+    container_name: "pleroma-db"
+    hostname: "pleroma-db"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=False"
+      - "org.label-schema.group=pleroma"
+    restart: always
+    env_file: ./test.env
+    ports:
+      - "127.0.0.1:5432:5432"
