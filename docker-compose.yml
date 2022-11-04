@@ -6,17 +6,6 @@ services:
     build: ./docker-resources/database
     restart: unless-stopped
     user: ${DOCKER_USER}
-    environment: {
-      # This might seem insecure but is usually not a problem.
-      # You should leave this at the "akkoma" default.
-      # The DB is only reachable by containers in the same docker network,
-      # and is not exposed to the open internet.
-      #
-      # If you do change this, remember to update "config.exs".
-      POSTGRES_DB: akkoma,
-      POSTGRES_USER: akkoma,
-      POSTGRES_PASSWORD: akkoma,
-    }
     env_file:
       - .env 
     volumes:

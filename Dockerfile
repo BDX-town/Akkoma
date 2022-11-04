@@ -1,33 +1,57 @@
-FROM hexpm/elixir:1.13.4-erlang-24.3.4.5-alpine-3.15.6
+FROM elixir:1.9-alpine as build
+
+COPY . .
 
 ENV MIX_ENV=prod
 
-ARG HOME=/opt/akkoma
+RUN apk add git gcc g++ musl-dev make cmake file-dev &&\
+	echo "import Mix.Config" > config/prod.secret.exs &&\
+	mix local.hex --force &&\
+	mix local.rebar --force &&\
+	mix deps.get --only prod &&\
+	mkdir release &&\
+	mix release --path release
 
-LABEL org.opencontainers.image.title="akkoma" \
-    org.opencontainers.image.description="Akkoma for Docker" \
-    org.opencontainers.image.vendor="akkoma.dev" \
-    org.opencontainers.image.documentation="https://docs.akkoma.dev/stable/" \
+FROM alpine:3.14
+
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL maintainer="ops@akkoma.social" \
+    org.opencontainers.image.title="akkoma" \
+    org.opencontainers.image.description="akkoma for Docker" \
+    org.opencontainers.image.authors="ops@akkoma.social" \
+    org.opencontainers.image.vendor="akkoma.social" \
+    org.opencontainers.image.documentation="https://git.akkoma.social/akkoma/akkoma" \
     org.opencontainers.image.licenses="AGPL-3.0" \
-    org.opencontainers.image.url="https://akkoma.dev" \
+    org.opencontainers.image.url="https://akkoma.social" \
     org.opencontainers.image.revision=$VCS_REF \
     org.opencontainers.image.created=$BUILD_DATE
 
-RUN apk add git gcc g++ musl-dev make cmake file-dev exiftool ffmpeg imagemagick libmagic ncurses postgresql-client
+ARG HOME=/opt/akkoma
+ARG DATA=/var/lib/akkoma
+
+RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/repositories &&\
+	apk update &&\
+	apk add exiftool ffmpeg imagemagick libmagic ncurses postgresql-client curl unzip &&\
+	adduser --system --shell /bin/false --home ${HOME} akkoma &&\
+	mkdir -p ${DATA}/uploads &&\
+	mkdir -p ${DATA}/static &&\
+	chown -R akkoma ${DATA} &&\
+	mkdir -p /etc/akkoma &&\
+	chown -R akkoma /etc/akkoma
+
+USER akkoma
+ 
+RUN curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
+	mkdir -p ${DATA}/static/frontends/mangane/vendor/ &&\
+    unzip ${DATA}/static.zip -d ${DATA}/static/frontends/mangane/vendor/
+
+COPY --from=build --chown=akkoma:0 /release ${HOME}
+
+COPY ./config/docker.exs /etc/akkoma/config.exs
+COPY ./docker-entrypoint.sh ${HOME}
 
 EXPOSE 4000
 
-ARG UID=1000
-ARG GID=1000
-ARG UNAME=akkoma
-
-RUN addgroup -g $GID $UNAME
-RUN adduser -u $UID -G $UNAME -D -h $HOME $UNAME
-
-WORKDIR /opt/akkoma
-
-USER $UNAME
-RUN mix local.hex --force &&\
-    mix local.rebar --force
-
-CMD ["/opt/akkoma/docker-entrypoint.sh"]
+ENTRYPOINT ["/opt/akkoma/docker-entrypoint.sh"]
