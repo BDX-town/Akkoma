@@ -1,4 +1,4 @@
-FROM hexpm/elixir:1.13.4-erlang-24.3.4.5-alpine-3.15.6
+FROM hexpm/elixir:1.13.4-erlang-24.3.4.5-alpine-3.15.6 as build
 
 COPY . .
 
@@ -31,8 +31,7 @@ LABEL maintainer="ops@akkoma.social" \
 ARG HOME=/opt/akkoma
 ARG DATA=/var/lib/akkoma
 
-RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/repositories &&\
-	apk update &&\
+RUN apk update &&\
 	apk add exiftool ffmpeg imagemagick libmagic ncurses postgresql-client curl unzip &&\
 	adduser --system --shell /bin/false --home ${HOME} akkoma &&\
 	mkdir -p ${DATA}/uploads &&\
@@ -43,7 +42,7 @@ RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/community" >> /etc/apk/
 
 USER akkoma
  
-RUN curl -L https://github.com/Cl0v1s/mangane/releases/latest/download/static.zip > ${DATA}/static.zip &&\
+RUN curl -L https://github.com/Cl0v1s/mangane-ui/releases/latest/download/static.zip > ${DATA}/static.zip &&\
 	mkdir -p ${DATA}/static/frontends/mangane/vendor/ &&\
     unzip ${DATA}/static.zip -d ${DATA}/static/frontends/mangane/vendor/
 
