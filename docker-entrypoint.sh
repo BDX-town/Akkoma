@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/sh
 
 set -e
 
@@ -8,7 +8,7 @@ while ! pg_isready -U ${DB_USER:-pleroma} -d postgres://${DB_HOST:-db}:5432/${DB
 done
 
 echo "-- Running migrations..."
-mix ecto.migrate
+$HOME/bin/pleroma_ctl migrate
 
 echo "-- Starting!"
-mix phx.server
+exec $HOME/bin/pleroma start

@@ -5,6 +5,7 @@ services:
     image: akkoma-db:latest
     build: ./docker-resources/database
     restart: unless-stopped
+    hostname: akkoma-db
     user: ${DOCKER_USER}
     env_file:
       - .env 
@@ -31,8 +32,6 @@ services:
       # and use a container link instead.
       "127.0.0.1:4000:4000",
     ]
-    volumes:
-      - .:/opt/akkoma
 
   # Uncomment the following if you want to use a reverse proxy
   #proxy:
