@@ -72,8 +72,19 @@ defmodule Pleroma.Web.Telemetry do
       summary("vm.total_run_queue_lengths.cpu"),
       summary("vm.total_run_queue_lengths.io"),
       distribution(
-        "oban.job.stop",
+        "oban_job_completion",
         event_name: [:oban, :job, :stop],
+        measurement: :duration,
+        tags: [:worker],
+        tag_values: fn tags -> Map.put(tags, :worker, tags.job.worker) end,
+        unit: {:native, :second},
+        reporter_options: [
+          buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
+        ]
+      ),
+      distribution(
+        "oban_job_exception",
+        event_name: [:oban, :job, :exception],
         measurement: :duration,
         tags: [:worker],
         tag_values: fn tags -> Map.put(tags, :worker, tags.job.worker) end,
