@@ -59,8 +59,7 @@ RUN curl -L https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/stable/a
  mv ${DATA}/static/frontends/admin-fe/dist ${DATA}/static/frontends/admin-fe/stable &&\
  rm ${DATA}/static.zip
 
-
-
+COPY ./compress-uploads.sh $DATA/compress-uploads.sh
 
 EXPOSE 4000
 
