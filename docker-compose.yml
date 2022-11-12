@@ -6,18 +6,8 @@ services:
     build: ./docker-resources/database
     shm_size: 4gb
     restart: unless-stopped
+    hostname: akkoma-db
     user: ${DOCKER_USER}
-    environment: {
-      # This might seem insecure but is usually not a problem.
-      # You should leave this at the "akkoma" default.
-      # The DB is only reachable by containers in the same docker network,
-      # and is not exposed to the open internet.
-      #
-      # If you do change this, remember to update "config.exs".
-      POSTGRES_DB: akkoma,
-      POSTGRES_USER: akkoma,
-      POSTGRES_PASSWORD: akkoma,
-    }
     env_file:
       - .env 
     volumes:
@@ -43,8 +33,6 @@ services:
       # and use a container link instead.
       "127.0.0.1:4000:4000",
     ]
-    volumes:
-      - .:/opt/akkoma
 
   # Uncomment the following if you want to use a reverse proxy
   #proxy:
