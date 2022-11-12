@@ -1,5 +1,7 @@
 import Config
 
+config :pleroma, configurable_from_database: true
+
 config :pleroma, Pleroma.Web.Endpoint,
   url: [host: System.get_env("DOMAIN", "localhost"), scheme: "https", port: 443],
   http: [ip: {0, 0, 0, 0}, port: 4000]
