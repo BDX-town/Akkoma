@@ -14,7 +14,7 @@ defmodule Pleroma.Web.Telemetry do
       {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
       # Add reporters as children of your supervision tree.
       # {Telemetry.Metrics.ConsoleReporter, metrics: metrics()},
-      {TelemetryMetricsPrometheus, metrics: metrics()}
+      {TelemetryMetricsPrometheus, metrics: metrics(), plug_cowboy_opts: [ip: {127, 0, 0, 1}]}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
