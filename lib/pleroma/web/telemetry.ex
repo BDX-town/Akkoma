@@ -75,7 +75,8 @@ defmodule Pleroma.Web.Telemetry do
         "oban.job.stop",
         event_name: [:oban, :job, :stop],
         measurement: :duration,
-        tags: [:job],
+        tags: [:worker],
+        tag_values: fn tags -> Map.put(tags, :worker, tags.job.worker) end,
         unit: {:native, :second},
         reporter_options: [
           buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
