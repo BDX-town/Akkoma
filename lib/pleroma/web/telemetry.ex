@@ -92,6 +92,17 @@ defmodule Pleroma.Web.Telemetry do
         reporter_options: [
           buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
         ]
+      ),
+      distribution(
+        "tesla_request_completed",
+        event_name: [:tesla, :request, :stop],
+        measurement: :duration,
+        tags: [:response_code],
+        tag_values: fn tags -> Map.put(tags, :response_code, tags.env.status) end,
+        unit: {:native, :second},
+        reporter_options: [
+          buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
+        ]
       )
     ]
   end
