@@ -51,7 +51,6 @@ COPY ./config/frontends.exs $DATA/config.exs
 RUN curl -L https://github.com/Cl0v1s/mangane-ui/releases/latest/download/static.zip --output ${DATA}/static.zip &&\
  mkdir -p ${DATA}/static/frontends/mangane &&\
  unzip -d ${DATA}/static/frontends/mangane ${DATA}/static.zip &&\
- mv ${DATA}/static/frontends/mangane/dist ${DATA}/static/frontends/mangane/stable &&\
  rm ${DATA}/static.zip
 
 RUN curl -L https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/stable/admin-fe.zip --output ${DATA}/static.zip &&\
