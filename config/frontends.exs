@@ -3,7 +3,7 @@ import Config
 config :pleroma, :frontends,
   primary: %{
     "name" => "mangane",
-    "ref" => "stable"
+    "ref" => "dist"
   },
   admin: %{
     "name" => "admin-fe",
