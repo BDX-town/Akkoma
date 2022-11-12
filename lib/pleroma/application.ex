@@ -64,7 +64,6 @@ defmodule Pleroma.Application do
         Config.TransferTask,
         Pleroma.Emoji,
         Pleroma.Web.Plugs.RateLimiter.Supervisor,
-        Pleroma.Web.Telemetry,
         {Task.Supervisor, name: Pleroma.TaskSupervisor}
       ] ++
         cachex_children() ++
@@ -74,7 +73,8 @@ defmodule Pleroma.Application do
           Pleroma.JobQueueMonitor,
           {Majic.Pool, [name: Pleroma.MajicPool, pool_size: Config.get([:majic_pool, :size], 2)]},
           {Oban, Config.get(Oban)},
-          Pleroma.Web.Endpoint
+          Pleroma.Web.Endpoint,
+          Pleroma.Web.Telemetry
         ] ++
         elasticsearch_children() ++
         task_children(@mix_env) ++

@@ -1,6 +1,7 @@
 defmodule Pleroma.Web.Telemetry do
   use Supervisor
   import Telemetry.Metrics
+  alias Pleroma.Stats
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
@@ -103,11 +104,23 @@ defmodule Pleroma.Web.Telemetry do
         reporter_options: [
           buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
         ]
-      )
+      ),
+      last_value("pleroma.local_users.total"),
+      last_value("pleroma.domains.total"),
+      last_value("pleroma.local_statuses.total")
     ]
   end
 
   defp periodic_measurements do
-    []
+    [
+      {__MODULE__, :instance_stats, []}
+    ]
+  end
+
+  def instance_stats do
+    stats = Stats.get_stats()
+    :telemetry.execute([:pleroma, :local_users], %{total: stats.user_count}, %{})
+    :telemetry.execute([:pleroma, :domains], %{total: stats.domain_count}, %{})
+    :telemetry.execute([:pleroma, :local_statuses], %{total: stats.status_count}, %{})
   end
 end
