@@ -27,13 +27,16 @@ defmodule Pleroma.Web.RichMedia.Parser do
   end
 
   defp parse_url(url) do
-    with {:ok, %Tesla.Env{body: html}} <- Pleroma.Web.RichMedia.Helpers.rich_media_get(url),
-         {:ok, html} <- Floki.parse_document(html) do
-      html
-      |> maybe_parse()
-      |> clean_parsed_data()
-      |> check_parsed_data()
-    end
+    try do
+      with {:ok, %Tesla.Env{body: html}} <- Pleroma.Web.RichMedia.Helpers.rich_media_get(url),
+          {:ok, html} <- Floki.parse_document(html) do
+        html
+        |> maybe_parse()
+        |> clean_parsed_data()
+        |> check_parsed_data()
+      end
+    rescue
+      e -> Logger.warning("Fail while fetching rich media for #{url}: #{Exception.format(:error, e, __STACKTRACE__)}")
   end
 
   defp maybe_parse(html) do

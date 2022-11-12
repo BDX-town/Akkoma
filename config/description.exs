@@ -3264,7 +3264,21 @@ config :pleroma, :config_description, [
         type: :integer,
         description: "Limit user to export not more often than once per N days",
         suggestions: [7]
-      }
+      },
+    ]
+  },
+  %{
+    group: :pleroma,
+    key: Pleroma.Stats,
+    type: :group,
+    description: "Stats-related settings",
+    children: [
+      %{
+        key: :get_stats_timeout,
+        type: :integer,
+        description: "Timeout for stats collection operations",
+        suggestion: [5000]
+      },
     ]
   },
   %{
@@ -3532,5 +3546,5 @@ config :pleroma, :config_description, [
         description: "Strip html from the post before translating it."
       }
     ]
-  }
+  },
 ]
