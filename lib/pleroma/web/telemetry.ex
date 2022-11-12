@@ -37,7 +37,7 @@ defmodule Pleroma.Web.Telemetry do
         unit: {:native, :second},
         tags: [:route],
         reporter_options: [
-          buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
+          buckets: [0.1, 0.2, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000]
         ]
       ),
 
@@ -48,7 +48,7 @@ defmodule Pleroma.Web.Telemetry do
         measurement: :total_time,
         unit: {:native, :millisecond},
         reporter_options: [
-          buckets: [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2.5, 5, 10]
+          buckets: [0.1, 0.2, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000]
         ]
       ),
       distribution(
