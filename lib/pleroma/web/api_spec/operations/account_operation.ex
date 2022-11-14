@@ -611,6 +611,11 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
           nullable: true,
           description: "Whether manual approval of follow requests is required."
         },
+        accepts_chat_messages: %Schema{
+          allOf: [BooleanLike],
+          nullable: true,
+          description: "Whether the user accepts receiving chat messages."
+        },
         fields_attributes: %Schema{
           nullable: true,
           oneOf: [

@@ -153,6 +153,9 @@ defmodule Pleroma.Config.TransferTaskTest do
       clear_config(:rate_limit)
       insert(:config, key: :rate_limit, value: [enabled: false])
 
+      clear_config(:shout)
+      insert(:config, key: :shout, value: [enabled: false])
+
       # Note that we don't actually restart Pleroma.
       # See module Restarter.Pleroma
       assert capture_log(fn ->
@@ -188,6 +191,9 @@ defmodule Pleroma.Config.TransferTaskTest do
       clear_config(Pleroma.Captcha)
 
       insert(:config, key: :rate_limit, value: [enabled: false])
+      clear_config(:shout)
+
+      insert(:config, key: :shout, value: [enabled: false])
       insert(:config, key: Pleroma.Captcha, value: [seconds_valid: 60])
 
       refute String.contains?(

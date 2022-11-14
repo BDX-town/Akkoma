@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.MigrationHelper.NotificationBackfill do
+  alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
 
@@ -78,5 +79,14 @@ defmodule Pleroma.MigrationHelper.NotificationBackfill do
     end
   end
 
-  defp type_from_activity_object(%{data: %{"type" => "Create"}}), do: "mention"
+  defp type_from_activity_object(%{data: %{"type" => "Create", "object" => %{}}}), do: "mention"
+
+  defp type_from_activity_object(%{data: %{"type" => "Create"}} = activity) do
+    object = Object.get_by_ap_id(activity.data["object"])
+
+    case object && object.data["type"] do
+      "ChatMessage" -> "pleroma:chat_mention"
+      _ -> "mention"
+    end
+  end
 end
