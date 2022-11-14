@@ -269,6 +269,11 @@ config :pleroma, :welcome,
     sender_nickname: nil,
     message: nil
   ],
+  chat_message: [
+    enabled: false,
+    sender_nickname: nil,
+    message: nil
+  ],
   email: [
     enabled: false,
     sender: nil,
@@ -763,8 +768,7 @@ config :pleroma, :frontends,
     "mastodon-fe" => %{
       "name" => "mastodon-fe",
       "git" => "https://akkoma.dev/AkkomaGang/masto-fe",
-      "build_url" =>
-        "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/masto-fe.zip",
+      "build_url" => "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/masto-fe.zip",
       "build_dir" => "distribution",
       "ref" => "akkoma"
     },

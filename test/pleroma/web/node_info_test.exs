@@ -141,6 +141,7 @@ defmodule Pleroma.Web.NodeInfoTest do
       "shareable_emoji_packs",
       "multifetch",
       "pleroma_emoji_reactions",
+      "pleroma_chat_messages",
       "pleroma:api/v1/notifications:include_types_filter"
     ]
 

@@ -151,6 +151,7 @@ defmodule Pleroma.User do
     field(:also_known_as, {:array, ObjectValidators.ObjectID}, default: [])
     field(:inbox, :string)
     field(:shared_inbox, :string)
+    field(:accepts_chat_messages, :boolean, default: nil)
     field(:last_active_at, :naive_datetime)
     field(:disclose_client, :boolean, default: true)
     field(:pinned_objects, :map, default: %{})
@@ -475,6 +476,7 @@ defmodule Pleroma.User do
         :invisible,
         :actor_type,
         :also_known_as,
+        :accepts_chat_messages,
         :pinned_objects
       ]
     )
@@ -535,8 +537,9 @@ defmodule Pleroma.User do
         :pleroma_settings_store,
         :is_discoverable,
         :actor_type,
-        :disclose_client,
-        :status_ttl_days
+        :status_ttl_days,
+        :accepts_chat_messages,
+        :disclose_client
       ]
     )
     |> unique_constraint(:nickname)
@@ -728,6 +731,7 @@ defmodule Pleroma.User do
     bio_limit = Config.get([:instance, :user_bio_length], 5000)
     name_limit = Config.get([:instance, :user_name_length], 100)
     reason_limit = Config.get([:instance, :registration_reason_length], 500)
+    params = Map.put_new(params, :accepts_chat_messages, true)
 
     confirmed? =
       if is_nil(opts[:confirmed]) do
@@ -755,6 +759,7 @@ defmodule Pleroma.User do
       :password,
       :password_confirmation,
       :emoji,
+      :accepts_chat_messages,
       :registration_reason,
       :language
     ])
@@ -865,7 +870,8 @@ defmodule Pleroma.User do
          {:ok, user} <- set_cache(user),
          {:ok, _} <- maybe_send_registration_email(user),
          {:ok, _} <- maybe_send_welcome_email(user),
-         {:ok, _} <- maybe_send_welcome_message(user) do
+         {:ok, _} <- maybe_send_welcome_message(user),
+         {:ok, _} <- maybe_send_welcome_chat_message(user) do
       {:ok, user}
     end
   end
@@ -893,6 +899,15 @@ defmodule Pleroma.User do
   defp maybe_send_welcome_message(user) do
     if User.WelcomeMessage.enabled?() do
       User.WelcomeMessage.post_message(user)
+      {:ok, :enqueued}
+    else
+      {:ok, :noop}
+    end
+  end
+
+  defp maybe_send_welcome_chat_message(user) do
+    if User.WelcomeChatMessage.enabled?() do
+      User.WelcomeChatMessage.post_message(user)
       {:ok, :enqueued}
     else
       {:ok, :noop}

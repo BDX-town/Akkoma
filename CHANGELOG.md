@@ -188,7 +188,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `/api/v1/notifications/dismiss`
   - `/api/v1/search`
   - `/api/v1/statuses/{id}/card` 
-- Chats, they were half-baked. Just use PMs.
 - Prometheus, it causes massive slowdown
 
 ## 2022.07
