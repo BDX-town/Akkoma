@@ -253,8 +253,12 @@ defmodule Pleroma.Web.Router do
     patch("/users/:nickname/credentials", AdminAPIController, :update_user_credentials)
 
     get("/users/:nickname/statuses", AdminAPIController, :list_user_statuses)
+    get("/users/:nickname/chats", AdminAPIController, :list_user_chats)
 
     get("/statuses", StatusController, :index)
+
+    get("/chats/:id", ChatController, :show)
+    get("/chats/:id/messages", ChatController, :messages)
   end
 
   # AdminAPI: admins and mods (staff) can perform these actions
@@ -294,6 +298,8 @@ defmodule Pleroma.Web.Router do
 
     post("/reload_emoji", AdminAPIController, :reload_emoji)
     get("/stats", AdminAPIController, :stats)
+
+    delete("/chats/:id/messages/:message_id", ChatController, :delete_message)
   end
 
   scope "/api/v1/pleroma/emoji", Pleroma.Web.PleromaAPI do
@@ -422,6 +428,14 @@ defmodule Pleroma.Web.Router do
     scope [] do
       pipe_through(:authenticated_api)
 
+      post("/chats/by-account-id/:id", ChatController, :create)
+      get("/chats/:id", ChatController, :show)
+      get("/chats/:id/messages", ChatController, :messages)
+      post("/chats/:id/messages", ChatController, :post_chat_message)
+      delete("/chats/:id/messages/:message_id", ChatController, :delete_message)
+      post("/chats/:id/read", ChatController, :mark_as_read)
+      post("/chats/:id/messages/:message_id/read", ChatController, :mark_message_as_read)
+
       get("/conversations/:id/statuses", ConversationController, :statuses)
       get("/conversations/:id", ConversationController, :show)
       post("/conversations/read", ConversationController, :mark_as_read)
@@ -486,6 +500,13 @@ defmodule Pleroma.Web.Router do
       FrontendSettingsController,
       :delete_profile
     )
+  end
+  
+  scope "/api/v2/pleroma", Pleroma.Web.PleromaAPI do
+    scope [] do
+      pipe_through(:authenticated_api)
+      get("/chats", ChatController, :index2)
+    end
   end
 
   scope "/api/v1", Pleroma.Web.MastodonAPI do
