@@ -1566,7 +1566,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       public_key: public_key,
       inbox: data["inbox"],
       shared_inbox: shared_inbox,
-      nickname: nickname
+      nickname: nickname,
       accepts_chat_messages: accepts_chat_messages,
       pinned_objects: pinned_objects
     }
