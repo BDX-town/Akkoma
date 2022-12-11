@@ -1056,7 +1056,7 @@ Most of the settings will be applied in `runtime`, this means that you don't nee
 
 Example of setting without keyword in value:
 ```elixir
-config :tesla, :adapter, Tesla.Adapter.Hackney
+config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 ```
 
 List of settings which support only full update by key:

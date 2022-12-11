@@ -213,6 +213,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
   def check_http_adapter do
     http_adapter = Application.get_env(:tesla, :adapter)
+
     case http_adapter do
       {Tesla.Adapter.Finch, _} ->
         :ok
