@@ -9,6 +9,13 @@ defmodule Mix.Tasks.Pleroma.Diagnostics do
   import Ecto.Query
   use Mix.Task
 
+  def run(["http", url]) do
+    start_pleroma()
+
+    Pleroma.HTTP.get(url)
+    |> IO.inspect()
+  end
+
   def run(["home_timeline", nickname]) do
     start_pleroma()
     user = Repo.get_by!(User, nickname: nickname)
