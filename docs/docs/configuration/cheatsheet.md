@@ -785,16 +785,7 @@ config :logger, :ex_syslogger,
   level: :info,
   ident: "pleroma",
   format: "$metadata[$level] $message"
-
-config :quack,
-  level: :warn,
-  meta: [:all],
-  webhook_url: "https://hooks.slack.com/services/YOUR-API-KEY-HERE"
 ```
-
-See the [Quack Github](https://github.com/azohra/quack) for more details
-
-
 
 ## Database options
 

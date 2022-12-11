@@ -163,7 +163,6 @@ defmodule Pleroma.ConfigDB do
   defp only_full_update?(%ConfigDB{group: group, key: key}) do
     full_key_update = [
       {:pleroma, :ecto_repos},
-      {:quack, :meta},
       {:mime, :types},
       {:cors_plug, [:max_age, :methods, :expose, :headers]},
       {:swarm, :node_blacklist},

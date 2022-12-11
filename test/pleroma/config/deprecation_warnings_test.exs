@@ -279,4 +279,12 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
            end) =~
              "Your config is using the old setting for controlling the URL of media uploaded to your S3 bucket."
   end
+
+  test "check_http_adapter/0" do
+    clear_config([:tesla, :adapter], Gun)
+
+    assert capture_log(fn ->
+             DeprecationWarnings.check_http_adapter()
+           end) =~ "Your config is using a custom tesla adapter"
+  end
 end
