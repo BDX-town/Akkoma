@@ -528,54 +528,6 @@ Available caches:
 * `user_agent`: what user agent should we use? (default: `:default`), must be string or `:default`
 * `adapter`: array of adapter options
 
-### :hackney_pools
-
-Advanced. Tweaks Hackney (http client) connections pools.
-
-There's three pools used:
-
-* `:federation` for the federation jobs.
-  You may want this pool max_connections to be at least equal to the number of federator jobs + retry queue jobs.
-* `:media` for rich media, media proxy
-* `:upload` for uploaded media (if using a remote uploader and `proxy_remote: true`)
-
-For each pool, the options are:
-
-* `max_connections` - how much connections a pool can hold
-* `timeout` - retention duration for connections
-
-
-### :connections_pool
-
-*For `gun` adapter*
-
-Settings for HTTP connection pool.
-
-* `:connection_acquisition_wait` - Timeout to acquire a connection from pool.The total max time is this value multiplied by the number of retries.
-* `connection_acquisition_retries` - Number of attempts to acquire the connection from the pool if it is overloaded. Each attempt is timed `:connection_acquisition_wait` apart.
-* `:max_connections` - Maximum number of connections in the pool.
-* `:connect_timeout` - Timeout to connect to the host.
-* `:reclaim_multiplier` - Multiplied by `:max_connections` this will be the maximum number of idle connections that will be reclaimed in case the pool is overloaded.
-
-### :pools
-
-*For `gun` adapter*
-
-Settings for request pools. These pools are limited on top of `:connections_pool`.
-
-There are four pools used:
-
-* `:federation` for the federation jobs. You may want this pool's max_connections to be at least equal to the number of federator jobs + retry queue jobs.
-* `:media` - for rich media, media proxy.
-* `:upload` - for proxying media when a remote uploader is used and `proxy_remote: true`.
-* `:default` - for other requests.
-
-For each pool, the options are:
-
-* `:size` - limit to how much requests can be concurrently executed.
-* `:recv_timeout` - timeout while `gun` will wait for response
-* `:max_waiting` - limit to how much requests can be waiting for others to finish, after this is reached, subsequent requests will be dropped.
-
 ## Captcha
 
 ### Pleroma.Captcha

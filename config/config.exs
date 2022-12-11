@@ -655,6 +655,10 @@ config :pleroma, :auth, oauth_consumer_strategies: oauth_consumer_strategies
 
 config :pleroma, Pleroma.Emails.Mailer, adapter: Swoosh.Adapters.Sendmail, enabled: false
 
+config :swoosh,
+  api_client: Swoosh.ApiClient.Finch,
+  finch_name: MyFinch
+
 config :pleroma, Pleroma.Emails.UserEmail,
   logo: nil,
   styling: %{
