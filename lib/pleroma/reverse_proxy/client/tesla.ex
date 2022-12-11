@@ -5,8 +5,6 @@
 defmodule Pleroma.ReverseProxy.Client.Tesla do
   @behaviour Pleroma.ReverseProxy.Client
 
-  alias Pleroma.Gun.ConnectionPool
-
   @type headers() :: [{String.t(), String.t()}]
   @type status() :: pos_integer()
 
@@ -76,10 +74,6 @@ defmodule Pleroma.ReverseProxy.Client.Tesla do
 
   defp check_adapter do
     adapter = Application.get_env(:tesla, :adapter)
-
-    unless adapter == Tesla.Adapter.Gun do
-      raise "#{adapter} doesn't support reading body in chunks"
-    end
 
     adapter
   end
