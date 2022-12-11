@@ -202,8 +202,7 @@ defmodule Pleroma.Mixfile do
       {:ex_machina, "~> 2.4", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:mock, "~> 0.3.5", only: :test},
-      # temporary downgrade for excoveralls, hackney until hackney max_connections bug will be fixed
-      {:excoveralls, "0.12.3", only: :test},
+      {:excoveralls, "0.15.1", only: :test},
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test}
     ] ++ oauth_deps()
