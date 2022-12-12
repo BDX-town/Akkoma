@@ -151,6 +151,8 @@ defmodule Pleroma.Mixfile do
       {:cors_plug, "~> 2.0"},
       {:web_push_encryption, "~> 0.3.1"},
       {:swoosh, "~> 1.0"},
+      # for gmail adapter in swoosh
+      {:mail, ">= 0.0.0"},
       {:phoenix_swoosh, "~> 0.3"},
       {:gen_smtp, "~> 0.13"},
       {:ex_syslogger, "~> 1.4"},
