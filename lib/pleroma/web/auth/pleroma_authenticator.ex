@@ -60,6 +60,8 @@ defmodule Pleroma.Web.Auth.PleromaAuthenticator do
   def get_registration(%Plug.Conn{} = _conn), do: {:error, :missing_credentials}
 
   @doc "Creates Pleroma.User record basing on params and Pleroma.Registration record."
+  @spec create_from_registration(Plug.Conn.t(), Registration.t()) ::
+          {:ok, User.t()} | {:error, any()}
   def create_from_registration(
         %Plug.Conn{params: %{"authorization" => registration_attrs}},
         %Registration{} = registration
@@ -89,6 +91,8 @@ defmodule Pleroma.Web.Auth.PleromaAuthenticator do
          {:ok, _} <-
            Registration.changeset(registration, %{user_id: new_user.id}) |> Repo.update() do
       {:ok, new_user}
+    else
+      err -> err
     end
   end
 

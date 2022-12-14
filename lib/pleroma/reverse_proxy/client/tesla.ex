@@ -66,6 +66,7 @@ defmodule Pleroma.ReverseProxy.Client.Tesla do
   @impl true
   @spec close(map) :: :ok | no_return()
   def close(%{pid: _pid}) do
+    :ok
   end
 
   defp check_adapter do

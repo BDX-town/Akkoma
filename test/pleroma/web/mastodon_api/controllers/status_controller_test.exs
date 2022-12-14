@@ -38,7 +38,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       response =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{
+        |> post("/api/v1/statuses", %{
           "content_type" => "text/plain",
           "source" => "Pleroma FE",
           "status" => "Hello world",
@@ -51,7 +51,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       response =
         conn
-        |> get("api/v1/statuses/#{response["id"]}", %{})
+        |> get("/api/v1/statuses/#{response["id"]}", %{})
         |> json_response_and_validate_schema(200)
 
       assert response["reblogs_count"] == 0
@@ -110,7 +110,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn_four =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{
+        |> post("/api/v1/statuses", %{
           "status" => "oolong",
           "expires_in" => expires_in
         })
@@ -133,7 +133,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{
+        |> post("/api/v1/statuses", %{
           "status" => "aa chikichiki banban"
         })
 
@@ -164,7 +164,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "Expiry date is too soon"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -176,7 +176,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "Expiry date is too soon"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -190,7 +190,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "[KeywordPolicy] Matches with rejected keyword"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{"status" => "GNO/Linux"})
+               |> post("/api/v1/statuses", %{"status" => "GNO/Linux"})
                |> json_response_and_validate_schema(422)
     end
 
@@ -383,7 +383,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{"status" => content, "visibility" => "direct"})
+        |> post("/api/v1/statuses", %{"status" => content, "visibility" => "direct"})
 
       assert %{"id" => id} = response = json_response_and_validate_schema(conn, 200)
       assert response["visibility"] == "direct"
@@ -420,7 +420,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       result =
         conn
-        |> get("api/v1/statuses/#{activity}")
+        |> get("/api/v1/statuses/#{activity}")
 
       assert %{
                "content" => "cofe is my copilot",
@@ -449,7 +449,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       result =
         conn
-        |> get("api/v1/statuses/#{activity}")
+        |> get("/api/v1/statuses/#{activity}")
 
       assert %{
                "content" => "club mate is my wingman",
@@ -1342,7 +1342,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"id" => id} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -1511,7 +1511,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn
       |> assign(:user, user3)
       |> assign(:token, insert(:oauth_token, user: user3, scopes: ["read:statuses"]))
-      |> get("api/v1/timelines/home")
+      |> get("/api/v1/timelines/home")
 
     [reblogged_activity] = json_response_and_validate_schema(conn3, 200)
 

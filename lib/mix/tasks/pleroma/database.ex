@@ -115,7 +115,6 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     nil
     |> Pleroma.Workers.Cron.PruneDatabaseWorker.perform()
-    |> IO.inspect()
   end
 
   def run(["fix_likes_collections"]) do

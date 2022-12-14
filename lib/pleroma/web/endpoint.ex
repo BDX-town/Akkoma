@@ -123,7 +123,7 @@ defmodule Pleroma.Web.Endpoint do
   plug(Plug.Parsers,
     parsers: [
       :urlencoded,
-      {:multipart, length: {Config, :get, [[:instance, :upload_limit]]}},
+      Pleroma.Web.Plugs.Parsers.Multipart,
       :json
     ],
     pass: ["*/*"],

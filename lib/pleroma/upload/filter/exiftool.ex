@@ -9,7 +9,7 @@ defmodule Pleroma.Upload.Filter.Exiftool do
   """
   @behaviour Pleroma.Upload.Filter
 
-  @spec filter(Pleroma.Upload.t()) :: {:ok, any()} | {:error, String.t()}
+  @spec filter(Pleroma.Upload.t()) :: {:ok, :noop} | {:ok, :filtered} | {:error, String.t()}
 
   # Formats not compatible with exiftool at this time
   def filter(%Pleroma.Upload{content_type: "image/heic"}), do: {:ok, :noop}

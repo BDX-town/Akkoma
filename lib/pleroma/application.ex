@@ -198,6 +198,8 @@ defmodule Pleroma.Application do
     ]
   end
 
+  @spec task_children(atom()) :: [map()]
+
   defp task_children(:test) do
     [
       %{
@@ -223,6 +225,7 @@ defmodule Pleroma.Application do
     ]
   end
 
+  @spec elasticsearch_children :: [Pleroma.Search.Elasticsearch.Cluster]
   def elasticsearch_children do
     config = Config.get([Pleroma.Search, :module])
 

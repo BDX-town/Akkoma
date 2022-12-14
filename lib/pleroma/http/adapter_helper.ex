@@ -14,9 +14,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
   alias Pleroma.HTTP.AdapterHelper
   require Logger
 
-  @type proxy ::
-          {Connection.host(), pos_integer()}
-          | {Connection.proxy_type(), Connection.host(), pos_integer()}
+  @type proxy :: {Connection.proxy_type(), Connection.host(), pos_integer(), list()}
 
   @callback options(keyword(), URI.t()) :: keyword()
 
@@ -25,7 +23,6 @@ defmodule Pleroma.HTTP.AdapterHelper do
 
   def format_proxy(proxy_url) do
     case parse_proxy(proxy_url) do
-      {:ok, host, port} -> {:http, host, port, []}
       {:ok, type, host, port} -> {type, host, port, []}
       _ -> nil
     end
@@ -94,8 +91,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
   defp proxy_type(_), do: {:error, :unknown}
 
   @spec parse_proxy(String.t() | tuple() | nil) ::
-          {:ok, host(), pos_integer()}
-          | {:ok, proxy_type(), host(), pos_integer()}
+          {:ok, proxy_type(), host(), pos_integer()}
           | {:error, atom()}
           | nil
   def parse_proxy(nil), do: nil

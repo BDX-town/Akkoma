@@ -1,3 +1,4 @@
+# credo:disable-for-this-file
 defmodule Mix.Tasks.Pleroma.Diagnostics do
   alias Pleroma.Repo
   alias Pleroma.User

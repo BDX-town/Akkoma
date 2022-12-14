@@ -558,10 +558,9 @@ defmodule Pleroma.Web.OAuth.OAuthController do
     else
       {:error, changeset} ->
         message =
-          Enum.map(changeset.errors, fn {field, {error, _}} ->
+          Enum.map_join(changeset.errors, "; ", fn {field, {error, _}} ->
             "#{field} #{error}"
           end)
-          |> Enum.join("; ")
 
         message =
           String.replace(

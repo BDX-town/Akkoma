@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.User do
+  @moduledoc """
+  A user, local or remote
+  """
+
   use Ecto.Schema
 
   import Ecto.Changeset
@@ -549,9 +553,17 @@ defmodule Pleroma.User do
   end
 
   defp put_fields(changeset) do
+    # These fields are inconsistent in tests when it comes to binary/atom keys
     if raw_fields = get_change(changeset, :raw_fields) do
       raw_fields =
         raw_fields
+        |> Enum.map(fn
+          %{name: name, value: value} ->
+            %{"name" => name, "value" => value}
+
+          %{"name" => _} = field ->
+            field
+        end)
         |> Enum.filter(fn %{"name" => n} -> n != "" end)
 
       fields =
@@ -705,7 +717,8 @@ defmodule Pleroma.User do
     |> put_private_key()
   end
 
-  def register_changeset(struct, params \\ %{}, opts \\ []) do
+  @spec register_changeset(User.t(), map(), keyword()) :: Changeset.t()
+  def register_changeset(%User{} = struct, params \\ %{}, opts \\ []) do
     bio_limit = Config.get([:instance, :user_bio_length], 5000)
     name_limit = Config.get([:instance, :user_name_length], 100)
     reason_limit = Config.get([:instance, :registration_reason_length], 500)
@@ -819,12 +832,14 @@ defmodule Pleroma.User do
   end
 
   @doc "Inserts provided changeset, performs post-registration actions (confirmation email sending etc.)"
+  @spec register(Changeset.t()) :: {:ok, User.t()} | {:error, any} | nil
   def register(%Ecto.Changeset{} = changeset) do
     with {:ok, user} <- Repo.insert(changeset) do
       post_register_action(user)
     end
   end
 
+  @spec post_register_action(User.t()) :: {:error, any} | {:ok, User.t()}
   def post_register_action(%User{is_confirmed: false} = user) do
     with {:ok, _} <- maybe_send_confirmation_email(user) do
       {:ok, user}
@@ -939,7 +954,8 @@ defmodule Pleroma.User do
 
   def needs_update?(_), do: true
 
-  @spec maybe_direct_follow(User.t(), User.t()) :: {:ok, User.t()} | {:error, String.t()}
+  @spec maybe_direct_follow(User.t(), User.t()) ::
+          {:ok, User.t(), User.t()} | {:error, String.t()}
 
   # "Locked" (self-locked) users demand explicit authorization of follow requests
   def maybe_direct_follow(%User{} = follower, %User{local: true, is_locked: true} = followed) do
@@ -1072,6 +1088,11 @@ defmodule Pleroma.User do
     get_cached_by_nickname(nickname)
   end
 
+  @spec set_cache(
+          {:error, any}
+          | {:ok, User.t()}
+          | User.t()
+        ) :: {:ok, User.t()} | {:error, any}
   def set_cache({:ok, user}), do: set_cache(user)
   def set_cache({:error, err}), do: {:error, err}
 
@@ -1082,12 +1103,14 @@ defmodule Pleroma.User do
     {:ok, user}
   end
 
+  @spec update_and_set_cache(User.t(), map()) :: {:ok, User.t()} | {:error, any}
   def update_and_set_cache(struct, params) do
     struct
     |> update_changeset(params)
     |> update_and_set_cache()
   end
 
+  @spec update_and_set_cache(Changeset.t()) :: {:ok, User.t()} | {:error, any}
   def update_and_set_cache(%{data: %Pleroma.User{} = user} = changeset) do
     was_superuser_before_update = User.superuser?(user)
 
@@ -1142,6 +1165,7 @@ defmodule Pleroma.User do
     end
   end
 
+  @spec get_cached_by_id(String.t()) :: nil | Pleroma.User.t()
   def get_cached_by_id(id) do
     key = "id:#{id}"
 
@@ -2302,6 +2326,7 @@ defmodule Pleroma.User do
     end
   end
 
+  @spec delete_alias(User.t(), User.t()) :: {:error, :no_such_alias}
   def delete_alias(user, alias_user) do
     current_aliases = user.also_known_as || []
     alias_ap_id = alias_user.ap_id
@@ -2417,7 +2442,7 @@ defmodule Pleroma.User do
     cast(user, params, [:is_confirmed, :confirmation_token])
   end
 
-  @spec approval_changeset(User.t(), keyword()) :: Changeset.t()
+  @spec approval_changeset(Changeset.t(), keyword()) :: Changeset.t()
   def approval_changeset(user, set_approval: approved?) do
     cast(user, %{is_approved: approved?}, [:is_approved])
   end
@@ -2492,15 +2517,19 @@ defmodule Pleroma.User do
     with {:ok, relationship} <- UserRelationship.create_block(user, blocked) do
       @cachex.del(:user_cache, "blocked_users_ap_ids:#{user.ap_id}")
       {:ok, relationship}
+    else
+      err -> err
     end
   end
 
-  @spec add_to_block(User.t(), User.t()) ::
+  @spec remove_from_block(User.t(), User.t()) ::
           {:ok, UserRelationship.t()} | {:ok, nil} | {:error, Ecto.Changeset.t()}
   defp remove_from_block(%User{} = user, %User{} = blocked) do
     with {:ok, relationship} <- UserRelationship.delete_block(user, blocked) do
       @cachex.del(:user_cache, "blocked_users_ap_ids:#{user.ap_id}")
       {:ok, relationship}
+    else
+      err -> err
     end
   end
 
