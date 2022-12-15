@@ -13,6 +13,7 @@ defmodule Pleroma.Web.Endpoint do
 
   plug(Pleroma.Web.Plugs.SetLocalePlug)
   plug(CORSPlug)
+  plug(Pleroma.Web.Plugs.CSPNoncePlug)
   plug(Pleroma.Web.Plugs.HTTPSecurityPlug)
   plug(Pleroma.Web.Plugs.UploadedMedia)
 

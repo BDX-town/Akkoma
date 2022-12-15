@@ -185,7 +185,7 @@ defmodule Pleroma.Mixfile do
        git: "https://github.com/FloatingGhost/pleroma-contrib-search-parser.git",
        ref: "08971a81e68686f9ac465cfb6661d51c5e4e1e7f"},
       {:nimble_parsec, "~> 1.0", override: true},
-      {:phoenix_live_dashboard, "~> 0.6.2"},
+      {:phoenix_live_dashboard, "~> 0.7.2"},
       {:ecto_psql_extras, "~> 0.6"},
       {:elasticsearch,
        git: "https://akkoma.dev/AkkomaGang/elasticsearch-elixir.git", ref: "main"},
