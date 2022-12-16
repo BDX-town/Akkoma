@@ -17,7 +17,7 @@ RESP=$(curl \
 client_id=$(echo $RESP | jq -r .client_id)
 client_secret=$(echo $RESP | jq -r .client_secret)
 
-if [ -z "$client_id"]; then
+if [ -z "$client_id" ]; then
   echo "Could not create an app"
   echo "$RESP"
   exit 1
@@ -47,7 +47,7 @@ RESP=$(curl \
     --data-urlencode 'redirect_uri=urn:ietf:wg:oauth:2.0:oob' \
     --data-urlencode "scope=admin:metrics"
 )
-
+echo $RESP
 ACCESS_TOKEN="$(echo $RESP | jq -r .access_token)"
 
 echo "Token is $ACCESS_TOKEN"

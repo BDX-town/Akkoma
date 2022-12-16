@@ -207,6 +207,8 @@ defmodule Pleroma.Web.Plugs.RateLimiter do
     |> Enum.join(".")
   end
 
+  defp ip(_), do: nil
+
   defp render_throttled_error(conn) do
     conn
     |> render_error(:too_many_requests, "Throttled")
