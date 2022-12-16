@@ -2,6 +2,7 @@ defmodule Pleroma.Web.AkkomaAPI.MetricsController do
   use Pleroma.Web, :controller
 
   alias Pleroma.Web.Plugs.OAuthScopesPlug
+  alias Pleroma.Config
 
   plug(
     OAuthScopesPlug,
@@ -12,9 +13,12 @@ defmodule Pleroma.Web.AkkomaAPI.MetricsController do
   )
 
   def show(conn, _params) do
-    stats = TelemetryMetricsPrometheus.Core.scrape()
-
-    conn
-    |> text(stats)
+    if Config.get([:instance, :export_prometheus_metrics], true) do
+      conn
+      |> text(TelemetryMetricsPrometheus.Core.scrape())
+    else
+      conn
+      |> send_resp(404, "Not Found")
+    end
   end
 end

@@ -259,7 +259,8 @@ config :pleroma, :instance,
   profile_directory: true,
   privileged_staff: false,
   local_bubble: [],
-  max_frontend_settings_json_chars: 100_000
+  max_frontend_settings_json_chars: 100_000,
+  export_prometheus_metrics: true
 
 config :pleroma, :welcome,
   direct_message: [

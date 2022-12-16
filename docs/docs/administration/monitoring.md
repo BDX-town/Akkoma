@@ -7,6 +7,8 @@ To facilitate this, akkoma exposes prometheus metrics to be scraped.
 
 ## Prometheus
 
+See: [export_prometheus_metrics](../configuration/cheatsheet#instance)
+
 To scrape prometheus metrics, we need an oauth2 token with the `admin:metrics` scope.
 
 consider using [constanze](https://akkoma.dev/AkkomaGang/constanze) to make this easier -
