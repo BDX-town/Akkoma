@@ -111,8 +111,8 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
         ["connect-src 'self' blob: ", static_url, ?\s, websocket_url]
       end
 
-    style_src = "style-src 'self' '#{nonce_tag}'"
-    font_src = "font-src 'self' '#{nonce_tag}' data:"
+    style_src = "style-src 'self' 'unsafe-inline'"
+    font_src = "font-src 'self' data:"
 
     script_src =
       if Config.get(:env) == :dev do

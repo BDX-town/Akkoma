@@ -7,5 +7,4 @@
 *.js.map binary
 *.css binary
 
-priv/static/instance/static.css diff=css
-priv/static/static-fe/static-fe.css diff=css
+*.css diff=css
