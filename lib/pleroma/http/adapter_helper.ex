@@ -47,6 +47,13 @@ defmodule Pleroma.HTTP.AdapterHelper do
     |> put_in([:pools, :default, :conn_opts, :proxy], proxy)
   end
 
+  def add_pool_size(opts, pool_size) do
+    opts
+    |> maybe_add_pools()
+    |> maybe_add_default_pool()
+    |> put_in([:pools, :default, :size], pool_size)
+  end
+
   defp maybe_add_pools(opts) do
     if Keyword.has_key?(opts, :pools) do
       opts

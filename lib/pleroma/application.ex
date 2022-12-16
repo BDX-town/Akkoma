@@ -259,10 +259,12 @@ defmodule Pleroma.Application do
   defp http_children do
     proxy_url = Config.get([:http, :proxy_url])
     proxy = Pleroma.HTTP.AdapterHelper.format_proxy(proxy_url)
+    pool_size = Config.get([:http, :pool_size])
 
     config =
       [:http, :adapter]
       |> Config.get([])
+      |> Pleroma.HTTP.AdapterHelper.add_pool_size(pool_size)
       |> Pleroma.HTTP.AdapterHelper.maybe_add_proxy_pool(proxy)
       |> Keyword.put(:name, MyFinch)
 

@@ -2662,6 +2662,13 @@ config :pleroma, :config_description, [
         suggestions: ["Pleroma", :default]
       },
       %{
+        key: :pool_size,
+        type: :integer,
+        description:
+          "Number of concurrent outbound HTTP requests to allow. Default 50.",
+        suggestions: [50]
+      },
+      %{
         key: :adapter,
         type: :keyword,
         description: "Adapter specific options",

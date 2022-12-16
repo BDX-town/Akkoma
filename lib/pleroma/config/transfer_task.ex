@@ -25,7 +25,9 @@ defmodule Pleroma.Config.TransferTask do
     do: [
       {:pleroma, Pleroma.Captcha, [:seconds_valid]},
       {:pleroma, Pleroma.Upload, [:proxy_remote]},
-      {:pleroma, :instance, [:upload_limit]}
+      {:pleroma, :instance, [:upload_limit]},
+      {:pleroma, :http, [:pool_size]},
+      {:pleroma, :http, [:proxy_url]}
     ]
 
   def start_link(restart_pleroma? \\ true) do
