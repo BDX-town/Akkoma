@@ -1,6 +1,6 @@
 # Updating your instance
 
-You should **always check the [release notes/changelog](https://akkoma.dev/AkkomaGang/akkoma/src/branch/develop/CHANGELOG.md)** in case there are config deprecations, special update steps, etc.
+You should **always check the [release notes/changelog](https://akkoma.dev/AkkomaGang/akkoma/src/branch/stable/CHANGELOG.md)** in case there are config deprecations, special update steps, etc.
 
 Besides that, doing the following is generally enough:
 ## Switch to the akkoma user
@@ -57,7 +57,7 @@ sudo systemctl stop akkoma
 # Run database migrations
 mix ecto.migrate
 
-# Update frontend(s). See Frontend Configration doc for more information.
+# Update Pleroma-FE frontend to latest stable. For other Frontends see Frontend Configration doc for more information.
 mix pleroma.frontend install pleroma-fe --ref stable
 
 # Start akkoma (replace with your system service manager's equivalent if different)

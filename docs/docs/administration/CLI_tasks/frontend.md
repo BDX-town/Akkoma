@@ -24,20 +24,20 @@ Currently, known `<frontend>` values are:
 
 You can still install frontends that are not configured, see below.
 
-## Example installations for a known frontend
+## Example installations for a known frontend (Stable-Version)
 
 For a frontend configured under the `available` key, it's enough to install it by name.
 
 === "OTP"
 
     ```sh
-    ./bin/pleroma_ctl frontend install pleroma-fe
+    ./bin/pleroma_ctl frontend install pleroma-fe --ref stable
     ```
 
 === "From Source"
 
     ```sh
-    mix pleroma.frontend install pleroma-fe
+    mix pleroma.frontend install pleroma-fe --ref stable
     ```
 
 This will download the latest build for the pre-configured `ref` and install it. It can then be configured as the one of the served frontends in the config file (see `primary` or `admin`).
