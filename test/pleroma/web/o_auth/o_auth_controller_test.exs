@@ -770,7 +770,6 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       app = insert(:oauth_app)
       oauth_token = insert(:oauth_token, user: user, app: app)
       redirect_uri = OAuthController.default_redirect_uri(app)
-      IO.inspect(app)
 
       conn =
         build_conn()
