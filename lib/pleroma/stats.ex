@@ -11,7 +11,7 @@ defmodule Pleroma.Stats do
   alias Pleroma.Repo
   alias Pleroma.User
 
-  @interval :timer.seconds(60)
+  @interval :timer.seconds(300)
 
   def start_link(_) do
     GenServer.start_link(
