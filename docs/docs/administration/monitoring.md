@@ -7,7 +7,7 @@ To facilitate this, akkoma exposes prometheus metrics to be scraped.
 
 ## Prometheus
 
-See: [export_prometheus_metrics](../configuration/cheatsheet#instance)
+See: [export\_prometheus\_metrics](../../configuration/cheatsheet#instance)
 
 To scrape prometheus metrics, we need an oauth2 token with the `admin:metrics` scope.
 

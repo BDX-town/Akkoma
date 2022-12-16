@@ -1,0 +1,6 @@
+{
+"files": { },
+"pack": {
+"description": "Dump pack", "homepage": "https://pleroma.social",
+"license": "Test license", "share-files": true
+}}
