@@ -21,7 +21,6 @@ Currently, known `<frontend>` values are:
 - [admin-fe](https://akkoma.dev/AkkomaGang/admin-fe)
 - [mastodon-fe](https://akkoma.dev/AkkomaGang/masto-fe)
 - [pleroma-fe](https://akkoma.dev/AkkomaGang/pleroma-fe)
-- [soapbox-fe](https://gitlab.com/soapbox-pub/soapbox-fe)
 
 You can still install frontends that are not configured, see below.
 
