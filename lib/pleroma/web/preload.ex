@@ -5,7 +5,7 @@
 defmodule Pleroma.Web.Preload do
   alias Phoenix.HTML
 
-  def build_tags(%{assigns: %{csp_nonce: nonce}} = conn, params) do
+  def build_tags(%{assigns: %{csp_nonce: nonce}}, params) do
     preload_data =
       Enum.reduce(Pleroma.Config.get([__MODULE__, :providers], []), %{}, fn parser, acc ->
         terms =
