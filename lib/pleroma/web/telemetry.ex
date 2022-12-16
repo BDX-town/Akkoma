@@ -11,16 +11,13 @@ defmodule Pleroma.Web.Telemetry do
   def init(_arg) do
     children = [
       {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
-      {TelemetryMetricsPrometheus, metrics: prometheus_metrics(), plug_cowboy_opts: [ip: {127, 0, 0, 1}]}
+      {TelemetryMetricsPrometheus.Core, metrics: prometheus_metrics()}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  @doc """
-  A seperate set of metrics for distributions because phoenix dashboard does NOT handle
-  them well
-  """
+  # A seperate set of metrics for distributions because phoenix dashboard does NOT handle them well
   defp distribution_metrics do
     [
       distribution(
@@ -110,8 +107,6 @@ defmodule Pleroma.Web.Telemetry do
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
       summary("vm.total_run_queue_lengths.io"),
-
-
       last_value("pleroma.local_users.total"),
       last_value("pleroma.domains.total"),
       last_value("pleroma.local_statuses.total")

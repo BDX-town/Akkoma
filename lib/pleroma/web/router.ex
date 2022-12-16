@@ -868,7 +868,11 @@ defmodule Pleroma.Web.Router do
 
   scope "/" do
     pipe_through([:pleroma_html, :authenticate, :require_admin])
-    live_dashboard("/phoenix/live_dashboard", metrics: {Pleroma.Web.Telemetry, :live_dashboard_metrics}, csp_nonce_assign_key: :csp_nonce)
+
+    live_dashboard("/phoenix/live_dashboard",
+      metrics: {Pleroma.Web.Telemetry, :live_dashboard_metrics},
+      csp_nonce_assign_key: :csp_nonce
+    )
   end
 
   # Test-only routes needed to test action dispatching and plug chain execution
@@ -907,6 +911,7 @@ defmodule Pleroma.Web.Router do
   scope "/", Pleroma.Web.Fallback do
     get("/registration/:token", RedirectController, :registration_page)
     get("/:maybe_nickname_or_id", RedirectController, :redirector_with_meta)
+    get("/api/*path", RedirectController, :api_not_implemented)
     get("/*path", RedirectController, :redirector_with_preload)
 
     options("/*path", RedirectController, :empty)

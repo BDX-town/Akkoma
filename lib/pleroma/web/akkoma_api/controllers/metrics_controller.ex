@@ -3,9 +3,13 @@ defmodule Pleroma.Web.AkkomaAPI.MetricsController do
 
   alias Pleroma.Web.Plugs.OAuthScopesPlug
 
-  @unauthenticated_access %{fallback: :proceed_unauthenticated, scopes: []}
-  plug(:skip_auth)
-
+  plug(
+    OAuthScopesPlug,
+    %{scopes: ["admin:metrics"]}
+    when action in [
+           :show
+         ]
+  )
 
   def show(conn, _params) do
     stats = TelemetryMetricsPrometheus.Core.scrape()

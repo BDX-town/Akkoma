@@ -197,7 +197,11 @@ defmodule Pleroma.Web.Plugs.RateLimiter do
     })
   end
 
-  defp ip(%{remote_ip: remote_ip}) do
+  defp ip(%{remote_ip: remote_ip}) when is_binary(remote_ip) do
+    remote_ip
+  end
+
+  defp ip(%{remote_ip: remote_ip}) when is_tuple(remote_ip) do
     remote_ip
     |> Tuple.to_list()
     |> Enum.join(".")
