@@ -554,7 +554,7 @@ defmodule Pleroma.Factory do
     %Pleroma.Web.OAuth.App{
       client_name: sequence(:client_name, &"Some client #{&1}"),
       redirect_uris: "https://example.com/callback",
-      scopes: ["read", "write", "follow", "push", "admin"],
+      scopes: ["read", "write", "follow", "push"],
       website: "https://example.com",
       client_id: Ecto.UUID.generate(),
       client_secret: "aaa;/&bbb"

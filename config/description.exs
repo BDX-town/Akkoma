@@ -964,6 +964,11 @@ config :pleroma, :config_description, [
         type: {:list, :string},
         description:
           "List of instances that make up your local bubble (closely-related instances). Used to populate the 'bubble' timeline (domain only)."
+      },
+      %{
+        key: :export_prometheus_metrics,
+        type: :boolean,
+        description: "Enable prometheus metrics (at /api/v1/akkoma/metrics)"
       }
     ]
   },

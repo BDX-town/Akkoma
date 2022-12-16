@@ -56,12 +56,20 @@ defmodule Pleroma.Web.OAuth.Scopes do
   @doc """
   Validates scopes.
   """
-  @spec validate(list() | nil, list()) ::
-          {:ok, list()} | {:error, :missing_scopes | :unsupported_scopes}
-  def validate(blank_scopes, _app_scopes) when blank_scopes in [nil, []],
+  @spec validate(list() | nil, list(), Pleroma.User.t()) ::
+          {:ok, list()} | {:error, :missing_scopes | :unsupported_scopes, :user_is_not_an_admin}
+  def validate(blank_scopes, _app_scopes, _user) when blank_scopes in [nil, []],
     do: {:error, :missing_scopes}
 
-  def validate(scopes, app_scopes) do
+  def validate(scopes, app_scopes, %Pleroma.User{is_admin: is_admin}) do
+    if !is_admin && contains_admin_scopes?(scopes) do
+      {:error, :user_is_not_an_admin}
+    else
+      validate_scopes_are_supported(scopes, app_scopes)
+    end
+  end
+
+  defp validate_scopes_are_supported(scopes, app_scopes) do
     case OAuthScopesPlug.filter_descendants(scopes, app_scopes) do
       ^scopes -> {:ok, scopes}
       _ -> {:error, :unsupported_scopes}
