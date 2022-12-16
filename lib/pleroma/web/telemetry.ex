@@ -109,7 +109,8 @@ defmodule Pleroma.Web.Telemetry do
       summary("vm.total_run_queue_lengths.io"),
       last_value("pleroma.local_users.total"),
       last_value("pleroma.domains.total"),
-      last_value("pleroma.local_statuses.total")
+      last_value("pleroma.local_statuses.total"),
+      last_value("pleroma.remote_users.total")
     ]
   end
 
@@ -127,5 +128,6 @@ defmodule Pleroma.Web.Telemetry do
     :telemetry.execute([:pleroma, :local_users], %{total: stats.user_count}, %{})
     :telemetry.execute([:pleroma, :domains], %{total: stats.domain_count}, %{})
     :telemetry.execute([:pleroma, :local_statuses], %{total: stats.status_count}, %{})
+    :telemetry.execute([:pleroma, :remote_users], %{total: stats.remote_user_count}, %{})
   end
 end
