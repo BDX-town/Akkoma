@@ -862,60 +862,6 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       assert result =~ "Invalid Username/Password"
     end
 
-    test "returns 401 when attempting to use an admin scope with a non-admin", %{conn: conn} do
-      user = insert(:user)
-      app = insert(:oauth_app, scopes: ["admin"])
-      redirect_uri = OAuthController.default_redirect_uri(app)
-
-      result =
-        conn
-        |> post("/oauth/authorize", %{
-          "authorization" => %{
-            "name" => user.nickname,
-            "password" => "test",
-            "client_id" => app.client_id,
-            "redirect_uri" => redirect_uri,
-            "state" => "statepassed",
-            "scope" => Enum.join(app.scopes, " ")
-          }
-        })
-        |> html_response(:unauthorized)
-
-      # Keep the details
-      assert result =~ app.client_id
-      assert result =~ redirect_uri
-
-      # Error message
-      assert result =~ "outside of authorized scopes"
-    end
-
-    test "returns 401 for missing scopes" do
-      user = insert(:user, is_admin: false)
-      app = insert(:oauth_app, scopes: ["read", "write", "admin"])
-      redirect_uri = OAuthController.default_redirect_uri(app)
-
-      result =
-        build_conn()
-        |> post("/oauth/authorize", %{
-          "authorization" => %{
-            "name" => user.nickname,
-            "password" => "test",
-            "client_id" => app.client_id,
-            "redirect_uri" => redirect_uri,
-            "state" => "statepassed",
-            "scope" => ""
-          }
-        })
-        |> html_response(:unauthorized)
-
-      # Keep the details
-      assert result =~ app.client_id
-      assert result =~ redirect_uri
-
-      # Error message
-      assert result =~ "This action is outside of authorized scopes"
-    end
-
     test "returns 401 for scopes beyond app scopes hierarchy", %{conn: conn} do
       user = insert(:user)
       app = insert(:oauth_app, scopes: ["read", "write"])

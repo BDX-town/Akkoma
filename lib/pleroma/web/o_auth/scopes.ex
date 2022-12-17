@@ -62,11 +62,7 @@ defmodule Pleroma.Web.OAuth.Scopes do
     do: {:error, :missing_scopes}
 
   def validate(scopes, app_scopes, %Pleroma.User{is_admin: is_admin}) do
-    if !is_admin && contains_admin_scopes?(scopes) do
-      {:error, :user_is_not_an_admin}
-    else
-      validate_scopes_are_supported(scopes, app_scopes)
-    end
+    validate_scopes_are_supported(scopes, app_scopes)
   end
 
   @spec filter_admin_scopes([String.t()], Pleroma.User.t()) :: [String.t()]
