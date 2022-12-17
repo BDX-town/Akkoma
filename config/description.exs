@@ -2664,8 +2664,7 @@ config :pleroma, :config_description, [
       %{
         key: :pool_size,
         type: :integer,
-        description:
-          "Number of concurrent outbound HTTP requests to allow. Default 50.",
+        description: "Number of concurrent outbound HTTP requests to allow. Default 50.",
         suggestions: [50]
       },
       %{

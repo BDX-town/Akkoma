@@ -605,6 +605,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
   defp do_create_authorization(%User{} = user, %App{} = app, requested_scopes)
        when is_list(requested_scopes) do
     with {:account_status, :active} <- {:account_status, User.account_status(user)},
+         requested_scopes <- Scopes.filter_admin_scopes(requested_scopes, user),
          {:ok, scopes} <- validate_scopes(user, app, requested_scopes),
          {:ok, auth} <- Authorization.create_authorization(app, user, scopes) do
       {:ok, auth}

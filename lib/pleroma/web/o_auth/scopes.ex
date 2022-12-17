@@ -69,6 +69,17 @@ defmodule Pleroma.Web.OAuth.Scopes do
     end
   end
 
+  @spec filter_admin_scopes([String.t()], Pleroma.User.t()) :: [String.t()]
+  @doc """
+  Remove admin scopes for non-admins
+  """
+  def filter_admin_scopes(scopes, %Pleroma.User{is_admin: true}), do: scopes
+
+  def filter_admin_scopes(scopes, _user) do
+    drop_scopes = OAuthScopesPlug.filter_descendants(scopes, ["admin"])
+    Enum.reject(scopes, fn scope -> Enum.member?(drop_scopes, scope) end)
+  end
+
   defp validate_scopes_are_supported(scopes, app_scopes) do
     case OAuthScopesPlug.filter_descendants(scopes, app_scopes) do
       ^scopes -> {:ok, scopes}

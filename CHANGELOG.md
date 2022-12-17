@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Return HTTP error 413 when uploading an avatar or banner that's above the configured upload limit instead of a 500.
 - Non-admin users now cannot register `admin` scope tokens (not security-critical, they didn't work before, but you _could_ create them)
+  - Admin scopes will be dropped on create
 - Rich media will now backoff for 20 minutes after a failure
 
 ### Upgrade notes

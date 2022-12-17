@@ -693,7 +693,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
   describe "POST /oauth/authorize" do
     test "redirects with oauth authorization, " <>
-           "granting requested app-supported scopes to both admin users" do
+           "granting requested app-supported scopes to admin users" do
       app_scopes = ["read", "write", "admin", "secret_scope"]
       app = insert(:oauth_app, scopes: app_scopes)
       redirect_uri = OAuthController.default_redirect_uri(app)
@@ -735,7 +735,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       redirect_uri = OAuthController.default_redirect_uri(app)
 
       non_admin = insert(:user, is_admin: false)
-      scopes_subset = ["read:subscope", "write"]
+      scopes_subset = ["read:subscope", "write", "admin", "admin:metrics"]
 
       # In case scope param is missing, expecting _all_ app-supported scopes to be granted
       conn =
@@ -762,7 +762,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       assert %{"state" => "statepassed", "code" => code} = query
       auth = Repo.get_by(Authorization, token: code)
       assert auth
-      assert auth.scopes == scopes_subset
+      assert auth.scopes == ["read:subscope", "write"]
     end
 
     test "authorize from cookie" do
