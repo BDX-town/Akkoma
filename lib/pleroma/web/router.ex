@@ -147,6 +147,7 @@ defmodule Pleroma.Web.Router do
   pipeline :http_signature do
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
+    plug(Pleroma.Web.Plugs.EnsureHTTPSignaturePlug)
   end
 
   pipeline :static_fe do
