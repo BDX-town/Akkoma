@@ -61,7 +61,7 @@ defmodule Pleroma.Web.OAuth.Scopes do
   def validate(blank_scopes, _app_scopes, _user) when blank_scopes in [nil, []],
     do: {:error, :missing_scopes}
 
-  def validate(scopes, app_scopes, %Pleroma.User{is_admin: is_admin}) do
+  def validate(scopes, app_scopes, _user) do
     validate_scopes_are_supported(scopes, app_scopes)
   end
 
