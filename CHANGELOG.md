@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Admin scopes will be dropped on create
 - Rich media will now backoff for 20 minutes after a failure
 
+### Fixed 
+- /api/v1/accounts/lookup will now respect restrict\_unauthenticated
+
 ### Upgrade notes
 - Ensure `config :tesla, :adapter` is either unset, or set to `{Tesla.Adapter.Finch, name: MyFinch}` in your .exs config
 - Pleroma-FE will need to be updated to handle the new /api/v1/pleroma endpoints for  custom emoji
