@@ -3442,5 +3442,30 @@ config :pleroma, :config_description, [
         suggestion: [nil]
       }
     ]
+  },
+  %{
+    group: :pleroma,
+    key: :argos_translate,
+    type: :group,
+    description: "ArgosTranslate Settings.",
+    children: [
+      %{
+        key: :command_argos_translate,
+        type: :string,
+        description: "command for `argos-translate`. Can be the command if it's in your PATH, or the full path to the file.",
+        suggestion: ["argos-translate"]
+      },
+      %{
+        key: :command_argospm,
+        type: :string,
+        description: "command for `argospm`. Can be the command if it's in your PATH, or the full path to the file.",
+        suggestion: ["argospm"]
+      },
+      %{
+        key: :strip_html,
+        type: :boolean,
+        description: "Strip html from the post before translating it."
+      }
+    ]
   }
 ]

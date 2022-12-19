@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - Prometheus metrics exporting from `/api/v1/akkoma/metrics`
 - Ability to alter http pool size
+- Translation of statuses via ArgosTranslate
 
 ### Removed
 - Non-finch HTTP adapters

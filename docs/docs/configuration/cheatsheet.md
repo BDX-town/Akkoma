@@ -1119,7 +1119,7 @@ Each job has these settings:
 ### Translation Settings
 
 Settings to automatically translate statuses for end users. Currently supported
-translation services are DeepL and LibreTranslate.
+translation services are DeepL and LibreTranslate. The supported command line tool is [Argos Translate](https://github.com/argosopentech/argos-translate).
 
 Translations are available at `/api/v1/statuses/:id/translations/:language`, where
 `language` is the target language code (e.g `en`)
@@ -1128,7 +1128,7 @@ Translations are available at `/api/v1/statuses/:id/translations/:language`, whe
 
 - `:enabled` - enables translation
 - `:module` - Sets module to be used
-  - Either `Pleroma.Akkoma.Translators.DeepL` or `Pleroma.Akkoma.Translators.LibreTranslate`
+  - Either `Pleroma.Akkoma.Translators.DeepL`, `Pleroma.Akkoma.Translators.LibreTranslate`, or `Pleroma.Akkoma.Translators.ArgosTranslate`
 
 ### `:deepl`
 
@@ -1140,3 +1140,9 @@ Translations are available at `/api/v1/statuses/:id/translations/:language`, whe
 
 - `:url` - URL of LibreTranslate instance
 - `:api_key` - API key for LibreTranslate
+
+### `:argos_translate`
+
+- `:command_argos_translate` - command for `argos-translate`. Can be the command if it's in your PATH, or the full path to the file  (default: `argos-translate`).
+- `:command_argospm` - command for `argospm`. Can be the command if it's in your PATH, or the full path to the file (default: `argospm`).
+- `:strip_html` - Strip html from the post before translating it (default: `true`).

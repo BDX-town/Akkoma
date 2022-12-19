@@ -882,6 +882,11 @@ config :pleroma, :libre_translate,
   url: "http://127.0.0.1:5000",
   api_key: nil
 
+config :pleroma, :argos_translate,
+  command_argos_translate: "argos-translate",
+  command_argospm: "argospm",
+  strip_html: true
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
