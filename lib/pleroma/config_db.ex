@@ -342,7 +342,11 @@ defmodule Pleroma.ConfigDB do
 
   def string_to_elixir_types(value) do
     if module_name?(value) do
-      String.to_existing_atom("Elixir." <> value)
+      try do
+        String.to_existing_atom("Elixir." <> value)
+      rescue
+        ArgumentError -> :invalid_atom
+      end
     else
       value
     end

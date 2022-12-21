@@ -227,6 +227,10 @@ defmodule Pleroma.ConfigDBTest do
       assert ConfigDB.to_elixir_types("Pleroma.Bookmark") == Pleroma.Bookmark
     end
 
+    test "removed module" do
+      assert ConfigDB.to_elixir_types("Pleroma.Nowhere") == :invalid_atom
+    end
+
     test "pleroma string" do
       assert ConfigDB.to_elixir_types("Pleroma") == "Pleroma"
     end

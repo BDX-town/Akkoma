@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed 
 - /api/v1/accounts/lookup will now respect restrict\_unauthenticated
+- Unknown atoms in the config DB will no longer crash akkoma on boot
 
 ### Upgrade notes
 - Ensure `config :tesla, :adapter` is either unset, or set to `{Tesla.Adapter.Finch, name: MyFinch}` in your .exs config
