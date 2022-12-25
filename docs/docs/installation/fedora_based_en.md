@@ -30,11 +30,10 @@ sudo dnf install git gcc g++ make cmake file-devel postgresql-server postgresql-
 
 * Enable and initialize Postgres:
 ```shell
-sudo systemctl enable postgresql.service
 sudo postgresql-setup --initdb --unit postgresql
 # Allow password auth for postgres
 sudo sed -E -i 's|(host +all +all +127.0.0.1/32 +)ident|\1md5|' /var/lib/pgsql/data/pg_hba.conf
-sudo systemctl start postgresql.service
+sudo systemctl enable --now postgresql.service
 ```
 
 ### Install Elixir and Erlang
@@ -59,7 +58,7 @@ sudo dnf install ffmpeg
 * Install ImageMagick and ExifTool for image manipulation:
 
 ```shell
-sudo dnf install Imagemagick perl-Image-ExifTool
+sudo dnf install ImageMagick perl-Image-ExifTool
 ```
 
 
