@@ -79,7 +79,7 @@ defmodule Mix.Tasks.Pleroma.Config do
     end)
   end
 
-  def run(["dump_to_file", group, key]) do
+  def run(["dump_to_file", group, key, fname]) do
     check_configdb(fn ->
       start_pleroma()
 
@@ -95,7 +95,7 @@ defmodule Mix.Tasks.Pleroma.Config do
       |> Jason.encode!()
       |> Jason.Formatter.pretty_print()
 
-      File.write("#{group}_#{key}.json", json)
+      File.write(fname, json)
       shell_info("Wrote #{group}_#{key}.json")
     end)
   end

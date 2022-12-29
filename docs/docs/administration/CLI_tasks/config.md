@@ -155,3 +155,42 @@ This forcibly removes all saved values in the database.
     ```sh
     mix pleroma.config [--force] reset
     ```
+
+## Dumping specific configuration values to JSON
+
+If you want to bulk-modify configuration values (for example, for MRF modifications),
+it may be easier to dump the values to JSON and then modify them in a text editor.
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl config dump_to_file group key path
+    # For example, to dump the MRF simple configuration:
+    ./bin/pleroma_ctl config dump_to_file pleroma mrf_simple /tmp/mrf_simple.json
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.config dump_to_file group key path 
+    # For example, to dump the MRF simple configuration:
+    mix pleroma.config dump_to_file pleroma mrf_simple /tmp/mrf_simple.json
+    ```
+
+## Loading specific configuration values from JSON
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl config load_from_file path
+    # For example, to load the MRF simple configuration:
+    ./bin/pleroma_ctl config load_from_file /tmp/mrf_simple.json
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.config load_from_file path
+    # For example, to load the MRF simple configuration:
+    mix pleroma.config load_from_file /tmp/mrf_simple.json
+    ```
