@@ -179,6 +179,11 @@ it may be easier to dump the values to JSON and then modify them in a text edito
 
 ## Loading specific configuration values from JSON
 
+**Note:** This will overwrite any existing value in the database, and can
+cause crashes if you do not have exactly the correct formatting.
+
+Once you have modified the JSON file, you can load it back into the database.
+
 === "OTP"
 
     ```sh
@@ -194,3 +199,7 @@ it may be easier to dump the values to JSON and then modify them in a text edito
     # For example, to load the MRF simple configuration:
     mix pleroma.config load_from_file /tmp/mrf_simple.json
     ```
+
+**NOTE** an instance reboot is needed for many changes to take effect,
+you may want to visit `/api/v1/pleroma/admin/restart` on your instance
+to soft-restart the instance.
