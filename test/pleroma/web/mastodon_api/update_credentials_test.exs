@@ -465,6 +465,69 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
              ]
     end
 
+    test "update fields with a link to content with rel=me, with ap id", %{user: user, conn: conn} do
+      Tesla.Mock.mock(fn
+        %{url: "http://example.com/rel_me/ap_id"} ->
+          %Tesla.Env{
+            status: 200,
+            body: ~s[<html><head><link rel="me" href="#{user.ap_id}"></head></html>]
+          }
+      end)
+
+      field = %{name: "Website", value: "http://example.com/rel_me/ap_id"}
+
+      account_data =
+        conn
+        |> patch("/api/v1/accounts/update_credentials", %{fields_attributes: [field]})
+        |> json_response_and_validate_schema(200)
+
+      assert [
+               %{
+                 "name" => "Website",
+                 "value" =>
+                   ~s[<a href="http://example.com/rel_me/ap_id" rel="ugc">http://example.com/rel_me/ap_id</a>],
+                 "verified_at" => verified_at
+               }
+             ] = account_data["fields"]
+
+      {:ok, verified_at, _} = DateTime.from_iso8601(verified_at)
+      assert DateTime.diff(DateTime.utc_now(), verified_at) < 10
+    end
+
+    test "update fields with a link to content with rel=me, with frontend path", %{
+      user: user,
+      conn: conn
+    } do
+      fe_url = "#{Pleroma.Web.Endpoint.url()}/#{user.nickname}"
+
+      Tesla.Mock.mock(fn
+        %{url: "http://example.com/rel_me/fe_path"} ->
+          %Tesla.Env{
+            status: 200,
+            body: ~s[<html><head><link rel="me" href="#{fe_url}"></head></html>]
+          }
+      end)
+
+      field = %{name: "Website", value: "http://example.com/rel_me/fe_path"}
+
+      account_data =
+        conn
+        |> patch("/api/v1/accounts/update_credentials", %{fields_attributes: [field]})
+        |> json_response_and_validate_schema(200)
+
+      assert [
+               %{
+                 "name" => "Website",
+                 "value" =>
+                   ~s[<a href="http://example.com/rel_me/fe_path" rel="ugc">http://example.com/rel_me/fe_path</a>],
+                 "verified_at" => verified_at
+               }
+             ] = account_data["fields"]
+
+      {:ok, verified_at, _} = DateTime.from_iso8601(verified_at)
+      assert DateTime.diff(DateTime.utc_now(), verified_at) < 10
+    end
+
     test "emojis in fields labels", %{conn: conn} do
       fields = [
         %{name: ":firefox:", value: "is best 2hu"},

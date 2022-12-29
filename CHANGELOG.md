@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Prometheus metrics exporting from `/api/v1/akkoma/metrics`
 - Ability to alter http pool size
 - Translation of statuses via ArgosTranslate
+- Ability to "verify" links in profile fields via rel=me
+- Mix tasks to dump/load config to/from json for bulk editing
 
 ### Removed
 - Non-finch HTTP adapters

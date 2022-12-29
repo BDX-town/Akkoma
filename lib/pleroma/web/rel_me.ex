@@ -38,12 +38,11 @@ defmodule Pleroma.Web.RelMe do
 
   def maybe_put_rel_me("http" <> _ = target_page, profile_urls) when is_list(profile_urls) do
     {:ok, rel_me_hrefs} = parse(target_page)
-
     true = Enum.any?(rel_me_hrefs, fn x -> x in profile_urls end)
 
     "me"
   rescue
-    _ -> nil
+    e -> nil
   end
 
   def maybe_put_rel_me(_, _) do
