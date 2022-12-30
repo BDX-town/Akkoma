@@ -17,7 +17,6 @@ defmodule Pleroma.Web.CommonAPI.Utils do
   alias Pleroma.Web.ActivityPub.Visibility
   alias Pleroma.Web.CommonAPI.ActivityDraft
   alias Pleroma.Web.MediaProxy
-  alias Pleroma.Web.Plugs.AuthenticationPlug
   alias Pleroma.Web.Utils.Params
 
   require Logger
@@ -356,7 +355,7 @@ defmodule Pleroma.Web.CommonAPI.Utils do
   @spec confirm_current_password(User.t(), String.t()) :: {:ok, User.t()} | {:error, String.t()}
   def confirm_current_password(user, password) do
     with %User{local: true} = db_user <- User.get_cached_by_id(user.id),
-         true <- AuthenticationPlug.checkpw(password, db_user.password_hash) do
+         true <- Pleroma.Password.checkpw(password, db_user.password_hash) do
       {:ok, db_user}
     else
       _ -> {:error, dgettext("errors", "Invalid password.")}

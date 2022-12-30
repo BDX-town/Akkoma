@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Prometheus metrics exporting from `/api/v1/akkoma/metrics`
 - Ability to alter http pool size
 - Translation of statuses via ArgosTranslate
+- Argon2 password hashing
 - Ability to "verify" links in profile fields via rel=me
 - Mix tasks to dump/load config to/from json for bulk editing
 
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Non-finch HTTP adapters
 - Legacy redirect from /api/pleroma/admin to /api/v1/pleroma/admin
 - Legacy redirects from /api/pleroma to /api/v1/pleroma
+- :crypt dependency
 
 ### Changed
 - Return HTTP error 413 when uploading an avatar or banner that's above the configured upload limit instead of a 500.

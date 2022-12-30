@@ -6,7 +6,6 @@ defmodule Pleroma.Web.Auth.PleromaAuthenticator do
   alias Pleroma.Registration
   alias Pleroma.Repo
   alias Pleroma.User
-  alias Pleroma.Web.Plugs.AuthenticationPlug
 
   import Pleroma.Web.Auth.Helpers, only: [fetch_credentials: 1, fetch_user: 1]
 
@@ -15,8 +14,8 @@ defmodule Pleroma.Web.Auth.PleromaAuthenticator do
   def get_user(%Plug.Conn{} = conn) do
     with {:ok, {name, password}} <- fetch_credentials(conn),
          {_, %User{} = user} <- {:user, fetch_user(name)},
-         {_, true} <- {:checkpw, AuthenticationPlug.checkpw(password, user.password_hash)},
-         {:ok, user} <- AuthenticationPlug.maybe_update_password(user, password) do
+         {_, true} <- {:checkpw, Pleroma.Password.checkpw(password, user.password_hash)},
+         {:ok, user} <- Pleroma.Password.maybe_update_password(user, password) do
       {:ok, user}
     else
       {:error, _reason} = error -> error

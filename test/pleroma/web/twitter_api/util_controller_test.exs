@@ -553,7 +553,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
 
       assert json_response_and_validate_schema(conn, 200) == %{"status" => "success"}
       fetched_user = User.get_cached_by_id(user.id)
-      assert Pleroma.Password.Pbkdf2.verify_pass("newpass", fetched_user.password_hash) == true
+      assert Pleroma.Password.checkpw("newpass", fetched_user.password_hash) == true
     end
   end
 

@@ -87,13 +87,15 @@ defmodule Mix.Tasks.Pleroma.Config do
       key = maybe_atomize(key)
 
       config = ConfigDB.get_by_group_and_key(group, key)
-      json = %{
-        group: ConfigDB.to_json_types(config.group),
-        key: ConfigDB.to_json_types(config.key),
-        value: ConfigDB.to_json_types(config.value),
-      }
-      |> Jason.encode!()
-      |> Jason.Formatter.pretty_print()
+
+      json =
+        %{
+          group: ConfigDB.to_json_types(config.group),
+          key: ConfigDB.to_json_types(config.key),
+          value: ConfigDB.to_json_types(config.value)
+        }
+        |> Jason.encode!()
+        |> Jason.Formatter.pretty_print()
 
       File.write(fname, json)
       shell_info("Wrote #{group}_#{key}.json")
