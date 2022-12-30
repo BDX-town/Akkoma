@@ -33,7 +33,8 @@ defmodule Pleroma.Password do
     false
   end
 
-  @spec maybe_update_password(User.t(), String.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  @spec maybe_update_password(User.t(), String.t()) ::
+          {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def maybe_update_password(%User{password_hash: "$2" <> _} = user, password) do
     do_update_password(user, password)
   end
