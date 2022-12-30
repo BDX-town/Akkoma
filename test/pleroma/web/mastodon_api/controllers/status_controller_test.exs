@@ -326,7 +326,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
     test "fake statuses' preview card is not cached", %{conn: conn} do
       clear_config([:rich_media, :enabled], true)
 
-      Tesla.Mock.mock(fn
+      Tesla.Mock.mock_global(fn
         %{
           method: :get,
           url: "https://example.com/twitter-card"
