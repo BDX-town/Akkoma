@@ -177,7 +177,7 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   end
 
   defp context(draft) do
-    context = Utils.make_context(draft.in_reply_to, draft.in_reply_to_conversation)
+    context = Utils.make_context(draft)
     %__MODULE__{draft | context: context}
   end
 

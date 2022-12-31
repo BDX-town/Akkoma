@@ -2023,6 +2023,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert response["quote_id"] == quoted_status.id
       assert response["quote"]["id"] == quoted_status.id
       assert response["quote"]["content"] == quoted_status.object.data["content"]
+      assert response["pleroma"]["context"] == quoted_status.data["context"]
     end
 
     test "posting a quote, quoting a status that isn't public", %{conn: conn} do

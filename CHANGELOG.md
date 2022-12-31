@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Non-admin users now cannot register `admin` scope tokens (not security-critical, they didn't work before, but you _could_ create them)
   - Admin scopes will be dropped on create
 - Rich media will now backoff for 20 minutes after a failure
+- Quote posts are now considered as part of the same thread as the post they are quoting
 - Simplified HTTP signature processing
 - Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
 
