@@ -28,7 +28,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   # to fetch the preview. However it should be fine considering
   # pagination is restricted to 40 activities at a time
   defp fetch_rich_media_for_activities(activities) do
-    Enum.map(activities, fn activity ->
+    Enum.each(activities, fn activity ->
       spawn(fn ->
         Pleroma.Web.RichMedia.Helpers.fetch_data_for_activity(activity)
       end)
