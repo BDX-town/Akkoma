@@ -2,6 +2,7 @@ defmodule Pleroma.Web.Telemetry do
   use Supervisor
   import Telemetry.Metrics
   alias Pleroma.Stats
+  alias Pleroma.Config
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
@@ -9,12 +10,26 @@ defmodule Pleroma.Web.Telemetry do
 
   @impl true
   def init(_arg) do
-    children = [
-      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
-      {TelemetryMetricsPrometheus.Core, metrics: prometheus_metrics()}
-    ]
+    children =
+      [
+        {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+      ] ++
+        prometheus_children()
 
     Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  defp prometheus_children do
+    config = Config.get([:instance, :export_prometheus_metrics], true)
+
+    if config do
+      [
+        {TelemetryMetricsPrometheus.Core, metrics: prometheus_metrics()},
+        Pleroma.PrometheusExporter
+      ]
+    else
+      []
+    end
   end
 
   # A seperate set of metrics for distributions because phoenix dashboard does NOT handle them well
