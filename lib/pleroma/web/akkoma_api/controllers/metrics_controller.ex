@@ -15,7 +15,7 @@ defmodule Pleroma.Web.AkkomaAPI.MetricsController do
   def show(conn, _params) do
     if Config.get([:instance, :export_prometheus_metrics], true) do
       conn
-      |> text(TelemetryMetricsPrometheus.Core.scrape())
+      |> text(Pleroma.PrometheusExporter.show())
     else
       conn
       |> send_resp(404, "Not Found")

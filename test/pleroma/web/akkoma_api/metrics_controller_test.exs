@@ -5,6 +5,8 @@ defmodule Pleroma.Web.AkkomaAPI.MetricsControllerTest do
     test "should return metrics when the user has admin:metrics" do
       %{conn: conn} = oauth_access(["admin:metrics"])
 
+      Pleroma.PrometheusExporter.gather()
+
       resp =
         conn
         |> get("/api/v1/akkoma/metrics")
