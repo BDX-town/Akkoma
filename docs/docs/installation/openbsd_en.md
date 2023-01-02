@@ -92,9 +92,6 @@ server "default" {
 	location "/robots.txt" { root "/htdocs/local/" }
 	location "/*" { block return 302 "https://$HTTP_HOST$REQUEST_URI" }
 }
-
-types {
-}
 ```
 Do not forget to change *<IPv4/6 address\>* to your server's address(es). If httpd should only listen on one protocol family, comment one of the two first *listen* options.
 
