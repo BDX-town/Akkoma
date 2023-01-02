@@ -47,6 +47,9 @@ Create the `_akkoma` user, assign it the akkoma login class and create its home 
 Enter a shell as the `_akkoma` user. As root, run `su _akkoma -;cd`. Then clone the repository with `git clone https://akkoma.dev/AkkomaGang/akkoma.git`. Akkoma is now installed in `/home/_akkoma/akkoma/`, it will be configured and started at the end of this guide.
 
 #### PostgreSQL
+Create `_postgresql`'s user directory (it hasn't been created yet): `mdir var/postgresql/data`. To set it as home
+directory for user `_postgresql` run `usermod -d  /var/postgresql/data _postgresql`.
+
 Start a shell as the `_postgresql` user (as root run `su _postgresql -` then run the `initdb` command to initialize postgresql.
 You will need to specify pgdata directory to the default (`/var/postgresql/data`) with the `-D <path>` and set the user to postgres with the `-U <username>` flag. This can be done as follows:
 
