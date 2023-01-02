@@ -12,10 +12,9 @@ For any additional information regarding commands and configuration files mentio
 To install them, run the following command (with doas or as root):
 
 ```
-pkg_add elixir gmake git postgresql-server postgresql-contrib cmake ffmpeg ImageMagick erlang-wx-25
+pkg_add elixir gmake git postgresql-server postgresql-contrib cmake ffmpeg erlang-wx libmagic
+pkg_add erlang-wx # Choose the latest version as package version when promted
 ```
-
-(Note that the erlang version may change, it was 25 at the time of writing)
 
 Akkoma requires a reverse proxy, OpenBSD has relayd in base (and is used in this guide) and packages/ports are available for nginx (www/nginx) and apache (www/apache-httpd). Independently of the reverse proxy, [acme-client(1)](https://man.openbsd.org/acme-client) can be used to get a certificate from Let's Encrypt.
 
@@ -29,7 +28,7 @@ Per [`docs/installation/optional/media_graphics_packages.md`](../installation/op
 To install the above:
 
 ```
-pkg_add ImageMagick ffmpeg p5-Image-ExifTool
+pkg_add ffmpeg p5-Image-ExifTool
 ```
 
 #### Creating the akkoma user
