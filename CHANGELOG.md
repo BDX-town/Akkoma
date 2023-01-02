@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Quote posts are now considered as part of the same thread as the post they are quoting
 - Simplified HTTP signature processing
 - Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
+- HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
 
 ### Fixed 
 - /api/v1/accounts/lookup will now respect restrict\_unauthenticated

@@ -106,20 +106,15 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
     connect_src =
       if Config.get([:media_proxy, :enabled]) do
         sources = build_csp_multimedia_source_list()
-        ["connect-src 'self' blob: ", static_url, ?\s, websocket_url, ?\s, sources]
+        ["connect-src 'self' ", static_url, ?\s, websocket_url, ?\s, sources]
       else
-        ["connect-src 'self' blob: ", static_url, ?\s, websocket_url]
+        ["connect-src 'self' ", static_url, ?\s, websocket_url]
       end
 
-    style_src = "style-src 'self' 'unsafe-inline'"
-    font_src = "font-src 'self' data:"
+    style_src = "style-src 'self' '#{nonce_tag}'"
+    font_src = "font-src 'self'"
 
-    script_src =
-      if Config.get(:env) == :dev do
-        "script-src 'self' 'unsafe-eval' '#{nonce_tag}'"
-      else
-        "script-src 'self' '#{nonce_tag}'"
-      end
+    script_src = "script-src 'self' '#{nonce_tag}'"
 
     report = if report_uri, do: ["report-uri ", report_uri, ";report-to csp-endpoint"]
     insecure = if scheme == "https", do: "upgrade-insecure-requests"
