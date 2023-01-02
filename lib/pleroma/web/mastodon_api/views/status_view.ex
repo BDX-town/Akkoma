@@ -131,7 +131,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       |> Map.put(:parent_activities, parent_activities)
       |> Map.put(:relationships, relationships_opt)
 
-    safe_render_many(activities, StatusView, "show.json", opts)
+    render_many(activities, StatusView, "show.json", opts)
   end
 
   def render(
