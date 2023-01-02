@@ -219,6 +219,18 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert json_response_and_validate_schema(conn, 200)
     end
 
+    test "posting a status with an invalid language", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "cofe",
+          "language" => "invalid"
+        })
+
+      assert %{"error" => "Invalid language"} = json_response_and_validate_schema(conn, 422)
+    end
+
     test "replying to a status", %{user: user, conn: conn} do
       {:ok, replied_to} = CommonAPI.post(user, %{status: "cofe"})
 
