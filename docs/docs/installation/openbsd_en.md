@@ -1,6 +1,6 @@
 # Installing on OpenBSD
 
-This guide describes the installation and configuration of akkoma (and the required software to run it) on a single OpenBSD 6.6 server.
+This guide describes the installation and configuration of akkoma (and the required software to run it) on a single OpenBSD 7.2 server.
 
 For any additional information regarding commands and configuration files mentioned here, check the man pages [online](https://man.openbsd.org/) or directly on your server with the man command.
 
