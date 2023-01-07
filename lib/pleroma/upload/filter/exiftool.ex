@@ -15,6 +15,7 @@ defmodule Pleroma.Upload.Filter.Exiftool do
   def filter(%Pleroma.Upload{content_type: "image/heic"}), do: {:ok, :noop}
   def filter(%Pleroma.Upload{content_type: "image/webp"}), do: {:ok, :noop}
   def filter(%Pleroma.Upload{content_type: "image/svg+xml"}), do: {:ok, :noop}
+  def filter(%Pleroma.Upload{content_type: "image/jxl"}), do: {:ok, :noop}
 
   def filter(%Pleroma.Upload{tempfile: file, content_type: "image" <> _}) do
     try do
