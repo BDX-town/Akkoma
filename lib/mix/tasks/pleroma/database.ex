@@ -69,7 +69,8 @@ defmodule Mix.Tasks.Pleroma.Database do
         strict: [
           vacuum: :boolean,
           keep_threads: :boolean,
-          keep_non_public: :boolean
+          keep_non_public: :boolean,
+          prune_orphaned_activities: :boolean
         ]
       )
 
@@ -90,6 +91,21 @@ defmodule Mix.Tasks.Pleroma.Database do
     log_message =
       if Keyword.get(options, :keep_threads) do
         log_message <> ", keeping threads intact"
+      else
+        log_message
+      end
+
+    log_message =
+      if Keyword.get(options, :prune_orphaned_activities) do
+        log_message <> ", pruning orphaned activities"
+      else
+        log_message
+      end
+
+    log_message =
+      if Keyword.get(options, :vacuum) do
+        log_message <>
+          ", doing a full vacuum (you shouldn't do this as a recurring maintanance task)"
       else
         log_message
       end
@@ -154,6 +170,28 @@ defmodule Mix.Tasks.Pleroma.Database do
       )
     end
     |> Repo.delete_all(timeout: :infinity)
+
+    if Keyword.get(options, :prune_orphaned_activities) do
+      """
+      delete from public.activities
+      where id in (
+      select a.id from public.activities a 
+      left join public.objects o on a.data ->> 'object' = o.data ->> 'id'
+      left join public.activities a2 on a.data ->> 'object' = a2.data ->> 'id'
+      left join public.users u  on a.data ->> 'object' = u.ap_id
+      -- Only clean up remote activities
+      where not a.local
+      -- For now we only focus on activities with direct links to objects
+      --     e.g. not json objects (in case of embedded objects) or json arrays (in case of multiple objects)
+      and jsonb_typeof(a."data" -> 'object') = 'string'
+      -- Find Activities that don't have existing objects
+      and o.id is null 
+      and a2.id is null
+      and u.id is null
+      )
+      """
+      |> Repo.query()
+    end
 
     prune_hashtags_query = """
     DELETE FROM hashtags AS ht
