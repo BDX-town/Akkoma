@@ -172,35 +172,48 @@ defmodule Mix.Tasks.Pleroma.Database do
     |> Repo.delete_all(timeout: :infinity)
 
     if Keyword.get(options, :prune_orphaned_activities) do
+      # Prune activities who link to a single object
       """
       delete from public.activities
       where id in (
-      select a.id from public.activities a 
-      left join public.objects o on a.data ->> 'object' = o.data ->> 'id'
-      left join public.activities a2 on a.data ->> 'object' = a2.data ->> 'id'
-      left join public.users u  on a.data ->> 'object' = u.ap_id
-      -- Only clean up remote activities
-      where not a.local
-      -- For now we only focus on activities with direct links to objects
-      --     e.g. not json objects (in case of embedded objects) or json arrays (in case of multiple objects)
-      and jsonb_typeof(a."data" -> 'object') = 'string'
-      -- Find Activities that don't have existing objects
-      and o.id is null 
-      and a2.id is null
-      and u.id is null
+        select a.id from public.activities a
+        left join public.objects o on a.data ->> 'object' = o.data ->> 'id'
+        left join public.activities a2 on a.data ->> 'object' = a2.data ->> 'id'
+        left join public.users u  on a.data ->> 'object' = u.ap_id
+        where not a.local
+        and jsonb_typeof(a."data" -> 'object') = 'string'
+        and o.id is null
+        and a2.id is null
+        and u.id is null
       )
       """
-      |> Repo.query()
+      |> Repo.query([], timeout: :infinity)
+
+      # Prune activities who link to an array of objects
+      """
+      delete from public.activities
+      where id in (
+        select a.id from public.activities a
+        join json_array_elements_text((a."data" -> 'object')::json) as j on jsonb_typeof(a."data" -> 'object') = 'array'
+        left join public.objects o on j.value = o.data ->> 'id'
+        left join public.activities a2 on j.value = a2.data ->> 'id'
+        left join public.users u  on j.value = u.ap_id
+        group by a.id
+        having max(o.data ->> 'id') is null
+        and max(a2.data ->> 'id') is null
+        and max(u.ap_id) is null
+      )
+      """
+      |> Repo.query([], timeout: :infinity)
     end
 
-    prune_hashtags_query = """
+    """
     DELETE FROM hashtags AS ht
     WHERE NOT EXISTS (
       SELECT 1 FROM hashtags_objects hto
       WHERE ht.id = hto.hashtag_id)
     """
-
-    Repo.query(prune_hashtags_query)
+    |> Repo.query()
 
     if Keyword.get(options, :vacuum) do
       Maintenance.vacuum("full")
