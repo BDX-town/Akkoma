@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Admin scopes will be dropped on create
 - Rich media will now backoff for 20 minutes after a failure
 - Quote posts are now considered as part of the same thread as the post they are quoting
+- Extend the mix task `prune_objects` with options to keep more relevant posts
 - Simplified HTTP signature processing
 - Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
 - HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
