@@ -152,7 +152,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
     # Only allow valid languages
     content_map =
       content_map
-      |> Enum.reject(fn {lang, content} ->
+      |> Enum.reject(fn {lang, _content} ->
         !Pleroma.ISO639.valid_alpha2?(lang)
       end)
 
