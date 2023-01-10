@@ -67,11 +67,17 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> post("/api/v1/statuses", %{
           "status" => "cofe",
           "spoiler_text" => "2hu",
-          "sensitive" => "0"
+          "sensitive" => "0",
+          "language" => "ja"
         })
 
-      assert %{"content" => "cofe", "id" => id, "spoiler_text" => "2hu", "sensitive" => false} =
-               json_response_and_validate_schema(conn_one, 200)
+      assert %{
+               "content" => "cofe",
+               "id" => id,
+               "spoiler_text" => "2hu",
+               "sensitive" => false,
+               "language" => "ja"
+             } = json_response_and_validate_schema(conn_one, 200)
 
       assert Activity.get_by_id(id)
 
@@ -211,6 +217,18 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         })
 
       assert json_response_and_validate_schema(conn, 200)
+    end
+
+    test "posting a status with an invalid language", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "cofe",
+          "language" => "invalid"
+        })
+
+      assert %{"error" => "Invalid language"} = json_response_and_validate_schema(conn, 422)
     end
 
     test "replying to a status", %{user: user, conn: conn} do

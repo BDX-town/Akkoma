@@ -200,7 +200,7 @@ defmodule Pleroma.Mixfile do
        ref: "1c1b99ea41a457761383d81aaf6a606913996fe7",
        only: [:dev, :test],
        runtime: false},
-      {:mock, "~> 0.3.5", only: :test},
+      {:mock, "~> 0.3.7", only: :test},
       {:excoveralls, "0.15.1", only: :test},
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
