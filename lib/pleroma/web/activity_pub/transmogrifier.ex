@@ -346,16 +346,11 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def fix_tag(object), do: object
 
   # content map usually only has one language so this will do for now.
-  def fix_content_map(%{"contentMap" => content_map} = object) when is_map(content_map) do
+  def fix_content_map(%{"contentMap" => content_map} = object) do
     content_groups = Map.to_list(content_map)
+    {_, content} = Enum.at(content_groups, 0)
 
-    if Enum.empty?(content_groups) do
-      object
-    else
-      {_, content} = Enum.at(content_groups, 0)
-
-      Map.put(object, "content", content)
-    end
+    Map.put(object, "content", content)
   end
 
   def fix_content_map(object), do: object

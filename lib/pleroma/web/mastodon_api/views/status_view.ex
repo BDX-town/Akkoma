@@ -169,7 +169,6 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       |> Enum.map(fn user -> AccountView.render("mention.json", %{user: user}) end)
 
     {pinned?, pinned_at} = pin_data(object, user)
-    lang = language(object)
 
     %{
       id: to_string(activity.id),
@@ -200,7 +199,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       mentions: mentions,
       tags: reblogged[:tags] || [],
       application: build_application(object.data["generator"]),
-      language: lang,
+      language: nil,
       emojis: [],
       pleroma: %{
         local: activity.local,
@@ -358,7 +357,6 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       {pinned?, pinned_at} = pin_data(object, user)
 
       quote = Activity.get_quoted_activity_from_object(object)
-      lang = language(object)
 
       %{
         id: to_string(activity.id),
@@ -393,7 +391,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
         mentions: mentions,
         tags: build_tags(tags),
         application: build_application(object.data["generator"]),
-        language: lang,
+        language: nil,
         emojis: build_emojis(object.data["emoji"]),
         quote_id: if(quote, do: quote.id, else: nil),
         quote: maybe_render_quote(quote, opts),
@@ -786,12 +784,4 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   defp get_source_content_type(_source) do
     Utils.get_content_type(nil)
   end
-
-  defp language(%Object{data: %{"contentMap" => contentMap}}) when is_map(contentMap) do
-    contentMap
-    |> Map.keys()
-    |> Enum.at(0)
-  end
-
-  defp language(_), do: nil
 end

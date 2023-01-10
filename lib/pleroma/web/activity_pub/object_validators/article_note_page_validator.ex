@@ -30,7 +30,6 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
 
     field(:replies, {:array, ObjectValidators.ObjectID}, default: [])
     field(:source, :map)
-    field(:content_map, :map)
   end
 
   def cast_and_apply(data) do
@@ -147,20 +146,6 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
 
   defp fix_source(object), do: object
 
-  defp fix_content_map_languages(%{"contentMap" => content_map} = object)
-       when is_map(content_map) do
-    # Only allow valid languages
-    content_map =
-      content_map
-      |> Enum.reject(fn {lang, _content} ->
-        !Pleroma.ISO639.valid_alpha2?(lang)
-      end)
-
-    Map.put(object, "contentMap", content_map)
-  end
-
-  defp fix_content_map_languages(object), do: object
-
   defp fix(data) do
     data
     |> CommonFixes.fix_actor()
@@ -173,7 +158,6 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
     |> Transmogrifier.fix_attachments()
     |> Transmogrifier.fix_emoji()
     |> Transmogrifier.fix_content_map()
-    |> fix_content_map_languages()
   end
 
   def changeset(struct, data) do
