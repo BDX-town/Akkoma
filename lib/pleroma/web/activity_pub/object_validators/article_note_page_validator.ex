@@ -30,7 +30,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
 
     field(:replies, {:array, ObjectValidators.ObjectID}, default: [])
     field(:source, :map)
-    field(:content_map, :map)
+    field(:contentMap, :map)
   end
 
   def cast_and_apply(data) do
@@ -155,6 +155,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
       |> Enum.reject(fn {lang, _content} ->
         !Pleroma.ISO639.valid_alpha2?(lang)
       end)
+      |> Enum.into(%{})
 
     Map.put(object, "contentMap", content_map)
   end
