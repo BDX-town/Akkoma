@@ -145,7 +145,10 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
     end
   end
 
-  defp language(draft), do: draft
+  defp language(%{content_html: content} = draft) do
+    # Use a default language if no language is specified
+    %__MODULE__{draft | content_map: %{"en" => content}}
+  end
 
   defp visibility(%{params: params} = draft) do
     case CommonAPI.get_visibility(params, draft.in_reply_to, draft.in_reply_to_conversation) do
