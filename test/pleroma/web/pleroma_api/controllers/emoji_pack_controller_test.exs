@@ -40,11 +40,11 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
       |> get("/api/v1/pleroma/emoji/packs")
       |> json_response_and_validate_schema(200)
 
-    assert resp["count"] == 4
+    assert resp["count"] == 5
 
     assert resp["packs"]
            |> Map.keys()
-           |> length() == 4
+           |> length() == 5
 
     shared = resp["packs"]["test_pack"]
     assert shared["files"] == %{"blank" => "blank.png", "blank2" => "blank2.png"}
@@ -61,7 +61,7 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
       |> get("/api/v1/pleroma/emoji/packs?page_size=1")
       |> json_response_and_validate_schema(200)
 
-    assert resp["count"] == 4
+    assert resp["count"] == 5
 
     packs = Map.keys(resp["packs"])
 
@@ -74,7 +74,7 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
       |> get("/api/v1/pleroma/emoji/packs?page_size=1&page=2")
       |> json_response_and_validate_schema(200)
 
-    assert resp["count"] == 4
+    assert resp["count"] == 5
     packs = Map.keys(resp["packs"])
     assert length(packs) == 1
     [pack2] = packs
@@ -84,7 +84,7 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
       |> get("/api/v1/pleroma/emoji/packs?page_size=1&page=3")
       |> json_response_and_validate_schema(200)
 
-    assert resp["count"] == 4
+    assert resp["count"] == 5
     packs = Map.keys(resp["packs"])
     assert length(packs) == 1
     [pack3] = packs
@@ -94,7 +94,7 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
       |> get("/api/v1/pleroma/emoji/packs?page_size=1&page=4")
       |> json_response_and_validate_schema(200)
 
-    assert resp["count"] == 4
+    assert resp["count"] == 5
     packs = Map.keys(resp["packs"])
     assert length(packs) == 1
     [pack4] = packs
@@ -221,6 +221,24 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
           url: "https://nonshared-pack"
         } ->
           text(File.read!("#{@emoji_path}/test_pack_nonshared/nonshared.zip"))
+
+        %{
+          method: :get,
+          url: "https://example.com/api/v1/pleroma/emoji/pack?name=test%20with%20spaces"
+        } ->
+          conn
+          |> get("/api/v1/pleroma/emoji/pack?name=test%20with%20spaces")
+          |> json_response_and_validate_schema(200)
+          |> json()
+
+        %{
+          method: :get,
+          url: "https://example.com/api/v1/pleroma/emoji/packs/archive?name=test%20with%20spaces"
+        } ->
+          conn
+          |> get("/api/v1/pleroma/emoji/packs/archive?name=test%20with%20spaces")
+          |> response(200)
+          |> text()
       end)
 
       assert admin_conn
@@ -261,6 +279,18 @@ defmodule Pleroma.Web.PleromaAPI.EmojiPackControllerTest do
              |> json_response_and_validate_schema(200) == "ok"
 
       refute File.exists?("#{@emoji_path}/test_pack_nonshared2")
+
+      assert admin_conn
+             |> put_req_header("content-type", "multipart/form-data")
+             |> post("/api/v1/pleroma/emoji/packs/download", %{
+               url: "https://example.com",
+               name: "test with spaces",
+               as: "test with spaces"
+             })
+             |> json_response_and_validate_schema(200) == "ok"
+
+      assert File.exists?("#{@emoji_path}/test with spaces/pack.json")
+      assert File.exists?("#{@emoji_path}/test with spaces/blank.png")
     end
 
     test "nonshareable instance", %{admin_conn: admin_conn} do
