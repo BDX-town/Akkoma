@@ -40,7 +40,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
     end
 
     test "a note with a language validates" do
-      user = insert(:user, %{ap_id: "https://mastodon.social/users/akkoma_ap_integration_tester"})
+      insert(:user, %{ap_id: "https://mastodon.social/users/akkoma_ap_integration_tester"})
       note = File.read!("test/fixtures/mastodon/note_with_language.json") |> Jason.decode!()
 
       %{
