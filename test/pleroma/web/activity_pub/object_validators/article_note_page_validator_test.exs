@@ -42,9 +42,15 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
     test "a note with a language validates" do
       user = insert(:user, %{ap_id: "https://mastodon.social/users/akkoma_ap_integration_tester"})
       note = File.read!("test/fixtures/mastodon/note_with_language.json") |> Jason.decode!()
-      %{valid?: true, changes: %{ contentMap: %{
-        "ja" => "<p>tag</p>",
-      }}} = ArticleNotePageValidator.cast_and_validate(note)
+
+      %{
+        valid?: true,
+        changes: %{
+          contentMap: %{
+            "ja" => "<p>tag</p>"
+          }
+        }
+      } = ArticleNotePageValidator.cast_and_validate(note)
     end
 
     test "a note from factory validates" do
