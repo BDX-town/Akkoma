@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ability to "verify" links in profile fields via rel=me
 - Mix tasks to dump/load config to/from json for bulk editing
 - Followed hashtag list at /api/v1/followed\_tags, API parity with mastodon
+- Ability to set posting language in the post form, API parity with mastodon
 
 ### Removed
 - Non-finch HTTP adapters
