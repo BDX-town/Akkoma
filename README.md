@@ -1,3 +1,5 @@
+# WE ARE NOT AKKOMA, THIS IS ONLY A FORK THE BDX.TOWN SERVER. PLEASE REPORT YOUR ISSUES AT https://akkoma.dev/AkkomaGang/akkoma/
+
 ## akkoma
 
 *a smallish microblogging platform, aka the cooler pleroma*
