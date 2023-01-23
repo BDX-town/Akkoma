@@ -416,7 +416,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
     end
 
     test "it prunes orphaned activities with the --prune-orphaned-activities" do
-      # Add a remote activity which references an Object
       %Object{} |> Map.merge(%{data: %{"id" => "object_for_activity"}}) |> Repo.insert()
 
       %Activity{}
@@ -426,7 +425,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Add a remote activity which references an activity
       %Activity{}
       |> Map.merge(%{
         local: false,
@@ -437,7 +435,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Add a remote activity which references an Actor
       %User{} |> Map.merge(%{ap_id: "actor"}) |> Repo.insert()
 
       %Activity{}
@@ -447,7 +444,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Add a remote activity without existing referenced object, activity or actor
       %Activity{}
       |> Map.merge(%{
         local: false,
@@ -458,7 +454,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Add a local activity without existing referenced object, activity or actor
       %Activity{}
       |> Map.merge(%{
         local: true,
@@ -466,8 +461,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # The remote activities without existing reference, and only the remote activities without existing reference, are deleted
-      # if, and only if, we provide the --prune-orphaned-activities option
       assert length(Repo.all(Activity)) == 5
       Mix.Tasks.Pleroma.Database.run(["prune_objects"])
       assert length(Repo.all(Activity)) == 5
@@ -486,7 +479,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       %Object{} |> Map.merge(%{data: %{"id" => "existing_object"}}) |> Repo.insert()
       %User{} |> Map.merge(%{ap_id: "existing_actor"}) |> Repo.insert()
 
-      # Multiple objects, one object exists (keep)
       %Activity{}
       |> Map.merge(%{
         local: false,
@@ -497,7 +489,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Multiple objects, one actor exists (keep)
       %Activity{}
       |> Map.merge(%{
         local: false,
@@ -508,7 +499,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Multiple objects, one activity exists (keep)
       %Activity{}
       |> Map.merge(%{
         local: false,
@@ -519,7 +509,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       })
       |> Repo.insert()
 
-      # Multiple objects none exist (prune)
       %Activity{}
       |> Map.merge(%{
         local: false,

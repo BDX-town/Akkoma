@@ -7,8 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## Fixed
-
 - Allowed contentMap to be updated on edit
+
+### Added
+- Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
 
 ## 2023.02
 
