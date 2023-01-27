@@ -354,7 +354,7 @@ config :pleroma, :manifest,
 
 config :pleroma, :activitypub,
   unfollow_blocked: true,
-  outgoing_blocks: true,
+  outgoing_blocks: false,
   blockers_visible: true,
   follow_handshake_timeout: 500,
   note_replies_output_limit: 5,
