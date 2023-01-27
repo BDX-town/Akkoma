@@ -7,8 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## Fixed
-
 - Allowed contentMap to be updated on edit
+
+### Changed
+- Restoring the database from a dump now goes much faster without need for work-arounds
 
 ## 2023.02
 
