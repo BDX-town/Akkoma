@@ -24,5 +24,5 @@ mkdocs serve
 mkdocs build
 
 # To get out of the virtual environment, you do
-deacivate
+deactivate
 ```
