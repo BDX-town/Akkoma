@@ -41,8 +41,10 @@ you _may_ need to specify `--flavour`, in the same way as
 Run as the `akkoma` user:
 
 ```sh
-# Pull in new changes
-git pull
+# fetch changes
+git fetch
+# check out the latest tag
+git checkout $(git tag -l | grep -v 'rc[0-9]*$' | sort -V | tail -n 1)
 
 # Run with production configuration
 export MIX_ENV=prod
