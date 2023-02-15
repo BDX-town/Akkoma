@@ -151,8 +151,8 @@ pipeline:
 
   # Canonical amd64-musl
   musl:
-    image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.17.0
-    <<: *on-stable
+    image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.15.6
+    <<: *on-release
     environment:
       MIX_ENV: prod
     commands:
@@ -167,7 +167,7 @@ pipeline:
 
   release-musl:
     image: akkoma/releaser
-    <<: *on-stable
+    <<: *on-release
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64-musl.zip
