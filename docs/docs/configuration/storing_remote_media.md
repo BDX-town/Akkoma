@@ -23,7 +23,8 @@ as soon as the post is received by your instance.
         proxy_buffering    on;
         chunked_transfer_encoding on;
         proxy_ignore_headers Cache-Control Expires;
-        proxy_hide_header  Cache-Control Expires;
+        proxy_hide_header  Cache-Control;
+        proxy_hide_header  Expires;
         proxy_pass         http://127.0.0.1:4000;
     }
 ```
