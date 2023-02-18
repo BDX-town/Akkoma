@@ -1500,12 +1500,6 @@ msgstr ""
 
 #: lib/pleroma/docs/translator.ex:5
 #, elixir-autogen, elixir-format
-msgctxt "config description at :pleroma-:instance > :healthcheck"
-msgid "If enabled, system data will be shown on `/api/pleroma/healthcheck`"
-msgstr ""
-
-#: lib/pleroma/docs/translator.ex:5
-#, elixir-autogen, elixir-format
 msgctxt "config description at :pleroma-:instance > :instance_thumbnail"
 msgid "The instance thumbnail can be any image that represents your instance and is used by some apps or services when they display information about your instance."
 msgstr ""
@@ -5972,4 +5966,10 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgctxt "config label at :pleroma-Pleroma.Web.Metadata.Providers.Theme > :theme_color"
 msgid "Theme color"
+msgstr ""
+
+#: lib/pleroma/docs/translator.ex:5
+#, elixir-autogen, elixir-format
+msgctxt "config description at :pleroma-:instance > :healthcheck"
+msgid "If enabled, system data will be shown on `/api/v1/pleroma/healthcheck`"
 msgstr ""
