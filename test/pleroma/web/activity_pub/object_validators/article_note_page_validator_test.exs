@@ -136,6 +136,8 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
 
       assert content =~
                "<span class=\"mfm _mfm_jelly_\" style=\"display: inline-block; animation: 1s linear 0s infinite normal both running mfm-rubberBand;\">mfm goes here</span> </p>aaa"
+
+      assert content =~ "some text<br/>newline"
     end
 
     test "a misskey MFM status with a _misskey_content field should work and be linked", _ do
