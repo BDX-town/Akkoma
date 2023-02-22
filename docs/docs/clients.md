@@ -25,7 +25,7 @@ Apps listed here might not support all of Akkoma's features.
 - Features: MastoAPI, Streaming Ready, Moderation, Text Formatting
 
 ### Husky
-- Source code: <https://git.sr.ht/~captainepoch/husky>
+- Source code: <https://codeberg.org/husky/husky>
 - Contact: [@captainepoch@stereophonic.space](https://stereophonic.space/captainepoch)
 - Platforms: Android
 - Features: MastoAPI, No Streaming, Emoji Reactions, Text Formatting, FE Stickers
