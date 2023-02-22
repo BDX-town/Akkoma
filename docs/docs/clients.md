@@ -45,10 +45,10 @@ Apps listed here might not support all of Akkoma's features.
 
 ## Alternative Web Interfaces
 ### Pinafore
+- Note: Pinafore is unmaintained (See [the author's original article](https://nolanlawson.com/2023/01/09/retiring-pinafore/) for details)
 - Homepage: <https://pinafore.social/>
 - Source Code: <https://github.com/nolanlawson/pinafore>
 - Contact: [@pinafore@mastodon.technology](https://mastodon.technology/users/pinafore)
-- Note: Pleroma support is a secondary goal
 - Features: MastoAPI, No Streaming
 
 ### Sengi
