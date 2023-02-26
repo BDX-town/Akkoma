@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
 
+### Removed
+- Possibility of using the `style` parameter on `span` elements. This will break certain MFM parameters.
+
 ## 2023.02
 
 ### Added
