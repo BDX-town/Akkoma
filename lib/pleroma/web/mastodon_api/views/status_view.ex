@@ -183,7 +183,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       in_reply_to_id: nil,
       in_reply_to_account_id: nil,
       reblog: reblogged,
-      content: reblogged[:content] || "",
+      content: "",
       created_at: created_at,
       reblogs_count: 0,
       replies_count: 0,
