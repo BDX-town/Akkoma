@@ -1308,28 +1308,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
       assert object.data["name"] == "a cool file"
     end
 
-    test "it sets the default description depending on the configuration", %{test_file: file} do
-      clear_config([Pleroma.Upload, :default_description])
-
-      clear_config([Pleroma.Upload, :default_description], nil)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == ""
-
-      clear_config([Pleroma.Upload, :default_description], :filename)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "an_image.jpg"
-
-      clear_config([Pleroma.Upload, :default_description], "unnamed attachment")
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "unnamed attachment"
-    end
-
-    test "copies the file to the configured folder", %{test_file: file} do
-      clear_config([Pleroma.Upload, :default_description], :filename)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "an_image.jpg"
-    end
-
     test "works with base64 encoded images" do
       file = %{
         img: data_uri()
