@@ -729,7 +729,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
     end
 
     test "redirects with oauth authorization, " <>
-         "granting requested app-supported scopes to moderators" do
+           "granting requested app-supported scopes to moderators" do
       app_scopes = ["read", "write", "admin", "secret_scope"]
       app = insert(:oauth_app, scopes: app_scopes)
       redirect_uri = OAuthController.default_redirect_uri(app)
