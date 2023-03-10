@@ -423,7 +423,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         } = data,
         options
       ) do
-    if Pleroma.Emoji.is_unicode_emoji?(reaction) or Pleroma.Emoji.matches_shortcode?(reaction) do
+    if Pleroma.Emoji.is_unicode_emoji?(reaction) || Pleroma.Emoji.matches_shortcode?(reaction) do
       data
       |> Map.put("type", "EmojiReact")
       |> handle_incoming(options)
