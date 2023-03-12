@@ -4,13 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## 2023.03
 
 ## Fixed
 - Allowed contentMap to be updated on edit
+- Filter creation now accepts expires\_at
 
 ### Changed
 - Restoring the database from a dump now goes much faster without need for work-arounds
+- Misskey reaction matching uses `content` parameter now
 
 ### Added
 - Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
