@@ -366,21 +366,21 @@ defmodule Pleroma.User do
   def invisible?(_), do: false
 
   def avatar_url(user, options \\ []) do
-    case user.avatar do
-      %{"url" => [%{"href" => href} | _]} ->
-        href
-
-      _ ->
-        unless options[:no_default] do
-          Config.get([:assets, :default_user_avatar], "#{Endpoint.url()}/images/avi.png")
-        end
-    end
+    default = Config.get([:assets, :default_user_avatar], "#{Endpoint.url()}/images/avi.png")
+    do_optional_url(user.avatar, default, options)
   end
 
   def banner_url(user, options \\ []) do
-    case user.banner do
-      %{"url" => [%{"href" => href} | _]} -> href
-      _ -> !options[:no_default] && "#{Endpoint.url()}/images/banner.png"
+    do_optional_url(user.banner, "#{Endpoint.url()}/images/banner.png", options)
+  end
+
+  defp do_optional_url(field, default, options \\ []) do
+    case field do
+      %{"url" => [%{"href" => href} | _]} when is_binary(href) ->
+        href
+
+      _ ->
+        unless options[:no_default], do: default
     end
   end
 
