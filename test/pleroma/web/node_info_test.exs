@@ -296,6 +296,7 @@ defmodule Pleroma.Web.NodeInfoTest do
   describe "public timeline visibility" do
     test "shows public timeline visibility", %{conn: conn} do
       clear_config([:restrict_unauthenticated, :timelines], %{local: false, federated: false})
+
       response =
         conn
         |> get("/nodeinfo/2.1.json")
@@ -305,14 +306,17 @@ defmodule Pleroma.Web.NodeInfoTest do
       assert response["metadata"]["publicTimelineVisibility"]["federated"] == true
 
       clear_config([:restrict_unauthenticated, :timelines], %{local: true, federated: false})
+
       response =
         conn
         |> get("/nodeinfo/2.1.json")
         |> json_response(:ok)
+
       assert response["metadata"]["publicTimelineVisibility"]["local"] == false
       assert response["metadata"]["publicTimelineVisibility"]["federated"] == true
 
       clear_config([:restrict_unauthenticated, :timelines], %{local: false, federated: true})
+
       response =
         conn
         |> get("/nodeinfo/2.1.json")
