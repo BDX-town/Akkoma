@@ -73,9 +73,13 @@ defmodule Pleroma.Web.Nodeinfo.Nodeinfo do
         privilegedStaff: Config.get([:instance, :privileged_staff]),
         localBubbleInstances: Config.get([:instance, :local_bubble], []),
         publicTimelineVisibility: %{
-          federated: !Config.restrict_unauthenticated_access?(:timelines, :federated),
-          local: !Config.restrict_unauthenticated_access?(:timelines, :local)
-        }
+          federated:
+            !Config.restrict_unauthenticated_access?(:timelines, :federated) &&
+              Config.get([:instance, :federated_timeline_available], true),
+          local: !Config.restrict_unauthenticated_access?(:timelines, :local),
+          bubble: !Config.restrict_unauthenticated_access?(:timelines, :bubble)
+        },
+        federatedTimelineAvailable: Config.get([:instance, :federated_timeline_available], true)
       }
     }
   end

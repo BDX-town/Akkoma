@@ -269,8 +269,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
     }
 
     with_mock(
-      Pleroma.Web.Nodeinfo.NodeinfoController,
-      raw_nodeinfo: fn -> %{version: "2.0"} end
+      Pleroma.Web.Nodeinfo.Nodeinfo,
+      get_nodeinfo: fn _ -> %{version: "2.0"} end
     ) do
       assert expected ==
                AccountView.render("show.json", %{user: user, skip_visibility_check: true})
