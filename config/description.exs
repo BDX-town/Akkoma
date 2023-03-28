@@ -3148,6 +3148,12 @@ config :pleroma, :config_description, [
         description:
           "A map containing available frontends and parameters for their installation.",
         children: frontend_options
+      },
+      %{
+          key: :pickable,
+          type: {:list, :string},
+          description:
+            "A list containing all frontends users can pick as their preference, format is :name/:ref, e.g pleroma-fe/stable."
       }
     ]
   },
