@@ -37,10 +37,16 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
     when action in [:public, :hashtag, :bubble]
   )
 
+  require Logger
+
   defdelegate open_api_operation(action), to: Pleroma.Web.ApiSpec.TimelineOperation
 
   # GET /api/v1/timelines/home
   def home(%{assigns: %{user: user}} = conn, params) do
+    %{nickname: nickname} = user
+
+    Logger.debug("TimelineController.home: #{nickname}")
+
     followed_hashtags =
       user
       |> User.followed_hashtags()
@@ -58,10 +64,14 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
       |> Map.put(:followed_hashtags, followed_hashtags)
       |> Map.delete(:local)
 
+    Logger.debug("TimelineController.home: #{nickname} - fetching activities")
+
     activities =
       [user.ap_id | User.following(user)]
       |> ActivityPub.fetch_activities(params)
       |> Enum.reverse()
+
+    Logger.debug("TimelineController.home: #{nickname} - rendering")
 
     conn
     |> add_link_headers(activities)
@@ -75,6 +85,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
 
   # GET /api/v1/timelines/direct
   def direct(%{assigns: %{user: user}} = conn, params) do
+    Logger.debug("TimelineController.direct: #{user.nickname}")
+
     params =
       params
       |> Map.put(:type, "Create")
@@ -82,10 +94,14 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
       |> Map.put(:user, user)
       |> Map.put(:visibility, "direct")
 
+    Logger.debug("TimelineController.direct: #{user.nickname} - fetching activities")
+
     activities =
       [user.ap_id]
       |> ActivityPub.fetch_activities_query(params)
       |> Pagination.fetch_paginated(params)
+
+    Logger.debug("TimelineController.direct: #{user.nickname} - rendering")
 
     conn
     |> add_link_headers(activities)
@@ -102,6 +118,7 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
 
   # GET /api/v1/timelines/public
   def public(%{assigns: %{user: user}} = conn, params) do
+    Logger.debug("TimelineController.public")
     local_only = params[:local]
     timeline_type = if local_only, do: :local, else: :federated
 
@@ -109,6 +126,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
            {:enabled, local_only || Config.get([:instance, :federated_timeline_available], true)},
          {:authenticated, true} <-
            {:authenticated, !(is_nil(user) and restrict_unauthenticated?(timeline_type))} do
+      Logger.debug("TimelineController.public: fetching activities")
+
       activities =
         params
         |> Map.put(:type, ["Create"])
@@ -120,6 +139,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
         # Restricts unfederated content to authenticated users
         |> Map.put(:includes_local_public, not is_nil(user))
         |> ActivityPub.fetch_public_activities()
+
+      Logger.debug("TimelineController.public: rendering")
 
       conn
       |> add_link_headers(activities, %{"local" => local_only})
@@ -142,6 +163,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
 
   # GET /api/v1/timelines/bubble
   def bubble(%{assigns: %{user: user}} = conn, params) do
+    Logger.debug("TimelineController.bubble")
+
     if is_nil(user) and restrict_unauthenticated?(:bubble) do
       fail_on_bad_auth(conn)
     else
@@ -151,6 +174,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
             [Pleroma.Web.Endpoint.host()]
         )
 
+      Logger.debug("TimelineController.bubble: fetching activities")
+
       activities =
         params
         |> Map.put(:type, ["Create"])
@@ -159,6 +184,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineController do
         |> Map.put(:reply_filtering_user, user)
         |> Map.put(:instance, bubble_instances)
         |> ActivityPub.fetch_public_activities()
+
+      Logger.debug("TimelineController.bubble: rendering")
 
       conn
       |> add_link_headers(activities)

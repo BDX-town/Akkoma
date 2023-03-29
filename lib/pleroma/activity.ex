@@ -284,7 +284,6 @@ defmodule Pleroma.Activity do
     |> Repo.one()
   end
 
-
   @spec create_by_id_with_object(String.t()) :: t() | nil
   def create_by_id_with_object(id) do
     get_by_id_with_opts(id, preload: [:object], filter: [type: "Create"])

@@ -374,7 +374,7 @@ defmodule Pleroma.User do
     do_optional_url(user.banner, "#{Endpoint.url()}/images/banner.png", options)
   end
 
-  defp do_optional_url(field, default, options \\ []) do
+  defp do_optional_url(field, default, options) do
     case field do
       %{"url" => [%{"href" => href} | _]} when is_binary(href) ->
         href
