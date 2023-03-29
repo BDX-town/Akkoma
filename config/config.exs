@@ -572,7 +572,8 @@ config :pleroma, Oban,
     database_prune: 1
   ],
   plugins: [
-    Oban.Plugins.Pruner
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Reindexer, schedule: "@weekly"}
   ],
   crontab: [
     {"0 0 * * 0", Pleroma.Workers.Cron.DigestEmailsWorker},
