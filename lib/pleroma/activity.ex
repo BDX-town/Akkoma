@@ -277,9 +277,9 @@ defmodule Pleroma.Activity do
 
   def get_create_by_object_ap_id_with_object(_), do: nil
 
-  def get_local_create_by_object_ap_id_with_object(ap_id) when is_binary(ap_id) do
+  def get_local_create_by_object_ap_id(ap_id) when is_binary(ap_id) do
     ap_id
-    |> create_by_object_ap_id_with_object()
+    |> create_by_object_ap_id()
     |> where(local: true)
     |> Repo.one()
   end
