@@ -49,7 +49,7 @@ COPY ./config/docker.exs /etc/akkoma/config.exs
 COPY ./docker-entrypoint.sh ${HOME}
 
 COPY ./config/frontends.exs $DATA/config.exs
-RUN curl -L https://github.com/Cl0v1s/mangane-ui/releases/latest/download/static.zip --output ${DATA}/static.zip &&\
+RUN curl -L https://github.com/BDX-town/Mangane/releases/latest/download/static.zip --output ${DATA}/static.zip &&\
  mkdir -p ${DATA}/static/frontends/mangane &&\
  unzip -d ${DATA}/static/frontends/mangane ${DATA}/static.zip &&\
  rm ${DATA}/static.zip
