@@ -4,7 +4,7 @@ All stable OTP releases are cryptographically signed, to allow
 you to verify the integrity if you choose to.
 
 Releases are signed with [Signify](https://man.openbsd.org/signify.1),
-with [the public key in the main repository](https://akkoma.dev/AkkomaGang/akkoma/src/branch/develop/SIGNING_KEY.pub)
+with [the public key in the main repository](https://akkoma.dev/AkkomaGang/akkoma/src/branch/stable/SIGNING_KEY.pub)
 
 Release URLs will always be of the form
 
@@ -12,7 +12,7 @@ Release URLs will always be of the form
 https://akkoma-updates.s3-website.fr-par.scw.cloud/{branch}/akkoma-{flavour}.zip
 ```
 
-Where branch is usually `stable` or `develop`, and `flavour` is
+Where branch is usually `stable` and `flavour` is
 the one [that you detect on install](../otp_en/#detecting-flavour).
 
 So, for an AMD64 stable install, your update URL will be

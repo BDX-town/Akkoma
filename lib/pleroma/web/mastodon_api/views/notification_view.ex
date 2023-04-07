@@ -69,7 +69,7 @@ defmodule Pleroma.Web.MastodonAPI.NotificationView do
       |> Map.put(:parent_activities, parent_activities)
       |> Map.put(:relationships, relationships_opt)
 
-    safe_render_many(notifications, NotificationView, "show.json", opts)
+    render_many(notifications, NotificationView, "show.json", opts)
   end
 
   def render(

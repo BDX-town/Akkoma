@@ -136,7 +136,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.drop(["conversation", "inReplyToAtomUri"])
       else
         e ->
-          Logger.warn("Couldn't fetch #{inspect(in_reply_to_id)}, error: #{inspect(e)}")
+          Logger.warn("Couldn't fetch reply@#{inspect(in_reply_to_id)}, error: #{inspect(e)}")
           object
       end
     else
@@ -159,7 +159,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.put("quoteUri", quoted_object.data["id"])
       else
         e ->
-          Logger.warn("Couldn't fetch #{inspect(quote_url)}, error: #{inspect(e)}")
+          Logger.warn("Couldn't fetch quote@#{inspect(quote_url)}, error: #{inspect(e)}")
           object
       end
     else
@@ -346,11 +346,16 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def fix_tag(object), do: object
 
   # content map usually only has one language so this will do for now.
-  def fix_content_map(%{"contentMap" => content_map} = object) do
+  def fix_content_map(%{"contentMap" => content_map} = object) when is_map(content_map) do
     content_groups = Map.to_list(content_map)
-    {_, content} = Enum.at(content_groups, 0)
 
-    Map.put(object, "content", content)
+    if Enum.empty?(content_groups) do
+      object
+    else
+      {_, content} = Enum.at(content_groups, 0)
+
+      Map.put(object, "content", content)
+    end
   end
 
   def fix_content_map(object), do: object
@@ -414,28 +419,19 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def handle_incoming(
         %{
           "type" => "Like",
-          "_misskey_reaction" => reaction,
-          "tag" => _
+          "content" => reaction
         } = data,
         options
       ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
-  end
-
-  def handle_incoming(
-        %{
-          "type" => "Like",
-          "_misskey_reaction" => reaction
-        } = data,
-        options
-      ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
+    if Pleroma.Emoji.is_unicode_emoji?(reaction) || Pleroma.Emoji.matches_shortcode?(reaction) do
+      data
+      |> Map.put("type", "EmojiReact")
+      |> handle_incoming(options)
+    else
+      data
+      |> Map.delete("content")
+      |> handle_incoming(options)
+    end
   end
 
   def handle_incoming(
@@ -861,7 +857,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
       Map.put(data, "object", external_url)
     else
       {:fetch, e} ->
-        Logger.error("Couldn't fetch #{object} #{inspect(e)}")
+        Logger.error("Couldn't fetch fixed_object@#{object} #{inspect(e)}")
         data
 
       _ ->

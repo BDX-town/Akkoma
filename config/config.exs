@@ -163,11 +163,6 @@ config :logger, :ex_syslogger,
   format: "$metadata[$level] $message",
   metadata: [:request_id]
 
-config :quack,
-  level: :warn,
-  meta: [:all],
-  webhook_url: "https://hooks.slack.com/services/YOUR-KEY-HERE"
-
 config :mime, :types, %{
   "application/xml" => ["xml"],
   "application/xrd+xml" => ["xrd+xml"],
@@ -180,8 +175,11 @@ config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 
 # Configures http settings, upstream proxy etc.
 config :pleroma, :http,
+  pool_timeout: :timer.seconds(5),
+  receive_timeout: :timer.seconds(15),
   proxy_url: nil,
   user_agent: :default,
+  pool_size: 50,
   adapter: []
 
 config :pleroma, :instance,
@@ -215,7 +213,7 @@ config :pleroma, :instance,
   federation_publisher_modules: [
     Pleroma.Web.ActivityPub.Publisher
   ],
-  allow_relay: true,
+  allow_relay: false,
   public: true,
   static_dir: "instance/static/",
   allowed_post_formats: [
@@ -262,7 +260,8 @@ config :pleroma, :instance,
   profile_directory: true,
   privileged_staff: false,
   local_bubble: [],
-  max_frontend_settings_json_chars: 100_000
+  max_frontend_settings_json_chars: 100_000,
+  export_prometheus_metrics: true
 
 config :pleroma, :welcome,
   direct_message: [
@@ -317,19 +316,19 @@ config :pleroma, :frontend_configurations,
     logo: "/static/logo.svg",
     logoMargin: ".1em",
     logoMask: true,
-    minimalScopesMode: false,
     noAttachmentLinks: false,
     nsfwCensorImage: "",
     postContentType: "text/plain",
     redirectRootLogin: "/main/friends",
-    redirectRootNoLogin: "/main/all",
+    redirectRootNoLogin: "/main/public",
     scopeCopy: true,
     sidebarRight: false,
     showFeaturesPanel: true,
     showInstanceSpecificPanel: false,
     subjectLineBehavior: "email",
     theme: "pleroma-dark",
-    webPushNotifications: false
+    webPushNotifications: false,
+    conversationDisplay: "linear"
   },
   masto_fe: %{
     showInstanceSpecificPanel: true
@@ -360,7 +359,7 @@ config :pleroma, :manifest,
 
 config :pleroma, :activitypub,
   unfollow_blocked: true,
-  outgoing_blocks: true,
+  outgoing_blocks: false,
   blockers_visible: true,
   follow_handshake_timeout: 500,
   note_replies_output_limit: 5,
@@ -394,7 +393,8 @@ config :pleroma, :mrf_simple,
   accept: [],
   avatar_removal: [],
   banner_removal: [],
-  reject_deletes: []
+  reject_deletes: [],
+  handle_threads: true
 
 config :pleroma, :mrf_keyword,
   reject: [],
@@ -431,7 +431,7 @@ config :pleroma, :rich_media,
     Pleroma.Web.RichMedia.Parsers.TwitterCard,
     Pleroma.Web.RichMedia.Parsers.OEmbed
   ],
-  failure_backoff: 60_000,
+  failure_backoff: :timer.minutes(20),
   ttl_setters: [Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl]
 
 config :pleroma, :media_proxy,
@@ -492,8 +492,7 @@ config :pleroma, Pleroma.Web.Preload,
 config :pleroma, :http_security,
   enabled: true,
   sts: false,
-  sts_max_age: 31_536_000,
-  ct_max_age: 2_592_000,
+  sts_max_age: 63_072_000,
   referrer_policy: "same-origin"
 
 config :cors_plug,
@@ -572,7 +571,9 @@ config :pleroma, Oban,
     attachments_cleanup: 1,
     new_users_digest: 1,
     mute_expire: 5,
-    search_indexing: 10
+    search_indexing: 10,
+    nodeinfo_fetcher: 1,
+    database_prune: 1
   ],
   plugins: [
     Oban.Plugins.Pruner,
@@ -580,7 +581,8 @@ config :pleroma, Oban,
   ],
   crontab: [
     {"0 0 * * 0", Pleroma.Workers.Cron.DigestEmailsWorker},
-    {"0 0 * * *", Pleroma.Workers.Cron.NewUsersDigestWorker}
+    {"0 0 * * *", Pleroma.Workers.Cron.NewUsersDigestWorker},
+    {"0 3 * * *", Pleroma.Workers.Cron.PruneDatabaseWorker}
   ]
 
 config :pleroma, :workers,
@@ -588,6 +590,28 @@ config :pleroma, :workers,
     federator_incoming: 5,
     federator_outgoing: 5,
     search_indexing: 2
+  ],
+  timeout: [
+    activity_expiration: :timer.seconds(5),
+    token_expiration: :timer.seconds(5),
+    filter_expiration: :timer.seconds(5),
+    backup: :timer.seconds(900),
+    federator_incoming: :timer.seconds(10),
+    federator_outgoing: :timer.seconds(10),
+    ingestion_queue: :timer.seconds(5),
+    web_push: :timer.seconds(5),
+    mailer: :timer.seconds(5),
+    transmogrifier: :timer.seconds(5),
+    scheduled_activities: :timer.seconds(5),
+    poll_notifications: :timer.seconds(5),
+    background: :timer.seconds(5),
+    remote_fetcher: :timer.seconds(10),
+    attachments_cleanup: :timer.seconds(900),
+    new_users_digest: :timer.seconds(10),
+    mute_expire: :timer.seconds(5),
+    search_indexing: :timer.seconds(5),
+    nodeinfo_fetcher: :timer.seconds(10),
+    database_prune: :timer.minutes(10)
   ]
 
 config :pleroma, Pleroma.Formatter,
@@ -632,6 +656,10 @@ config :ueberauth,
 config :pleroma, :auth, oauth_consumer_strategies: oauth_consumer_strategies
 
 config :pleroma, Pleroma.Emails.Mailer, adapter: Swoosh.Adapters.Sendmail, enabled: false
+
+config :swoosh,
+  api_client: Swoosh.ApiClient.Finch,
+  finch_name: MyFinch
 
 config :pleroma, Pleroma.Emails.UserEmail,
   logo: nil,
@@ -759,14 +787,6 @@ config :pleroma, :frontends,
         "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/admin-fe.zip",
       "ref" => "stable"
     },
-    "soapbox-fe" => %{
-      "name" => "soapbox-fe",
-      "git" => "https://gitlab.com/soapbox-pub/soapbox",
-      "build_url" =>
-        "https://gitlab.com/soapbox-pub/soapbox/-/jobs/artifacts/${ref}/download?job=build-production",
-      "ref" => "v2.0.0",
-      "build_dir" => "static"
-    },
     # For developers - enables a swagger frontend to view the openapi spec
     "swagger-ui" => %{
       "name" => "swagger-ui",
@@ -810,7 +830,8 @@ config :ex_aws, http_client: Pleroma.HTTP.ExAws
 
 config :web_push_encryption, http_client: Pleroma.HTTP.WebPush
 
-config :pleroma, :instances_favicons, enabled: false
+config :pleroma, :instances_favicons, enabled: true
+config :pleroma, :instances_nodeinfo, enabled: true
 
 config :floki, :html_parser, Floki.HTMLParser.FastHtml
 
@@ -864,6 +885,11 @@ config :pleroma, :deepl,
 config :pleroma, :libre_translate,
   url: "http://127.0.0.1:5000",
   api_key: nil
+
+config :pleroma, :argos_translate,
+  command_argos_translate: "argos-translate",
+  command_argospm: "argospm",
+  strip_html: true
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

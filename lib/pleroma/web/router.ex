@@ -147,9 +147,12 @@ defmodule Pleroma.Web.Router do
   pipeline :http_signature do
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
+    plug(Pleroma.Web.Plugs.EnsureHTTPSignaturePlug)
   end
 
   pipeline :static_fe do
+    plug(:fetch_session)
+    plug(:authenticate)
     plug(Pleroma.Web.Plugs.StaticFEPlug)
   end
 
@@ -479,6 +482,7 @@ defmodule Pleroma.Web.Router do
 
   scope "/api/v1/akkoma", Pleroma.Web.AkkomaAPI do
     pipe_through(:authenticated_api)
+    get("/metrics", MetricsController, :show)
     get("/translation/languages", TranslationController, :languages)
 
     get("/frontend_settings/:frontend_name", FrontendSettingsController, :list_profiles)
@@ -619,6 +623,11 @@ defmodule Pleroma.Web.Router do
 
     get("/announcements", AnnouncementController, :index)
     post("/announcements/:id/dismiss", AnnouncementController, :mark_read)
+
+    get("/tags/:id", TagController, :show)
+    post("/tags/:id/follow", TagController, :follow)
+    post("/tags/:id/unfollow", TagController, :unfollow)
+    get("/followed_tags", TagController, :show_followed)
   end
 
   scope "/api/web", Pleroma.Web do
@@ -745,6 +754,12 @@ defmodule Pleroma.Web.Router do
     get("/users/:nickname/feed", Feed.UserController, :feed, as: :user_feed)
   end
 
+  scope "/", Pleroma.Web.StaticFE do
+    # Profile pages for static-fe
+    get("/users/:nickname/with_replies", StaticFEController, :show)
+    get("/users/:nickname/media", StaticFEController, :show)
+  end
+
   scope "/", Pleroma.Web do
     pipe_through(:accepts_html)
     get("/notice/:id/embed_player", OStatus.OStatusController, :notice_player)
@@ -788,10 +803,16 @@ defmodule Pleroma.Web.Router do
     post("/users/:nickname/outbox", ActivityPubController, :update_outbox)
     post("/api/ap/upload_media", ActivityPubController, :upload_media)
 
+    get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
+  end
+
+  scope "/", Pleroma.Web.ActivityPub do
+    # Note: html format is supported only if static FE is enabled
+    pipe_through([:accepts_html_json, :static_fe, :activitypub_client])
+
     # The following two are S2S as well, see `ActivityPub.fetch_follow_information_for_user/1`:
     get("/users/:nickname/followers", ActivityPubController, :followers)
     get("/users/:nickname/following", ActivityPubController, :following)
-    get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
   end
 
   scope "/", Pleroma.Web.ActivityPub do
@@ -870,7 +891,11 @@ defmodule Pleroma.Web.Router do
 
   scope "/" do
     pipe_through([:pleroma_html, :authenticate, :require_admin])
-    live_dashboard("/phoenix/live_dashboard")
+
+    live_dashboard("/phoenix/live_dashboard",
+      metrics: {Pleroma.Web.Telemetry, :live_dashboard_metrics},
+      csp_nonce_assign_key: :csp_nonce
+    )
   end
 
   # Test-only routes needed to test action dispatching and plug chain execution
@@ -909,8 +934,7 @@ defmodule Pleroma.Web.Router do
   scope "/", Pleroma.Web.Fallback do
     get("/registration/:token", RedirectController, :registration_page)
     get("/:maybe_nickname_or_id", RedirectController, :redirector_with_meta)
-    match(:*, "/api/pleroma*path", LegacyPleromaApiRerouterPlug, [])
-    get("/api*path", RedirectController, :api_not_implemented)
+    get("/api/*path", RedirectController, :api_not_implemented)
     get("/*path", RedirectController, :redirector_with_preload)
 
     options("/*path", RedirectController, :empty)
@@ -918,7 +942,7 @@ defmodule Pleroma.Web.Router do
 
   # TODO: Change to Phoenix.Router.routes/1 for Phoenix 1.6.0+
   def get_api_routes do
-    __MODULE__.__routes__()
+    Phoenix.Router.routes(__MODULE__)
     |> Enum.reject(fn r -> r.plug == Pleroma.Web.Fallback.RedirectController end)
     |> Enum.map(fn r ->
       r.path

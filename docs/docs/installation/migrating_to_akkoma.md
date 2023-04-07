@@ -34,6 +34,15 @@ git pull -r
 # to run "git merge stable" instead (or develop if you want)
 ```
 
+### WARNING - Migrating from Pleroma Develop
+If you are on pleroma develop, and have updated since 2022-08, you may have issues with database migrations.
+
+Please roll back the given migrations:
+
+```bash
+MIX_ENV=prod mix ecto.rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n3
+```
+
 Then compile, migrate and restart as usual.
 
 ## From OTP
@@ -86,3 +95,26 @@ Your situation will likely be unique - you'll need the changes in the
 [forked pleroma-fe repository](https://akkoma.dev/AkkomaGang/pleroma-fe),
 and either merge or cherry-pick from there depending on how you've got
 things.
+
+## Common issues
+
+### The frontend doesn't show after installing it
+
+This may occur if you are using database configuration.
+
+Sometimes the config in your database will cause akkoma to still report
+that there's no frontend, even when you've run the install.
+
+To fix this, run:
+
+=== "OTP"
+    ```sh
+    ./bin/pleroma_ctl config delete pleroma frontends
+    ```
+
+=== "From Source"
+    ```sh
+    mix pleroma.config delete pleroma frontends
+    ```
+
+which will remove the config from the database. Things should work now.

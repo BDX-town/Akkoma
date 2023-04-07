@@ -111,6 +111,12 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Account do
           }
         }
       },
+      akkoma: %Schema{
+        type: :object,
+        properties: %{
+          note_ttl_days: %Schema{type: :integer}
+        }
+      },
       source: %Schema{
         type: :object,
         properties: %{

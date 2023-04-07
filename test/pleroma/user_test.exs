@@ -460,17 +460,20 @@ defmodule Pleroma.UserTest do
     end
 
     setup do:
-            clear_config(:mrf_simple,
-              media_removal: [],
-              media_nsfw: [],
-              federated_timeline_removal: [],
-              report_removal: [],
-              reject: [],
-              followers_only: [],
-              accept: [],
-              avatar_removal: [],
-              banner_removal: [],
-              reject_deletes: []
+            clear_config(
+              [:mrf_simple],
+              %{
+                media_removal: [],
+                media_nsfw: [],
+                federated_timeline_removal: [],
+                report_removal: [],
+                reject: [],
+                followers_only: [],
+                accept: [],
+                avatar_removal: [],
+                banner_removal: [],
+                reject_deletes: []
+              }
             )
 
     setup do:
@@ -530,9 +533,6 @@ defmodule Pleroma.UserTest do
       ObanHelpers.perform_all()
 
       Pleroma.Emails.UserEmail.account_confirmation_email(registered_user)
-      # temporary hackney fix until hackney max_connections bug is fixed
-      # https://git.pleroma.social/pleroma/pleroma/-/issues/2101
-      |> Swoosh.Email.put_private(:hackney_options, ssl_options: [versions: [:"tlsv1.2"]])
       |> assert_email_sent()
     end
 
@@ -1008,6 +1008,25 @@ defmodule Pleroma.UserTest do
 
       assert user.last_refreshed_at == orig_user.last_refreshed_at
     end
+
+    test "it doesn't fail on invalid alsoKnownAs entries" do
+      Tesla.Mock.mock(fn
+        %{url: "https://mbp.example.com/"} ->
+          %Tesla.Env{
+            status: 200,
+            body:
+              "test/fixtures/microblogpub/user_with_invalid_also_known_as.json"
+              |> File.read!(),
+            headers: [{"content-type", "application/activity+json"}]
+          }
+
+        _ ->
+          %Tesla.Env{status: 404}
+      end)
+
+      assert {:ok, %User{also_known_as: []}} =
+               User.get_or_fetch_by_ap_id("https://mbp.example.com/")
+    end
   end
 
   test "returns an ap_id for a user" do
@@ -1367,7 +1386,7 @@ defmodule Pleroma.UserTest do
       collateral_user =
         insert(:user, %{ap_id: "https://another-awful-and-rude-instance.com/user/bully"})
 
-      {:ok, user} = User.block_domain(user, "*.awful-and-rude-instance.com")
+      {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
 
       refute User.blocks?(user, collateral_user)
     end
@@ -1385,7 +1404,7 @@ defmodule Pleroma.UserTest do
 
       user_domain = insert(:user, %{ap_id: "https://awful-and-rude-instance.com/user/bully"})
 
-      {:ok, user} = User.block_domain(user, "*.awful-and-rude-instance.com")
+      {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
 
       assert User.blocks?(user, user_from_subdomain)
       assert User.blocks?(user, user_with_two_subdomains)
@@ -2698,6 +2717,76 @@ defmodule Pleroma.UserTest do
 
       assert user3_updated.also_known_as |> length() == 1
       assert user.ap_id in user3_updated.also_known_as
+    end
+  end
+
+  describe "follow_hashtag/2" do
+    test "should follow a hashtag" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 1
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+
+    test "should not follow a hashtag twice" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 1
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+
+    test "can follow multiple hashtags" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+      other_hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.follow_hashtag(other_hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 2
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+      assert other_hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+  end
+
+  describe "unfollow_hashtag/2" do
+    test "should unfollow a hashtag" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 0
+    end
+
+    test "should not error when trying to unfollow a hashtag twice" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 0
     end
   end
 end

@@ -3,6 +3,7 @@ FROM hexpm/elixir:1.13.4-erlang-24.3.4.5-alpine-3.15.6 as build
 COPY . .
 
 ENV MIX_ENV=prod
+ENV ERL_EPMD_ADDRESS=127.0.0.1
 
 RUN apk add git gcc g++ musl-dev make cmake file-dev &&\
 	echo "import Mix.Config" > config/prod.secret.exs &&\
@@ -48,7 +49,7 @@ COPY ./config/docker.exs /etc/akkoma/config.exs
 COPY ./docker-entrypoint.sh ${HOME}
 
 COPY ./config/frontends.exs $DATA/config.exs
-RUN curl -L https://github.com/Cl0v1s/mangane-ui/releases/latest/download/static.zip --output ${DATA}/static.zip &&\
+RUN curl -L https://github.com/BDX-town/Mangane/releases/latest/download/static.zip --output ${DATA}/static.zip &&\
  mkdir -p ${DATA}/static/frontends/mangane &&\
  unzip -d ${DATA}/static/frontends/mangane ${DATA}/static.zip &&\
  rm ${DATA}/static.zip

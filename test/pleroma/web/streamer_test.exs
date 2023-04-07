@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.StreamerTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   import Pleroma.Factory
 
@@ -477,6 +477,36 @@ defmodule Pleroma.Web.StreamerTest do
       stream = "user:#{user.id}"
       assert_receive {:render_with_user, _, "status_update.json", ^create, ^stream}
       refute Streamer.filtered_by_user?(user, edited)
+    end
+
+    test "it streams posts containing followed hashtags on the 'user' stream", %{
+      user: user,
+      token: oauth_token
+    } do
+      hashtag = insert(:hashtag, %{name: "tenshi"})
+      other_user = insert(:user)
+      {:ok, user} = User.follow_hashtag(user, hashtag)
+
+      Streamer.get_topic_and_add_socket("user", user, oauth_token)
+      {:ok, activity} = CommonAPI.post(other_user, %{status: "hey #tenshi"})
+
+      assert_receive {:render_with_user, _, "update.json", ^activity, _}
+    end
+
+    test "should not stream private posts containing followed hashtags on the 'user' stream", %{
+      user: user,
+      token: oauth_token
+    } do
+      hashtag = insert(:hashtag, %{name: "tenshi"})
+      other_user = insert(:user)
+      {:ok, user} = User.follow_hashtag(user, hashtag)
+
+      Streamer.get_topic_and_add_socket("user", user, oauth_token)
+
+      {:ok, activity} =
+        CommonAPI.post(other_user, %{status: "hey #tenshi", visibility: "private"})
+
+      refute_receive {:render_with_user, _, "update.json", ^activity, _}
     end
   end
 

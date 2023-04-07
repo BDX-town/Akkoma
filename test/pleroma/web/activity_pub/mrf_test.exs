@@ -9,8 +9,8 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
 
   test "subdomains_regex/1" do
     assert MRF.subdomains_regex(["unsafe.tld", "*.unsafe.tld"]) == [
-             ~r/^unsafe.tld$/i,
-             ~r/^(.*\.)*unsafe.tld$/i
+             ~r/^(.+\.)?unsafe\.tld$/i,
+             ~r/^(.+\.)?unsafe\.tld$/i
            ]
   end
 
@@ -18,7 +18,7 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
     test "common domains" do
       regexes = MRF.subdomains_regex(["unsafe.tld", "unsafe2.tld"])
 
-      assert regexes == [~r/^unsafe.tld$/i, ~r/^unsafe2.tld$/i]
+      assert regexes == [~r/^(.+\.)?unsafe\.tld$/i, ~r/^(.+\.)?unsafe2\.tld$/i]
 
       assert MRF.subdomain_match?(regexes, "unsafe.tld")
       assert MRF.subdomain_match?(regexes, "unsafe2.tld")
@@ -27,9 +27,9 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
     end
 
     test "wildcard domains with one subdomain" do
-      regexes = MRF.subdomains_regex(["*.unsafe.tld"])
+      regexes = MRF.subdomains_regex(["unsafe.tld"])
 
-      assert regexes == [~r/^(.*\.)*unsafe.tld$/i]
+      assert regexes == [~r/^(.+\.)?unsafe\.tld$/i]
 
       assert MRF.subdomain_match?(regexes, "unsafe.tld")
       assert MRF.subdomain_match?(regexes, "sub.unsafe.tld")
@@ -38,9 +38,9 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
     end
 
     test "wildcard domains with two subdomains" do
-      regexes = MRF.subdomains_regex(["*.unsafe.tld"])
+      regexes = MRF.subdomains_regex(["unsafe.tld"])
 
-      assert regexes == [~r/^(.*\.)*unsafe.tld$/i]
+      assert regexes == [~r/^(.+\.)?unsafe\.tld$/i]
 
       assert MRF.subdomain_match?(regexes, "unsafe.tld")
       assert MRF.subdomain_match?(regexes, "sub.sub.unsafe.tld")
@@ -48,10 +48,35 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
       refute MRF.subdomain_match?(regexes, "sub.unsafe.tldanother")
     end
 
+    test "wildcard on the tld" do
+      regexes = MRF.subdomains_regex(["somewhere.*"])
+
+      assert regexes == [~r/^(.+\.)?somewhere\.(.+)$/i]
+
+      assert MRF.subdomain_match?(regexes, "somewhere.net")
+      assert MRF.subdomain_match?(regexes, "somewhere.com")
+      assert MRF.subdomain_match?(regexes, "somewhere.somewherelese.net")
+      refute MRF.subdomain_match?(regexes, "somewhere")
+    end
+
+    test "wildcards on subdomain _and_ tld" do
+      regexes = MRF.subdomains_regex(["*.somewhere.*"])
+
+      assert regexes == [~r/^(.+\.)?somewhere\.(.+)$/i]
+
+      assert MRF.subdomain_match?(regexes, "somewhere.net")
+      assert MRF.subdomain_match?(regexes, "somewhere.com")
+      assert MRF.subdomain_match?(regexes, "sub.somewhere.net")
+      assert MRF.subdomain_match?(regexes, "sub.somewhere.com")
+      assert MRF.subdomain_match?(regexes, "sub.sub.somewhere.net")
+      assert MRF.subdomain_match?(regexes, "sub.sub.somewhere.com")
+      refute MRF.subdomain_match?(regexes, "somewhere")
+    end
+
     test "matches are case-insensitive" do
       regexes = MRF.subdomains_regex(["UnSafe.TLD", "UnSAFE2.Tld"])
 
-      assert regexes == [~r/^UnSafe.TLD$/i, ~r/^UnSAFE2.Tld$/i]
+      assert regexes == [~r/^(.+\.)?UnSafe\.TLD$/i, ~r/^(.+\.)?UnSAFE2\.Tld$/i]
 
       assert MRF.subdomain_match?(regexes, "UNSAFE.TLD")
       assert MRF.subdomain_match?(regexes, "UNSAFE2.TLD")
@@ -77,7 +102,7 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
       clear_config([:mrf, :policies], [Pleroma.Web.ActivityPub.MRF.NoOpPolicy])
 
       expected = %{
-        mrf_policies: ["NoOpPolicy", "HashtagPolicy", "InlineQuotePolicy"],
+        mrf_policies: ["NoOpPolicy", "HashtagPolicy", "InlineQuotePolicy", "NormalizeMarkup"],
         mrf_hashtag: %{
           federated_timeline_removal: [],
           reject: [],
@@ -93,7 +118,7 @@ defmodule Pleroma.Web.ActivityPub.MRFTest do
       clear_config([:mrf, :policies], [MRFModuleMock])
 
       expected = %{
-        mrf_policies: ["MRFModuleMock", "HashtagPolicy", "InlineQuotePolicy"],
+        mrf_policies: ["MRFModuleMock", "HashtagPolicy", "InlineQuotePolicy", "NormalizeMarkup"],
         mrf_module_mock: "some config data",
         mrf_hashtag: %{
           federated_timeline_removal: [],

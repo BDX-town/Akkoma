@@ -3,6 +3,8 @@ defmodule Pleroma.Web.AkkomaAPI.TranslationController do
 
   alias Pleroma.Web.Plugs.OAuthScopesPlug
 
+  require Logger
+
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
 
   @unauthenticated_access %{fallback: :proceed_unauthenticated, scopes: []}
@@ -21,11 +23,17 @@ defmodule Pleroma.Web.AkkomaAPI.TranslationController do
 
   @doc "GET /api/v1/akkoma/translation/languages"
   def languages(conn, _params) do
-    with {:ok, source_languages, dest_languages} <- get_languages() do
+    with {:enabled, true} <- {:enabled, Pleroma.Config.get([:translator, :enabled])},
+         {:ok, source_languages, dest_languages} <- get_languages() do
       conn
       |> json(%{source: source_languages, target: dest_languages})
     else
-      e -> IO.inspect(e)
+      {:enabled, false} ->
+        json(conn, %{})
+
+      e ->
+        Logger.error("Translation language list error: #{inspect(e)}")
+        {:error, e}
     end
   end
 

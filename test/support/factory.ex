@@ -36,14 +36,27 @@ defmodule Pleroma.Factory do
     }
   end
 
+  def instance_factory(attrs \\ %{}) do
+    %Pleroma.Instances.Instance{
+      host: attrs[:domain] || "example.com",
+      nodeinfo: %{version: "2.0", openRegistrations: true},
+      unreachable_since: nil
+    }
+    |> Map.merge(attrs)
+  end
+
   def user_factory(attrs \\ %{}) do
     pem = Enum.random(@rsa_keys)
+    # Argon2.hash_pwd_salt("test")
+    # it really eats CPU time, so we use a precomputed hash
+    password_hash =
+      "$argon2id$v=19$m=65536,t=8,p=2$FEAarFuiOsROO24NHIHMYw$oxdaz2fTPpuU+dYCl60FsqE65T1Tjy6lGikKfmql4xo"
 
     user = %User{
       name: sequence(:name, &"Test テスト User #{&1}"),
       email: sequence(:email, &"user#{&1}@example.com"),
       nickname: sequence(:nickname, &"nick#{&1}"),
-      password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt("test"),
+      password_hash: password_hash,
       bio: sequence(:bio, &"Tester Number #{&1}"),
       is_discoverable: true,
       last_digest_emailed_at: NaiveDateTime.utc_now(),
@@ -224,7 +237,7 @@ defmodule Pleroma.Factory do
     %Pleroma.Object{data: Map.merge(data, %{"type" => "Article"})}
   end
 
-  def tombstone_factory do
+  def tombstone_factory(attrs) do
     data = %{
       "type" => "Tombstone",
       "id" => Pleroma.Web.ActivityPub.Utils.generate_object_id(),
@@ -235,6 +248,7 @@ defmodule Pleroma.Factory do
     %Pleroma.Object{
       data: data
     }
+    |> merge_attributes(attrs)
   end
 
   def question_factory(attrs \\ %{}) do
@@ -442,15 +456,16 @@ defmodule Pleroma.Factory do
     }
   end
 
-  def follow_activity_factory do
-    follower = insert(:user)
-    followed = insert(:user)
+  def follow_activity_factory(attrs \\ %{}) do
+    follower = attrs[:follower] || insert(:user)
+    followed = attrs[:followed] || insert(:user)
 
     data = %{
       "id" => Pleroma.Web.ActivityPub.Utils.generate_activity_id(),
       "actor" => follower.ap_id,
       "type" => "Follow",
       "object" => followed.ap_id,
+      "state" => attrs[:state] || "pending",
       "published_at" => DateTime.utc_now() |> DateTime.to_iso8601()
     }
 
@@ -458,6 +473,7 @@ defmodule Pleroma.Factory do
       data: data,
       actor: follower.ap_id
     }
+    |> Map.merge(attrs)
   end
 
   def report_activity_factory(attrs \\ %{}) do
@@ -511,21 +527,41 @@ defmodule Pleroma.Factory do
     |> Map.merge(attrs)
   end
 
+  def delete_activity_factory(attrs \\ %{}) do
+    user = attrs[:user] || insert(:user)
+    note_activity = attrs[:note_activity] || insert(:note_activity, user: user)
+
+    data_attrs = attrs[:data_attrs] || %{}
+    attrs = Map.drop(attrs, [:user, :data_attrs])
+
+    data =
+      %{
+        "id" => Pleroma.Web.ActivityPub.Utils.generate_activity_id(),
+        "type" => "Delete",
+        "actor" => note_activity.data["actor"],
+        "to" => note_activity.data["to"],
+        "object" => note_activity.data["id"],
+        "published" => DateTime.utc_now() |> DateTime.to_iso8601(),
+        "context" => note_activity.data["context"]
+      }
+      |> Map.merge(data_attrs)
+
+    %Pleroma.Activity{
+      data: data,
+      actor: data["actor"],
+      recipients: data["to"]
+    }
+    |> Map.merge(attrs)
+  end
+
   def oauth_app_factory do
     %Pleroma.Web.OAuth.App{
       client_name: sequence(:client_name, &"Some client #{&1}"),
       redirect_uris: "https://example.com/callback",
-      scopes: ["read", "write", "follow", "push", "admin"],
+      scopes: ["read", "write", "follow", "push"],
       website: "https://example.com",
       client_id: Ecto.UUID.generate(),
       client_secret: "aaa;/&bbb"
-    }
-  end
-
-  def instance_factory do
-    %Pleroma.Instances.Instance{
-      host: "domain.com",
-      unreachable_since: nil
     }
   end
 
@@ -671,6 +707,23 @@ defmodule Pleroma.Factory do
       profile_name: "default",
       settings: %{"test" => "test"},
       version: 1
+    }
+    |> Map.merge(params)
+  end
+
+  def delivery_factory(params \\ %{}) do
+    object = Map.get(params, :object, build(:note))
+    user = Map.get(params, :user, build(:user))
+
+    %Pleroma.Delivery{
+      object: object,
+      user: user
+    }
+  end
+
+  def hashtag_factory(params \\ %{}) do
+    %Pleroma.Hashtag{
+      name: "test #{sequence(:hashtag_name, & &1)}"
     }
     |> Map.merge(params)
   end

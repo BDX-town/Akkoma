@@ -38,7 +38,8 @@ To add configuration to your config file, you can copy it from the base config. 
 * `federation_incoming_replies_max_depth`: Max. depth of reply-to activities fetching on incoming federation, to prevent out-of-memory situations while fetching very long threads. If set to `nil`, threads of any depth will be fetched. Lower this value if you experience out-of-memory crashes.
 * `federation_reachability_timeout_days`: Timeout (in days) of each external federation target being unreachable prior to pausing federating to it.
 * `allow_relay`: Permits remote instances to subscribe to all public posts of your instance. This may increase the visibility of your instance.
-* `public`: Makes the client API in authenticated mode-only except for user-profiles. Useful for disabling the Local Timeline and The Whole Known Network. Note that there is a dependent setting restricting or allowing unauthenticated access to specific resources, see `restrict_unauthenticated` for more details.
+* `public`: Allows unauthenticated access to public resources on your instance. This is essentially used as the default value for `:restrict_unauthenticated`. 
+   See `restrict_unauthenticated` for more details.
 * `quarantined_instances`: *DEPRECATED* ActivityPub instances where activities will not be sent. They can still reach there via other means, we just won't send them.
 * `allowed_post_formats`: MIME-type list of formats allowed to be posted (transformed into HTML).
 * `extended_nickname_format`: Set to `true` to use extended local nicknames format (allows underscores/dashes). This will break federation with
@@ -64,7 +65,9 @@ To add configuration to your config file, you can copy it from the base config. 
 * `cleanup_attachments`: Remove attachments along with statuses. Does not affect duplicate files and attachments without status. Enabling this will increase load to database when deleting statuses on larger instances.
 * `show_reactions`: Let favourites and emoji reactions be viewed through the API (default: `true`).
 * `password_reset_token_validity`: The time after which reset tokens aren't accepted anymore, in seconds (default: one day).
-* `local_bubble`: Array of domains representing instances closely related to yours. Used to populate the `bubble` timeline. e.g `['example.com']`, (default: `[]`)
+* `local_bubble`: Array of domains representing instances closely related to yours. Used to populate the `bubble` timeline. e.g `["example.com"]`, (default: `[]`)
+* `languages`: List of Language Codes used by the instance. This is used to try and set a default language from the frontend. It will try and find the first match between the languages set here and the user's browser languages. It will default to the first language in this setting if there is no match.. (default `["en"]`)
+* `export_prometheus_metrics`: Enable prometheus metrics, served at `/api/v1/akkoma/metrics`, requiring the `admin:metrics` oauth scope.
 
 ## :database
 * `improved_hashtag_timeline`: Setting to force toggle / force disable improved hashtags timeline. `:enabled` forces hashtags to be fetched from `hashtags` table for hashtags timeline. `:disabled` forces object-embedded hashtags to be used (slower). Keep it `:auto` for automatic behaviour (it is auto-set to `:enabled` [unless overridden] when HashtagsTableMigrator completes).
@@ -128,6 +131,8 @@ To add configuration to your config file, you can copy it from the base config. 
     * `Pleroma.Web.ActivityPub.MRF.FollowBotPolicy`: Automatically follows newly discovered users from the specified bot account. Local accounts, locked accounts, and users with "#nobot" in their bio are respected and excluded from being followed.
     * `Pleroma.Web.ActivityPub.MRF.AntiFollowbotPolicy`: Drops follow requests from followbots. Users can still allow bots to follow them by first following the bot.
     * `Pleroma.Web.ActivityPub.MRF.KeywordPolicy`: Rejects or removes from the federated timeline or replaces keywords. (See [`:mrf_keyword`](#mrf_keyword)).
+    * `Pleroma.Web.ActivityPub.MRF.NormalizeMarkup`: Pass inbound HTML through a scrubber to make sure it doesn't have anything unusual in it. On by default, cannot be turned off.
+    * `Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy`: Append a link to a post that quotes another post with the link to the quoted post, to ensure that software that does not understand quotes can have full context. On by default, cannot be turned off.
 * `transparency`: Make the content of your Message Rewrite Facility settings public (via nodeinfo).
 * `transparency_exclusions`: Exclude specific instance names from MRF transparency.  The use of the exclusions feature will be disclosed in nodeinfo as a boolean value.
 * `transparency_obfuscate_domains`: Show domains with `*` in the middle, to censor them if needed. For example, `ridingho.me` will show as `rid*****.me`
@@ -225,11 +230,6 @@ config :pleroma, :mrf_user_allowlist, %{
 Notes:
 - The hashtags in the configuration do not have a leading `#`.
 - This MRF Policy is always enabled, if you want to disable it you have to set empty lists
-
-#### :mrf_follow_bot
-
-* `follower_nickname`: The name of the bot account to use for following newly discovered users. Using `followbot` or similar is strongly suggested.
-
 
 ### :activitypub
 * `unfollow_blocked`: Whether blocks result in people getting unfollowed
@@ -461,7 +461,6 @@ This will make Akkoma listen on `127.0.0.1` port `8080` and generate urls starti
 * ``enabled``: Whether the managed content security policy is enabled.
 * ``sts``: Whether to additionally send a `Strict-Transport-Security` header.
 * ``sts_max_age``: The maximum age for the `Strict-Transport-Security` header if sent.
-* ``ct_max_age``: The maximum age for the `Expect-CT` header if sent.
 * ``referrer_policy``: The referrer policy to use, either `"same-origin"` or `"no-referrer"`.
 * ``report_uri``: Adds the specified url to `report-uri` and `report-to` group in CSP header.
 
@@ -532,58 +531,12 @@ Available caches:
 
 ### :http
 
+* `receive_timeout`: the amount of time, in ms, to wait for a remote server to respond to a request. (default: `15000`)
+* `pool_timeout`: the amount of time, in ms, to wait to check out an HTTP connection from the pool. This likely does not need changing unless your instance is _very_ busy with outbound requests. (default `5000`)
 * `proxy_url`: an upstream proxy to fetch posts and/or media with, (default: `nil`); for example `http://127.0.0.1:3192`. Does not support SOCKS5 proxy, only http(s).
 * `send_user_agent`: should we include a user agent with HTTP requests? (default: `true`)
 * `user_agent`: what user agent should we use? (default: `:default`), must be string or `:default`
 * `adapter`: array of adapter options
-
-### :hackney_pools
-
-Advanced. Tweaks Hackney (http client) connections pools.
-
-There's three pools used:
-
-* `:federation` for the federation jobs.
-  You may want this pool max_connections to be at least equal to the number of federator jobs + retry queue jobs.
-* `:media` for rich media, media proxy
-* `:upload` for uploaded media (if using a remote uploader and `proxy_remote: true`)
-
-For each pool, the options are:
-
-* `max_connections` - how much connections a pool can hold
-* `timeout` - retention duration for connections
-
-
-### :connections_pool
-
-*For `gun` adapter*
-
-Settings for HTTP connection pool.
-
-* `:connection_acquisition_wait` - Timeout to acquire a connection from pool.The total max time is this value multiplied by the number of retries.
-* `connection_acquisition_retries` - Number of attempts to acquire the connection from the pool if it is overloaded. Each attempt is timed `:connection_acquisition_wait` apart.
-* `:max_connections` - Maximum number of connections in the pool.
-* `:connect_timeout` - Timeout to connect to the host.
-* `:reclaim_multiplier` - Multiplied by `:max_connections` this will be the maximum number of idle connections that will be reclaimed in case the pool is overloaded.
-
-### :pools
-
-*For `gun` adapter*
-
-Settings for request pools. These pools are limited on top of `:connections_pool`.
-
-There are four pools used:
-
-* `:federation` for the federation jobs. You may want this pool's max_connections to be at least equal to the number of federator jobs + retry queue jobs.
-* `:media` - for rich media, media proxy.
-* `:upload` - for proxying media when a remote uploader is used and `proxy_remote: true`.
-* `:default` - for other requests.
-
-For each pool, the options are:
-
-* `:size` - limit to how much requests can be concurrently executed.
-* `:recv_timeout` - timeout while `gun` will wait for response
-* `:max_waiting` - limit to how much requests can be waiting for others to finish, after this is reached, subsequent requests will be dropped.
 
 ## Captcha
 
@@ -842,16 +795,7 @@ config :logger, :ex_syslogger,
   level: :info,
   ident: "pleroma",
   format: "$metadata[$level] $message"
-
-config :quack,
-  level: :warn,
-  meta: [:all],
-  webhook_url: "https://hooks.slack.com/services/YOUR-API-KEY-HERE"
 ```
-
-See the [Quack Github](https://github.com/azohra/quack) for more details
-
-
 
 ## Database options
 
@@ -1099,7 +1043,7 @@ config :pleroma, :database_config_whitelist, [
 
 ### :restrict_unauthenticated
 
-Restrict access for unauthenticated users to timelines (public and federated), user profiles and statuses.
+Restrict access for unauthenticated users to timelines (public and federated), user profiles and posts.
 
 * `timelines`: public and federated timelines
   * `local`: public timeline
@@ -1107,13 +1051,24 @@ Restrict access for unauthenticated users to timelines (public and federated), u
 * `profiles`: user profiles
   * `local`
   * `remote`
-* `activities`: statuses
+* `activities`: posts
   * `local`
   * `remote`
 
-Note: when `:instance, :public` is set to `false`, all `:restrict_unauthenticated` items be effectively set to `true` by default. If you'd like to allow unauthenticated access to specific API endpoints on a private instance, please explicitly set `:restrict_unauthenticated` to non-default value in `config/prod.secret.exs`.
+#### When :instance, :public is `true`
 
-Note: setting `restrict_unauthenticated/timelines/local` to `true` has no practical sense if `restrict_unauthenticated/timelines/federated` is set to `false` (since local public activities will still be delivered to unauthenticated users as part of federated timeline).
+When your instance is in "public" mode, all public resources (users, posts, timelines) are accessible to unauthenticated users.
+
+Turning any of the `:restrict_unauthenticated` options to `true` will restrict access to the corresponding resources.
+
+#### When :instance, :public is `false`
+
+When `:instance, :public` is set to `false`, all of the `:restrict_unauthenticated` options will effectively be set to `true` by default,
+meaning that only authenticated users will be able to access the corresponding resources.
+
+If you'd like to allow unauthenticated access to specific resources, you can turn these settings to `false`.
+
+**Note**: setting `restrict_unauthenticated/timelines/local` to `true` has no practical sense if `restrict_unauthenticated/timelines/federated` is set to `false` (since local public activities will still be delivered to unauthenticated users as part of federated timeline).
 
 ## Pleroma.Web.ApiSpec.CastAndValidate
 
@@ -1173,7 +1128,7 @@ Each job has these settings:
 ### Translation Settings
 
 Settings to automatically translate statuses for end users. Currently supported
-translation services are DeepL and LibreTranslate.
+translation services are DeepL and LibreTranslate. The supported command line tool is [Argos Translate](https://github.com/argosopentech/argos-translate).
 
 Translations are available at `/api/v1/statuses/:id/translations/:language`, where
 `language` is the target language code (e.g `en`)
@@ -1182,7 +1137,7 @@ Translations are available at `/api/v1/statuses/:id/translations/:language`, whe
 
 - `:enabled` - enables translation
 - `:module` - Sets module to be used
-  - Either `Pleroma.Akkoma.Translators.DeepL` or `Pleroma.Akkoma.Translators.LibreTranslate`
+  - Either `Pleroma.Akkoma.Translators.DeepL`, `Pleroma.Akkoma.Translators.LibreTranslate`, or `Pleroma.Akkoma.Translators.ArgosTranslate`
 
 ### `:deepl`
 
@@ -1194,3 +1149,9 @@ Translations are available at `/api/v1/statuses/:id/translations/:language`, whe
 
 - `:url` - URL of LibreTranslate instance
 - `:api_key` - API key for LibreTranslate
+
+### `:argos_translate`
+
+- `:command_argos_translate` - command for `argos-translate`. Can be the command if it's in your PATH, or the full path to the file  (default: `argos-translate`).
+- `:command_argospm` - command for `argospm`. Can be the command if it's in your PATH, or the full path to the file (default: `argospm`).
+- `:strip_html` - Strip html from the post before translating it (default: `true`).

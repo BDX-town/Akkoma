@@ -4,18 +4,114 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## 2023.03
+
+## Fixed
+- Allowed contentMap to be updated on edit
+- Filter creation now accepts expires\_at
+
+### Changed
+- Restoring the database from a dump now goes much faster without need for work-arounds
+- Misskey reaction matching uses `content` parameter now
+
+### Added
+- Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
+
+### Removed
+- Possibility of using the `style` parameter on `span` elements. This will break certain MFM parameters.
+
+## 2023.02
+
+### Added
+- Prometheus metrics exporting from `/api/v1/akkoma/metrics`
+- Ability to alter http pool size
+- Translation of statuses via ArgosTranslate
+- Argon2 password hashing
+- Ability to "verify" links in profile fields via rel=me
+- Mix tasks to dump/load config to/from json for bulk editing
+- Followed hashtag list at /api/v1/followed\_tags, API parity with mastodon
+- Ability to set posting language in the post form, API parity with mastodon
+- Ability to match domains in MRF by a trailing wildcard
+  - Currently supported formats:
+    - `example.com` (implicitly matches `*.example.com`)
+    - `*.example.com`
+    - `example.*` (implicitly matches `*.example.*`)
+
+### Removed
+- Non-finch HTTP adapters
+- Legacy redirect from /api/pleroma/admin to /api/v1/pleroma/admin
+- Legacy redirects from /api/pleroma to /api/v1/pleroma
+- :crypt dependency
+
+### Changed
+- Return HTTP error 413 when uploading an avatar or banner that's above the configured upload limit instead of a 500.
+- Non-admin users now cannot register `admin` scope tokens (not security-critical, they didn't work before, but you _could_ create them)
+  - Admin scopes will be dropped on create
+- Rich media will now backoff for 20 minutes after a failure
+- Quote posts are now considered as part of the same thread as the post they are quoting
+- Extend the mix task `prune_objects` with options to keep more relevant posts
+- Simplified HTTP signature processing
+- Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
+- HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
+- Follow requests are now paginated, matches mastodon API spec, so use the Link header to paginate.
+- `internal.fetch` and `relay` actors are now represented with the actor type `Application`
+
+### Fixed 
+- /api/v1/accounts/lookup will now respect restrict\_unauthenticated
+- Unknown atoms in the config DB will no longer crash akkoma on boot
+
+### Upgrade notes
+- Ensure `config :tesla, :adapter` is either unset, or set to `{Tesla.Adapter.Finch, name: MyFinch}` in your .exs config
+- Pleroma-FE will need to be updated to handle the new /api/v1/pleroma endpoints for  custom emoji
+
+## 2022.12
+
+## Added
+- Config: HTTP timeout options, :pool\_timeout and :receive\_timeout
+- Added statistic gathering about instances which do/don't have signed fetches when they request from us
+- Ability to set a default post expiry time, after which the post will be deleted. If used in concert with ActivityExpiration MRF, the expiry which comes _sooner_ will be applied.
+- Regular task to prune local transient activities
+- Task to manually run the transient prune job (pleroma.database prune\_task)
+- Ability to follow hashtags
+- Option to extend `reject` in MRF-Simple to apply to entire threads, where the originating instance is rejected
+- Extra information to failed HTTP requests
+
+## Changed
+- MastoAPI: Accept BooleanLike input on `/api/v1/accounts/:id/follow` (fixes follows with mastodon.py)
+- Relays from akkoma are now off by default
+- NormalizeMarkup MRF is now on by default
+- Follow/Block/Mute imports now spin off into *n* tasks to avoid the oban timeout
+- Transient activities recieved from remote servers are no longer persisted in the database
+- Overhauled static-fe view for logged-out users
+- Blocked instances will now not be sent _any_ requests, even fetch ones that would get rejected by MRF anyhow
+
+## Removed
+- FollowBotPolicy
+- Passing of undo/block into MRF
+
+## Upgrade Notes
+- If you have an old instance, you will probably want to run `mix pleroma.database prune_task` in the foreground to catch it up with the history of your instance.
+
+## 2022.11
 
 ## Added
 - Officially supported docker release
 - Ability to remove followers unilaterally without a block
+- Scraping of nodeinfo from remote instances to display instance info
+- `requested_by` in relationships when the user has requested to follow you
 
-## Changes
+## Changed
 - Follows no longer override domain blocks, a domain block is final
 - Deletes are now the lowest priority to publish and will be handled after creates
+- Domain blocks are now subdomain-matches by default
 
 ## Fixed
 - Registrations via ldap are now compatible with the latest OTP24
+
+## Update notes
+- If you use LDAP and run from source, please update your elixir/erlang
+  to the latest. The changes in OTP24.3 are breaking.
+- You can now remove the leading `*.` from domain blocks, but you do not have to.
 
 ## 2022.10
 
@@ -56,6 +152,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure key generation happens at registration-time to prevent potential race-conditions
 - Ensured websockets get closed on logout
 - Allowed GoToSocial-style `?query_string` signatures
+
+### Removed
+- Non-finch HTTP adapters. `:tesla, :adapter` is now highly recommended to be set to the default.
+
+## 2022.08
 
 ### Removed
 - Non-finch HTTP adapters. `:tesla, :adapter` is now highly recommended to be set to the default.

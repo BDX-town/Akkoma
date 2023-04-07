@@ -1,5 +1,6 @@
 # App artifacts
 docs/site
+*.zip
 *.sw*
 secret
 /_build
@@ -72,6 +73,8 @@ pleroma.iml
 
 # Generated documentation
 docs/site
+docs/venv
 
 # docker stuff
 docker-db
+*.iml

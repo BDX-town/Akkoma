@@ -63,6 +63,12 @@ defmodule Pleroma.Web.ActivityPub.MRF do
 
   @required_description_keys [:key, :related_policy]
 
+  def filter_one(policy, %{"type" => type} = message)
+      when type in ["Undo", "Block", "Delete"] and
+             policy != Pleroma.Web.ActivityPub.MRF.SimplePolicy do
+    {:ok, message}
+  end
+
   def filter_one(policy, message) do
     should_plug_history? =
       if function_exported?(policy, :history_awareness, 0) do
@@ -140,7 +146,8 @@ defmodule Pleroma.Web.ActivityPub.MRF do
     |> get_policies()
     |> Enum.concat([
       Pleroma.Web.ActivityPub.MRF.HashtagPolicy,
-      Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy
+      Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy,
+      Pleroma.Web.ActivityPub.MRF.NormalizeMarkup
     ])
     |> Enum.uniq()
   end
@@ -149,9 +156,27 @@ defmodule Pleroma.Web.ActivityPub.MRF do
   defp get_policies(policies) when is_list(policies), do: policies
   defp get_policies(_), do: []
 
+  # Matches the following:
+  # - https://baddomain.net
+  # - https://extra.baddomain.net/
+  # Does NOT match the following:
+  # - https://maybebaddomain.net/
+
+  # *.baddomain.net
+  def subdomain_regex("*." <> domain), do: subdomain_regex(domain)
+
+  # baddomain.net
+  def subdomain_regex(domain) do
+    if String.ends_with?(domain, ".*") do
+      ~r/^(.+\.)?#{Regex.escape(String.replace_suffix(domain, ".*", ""))}\.(.+)$/i
+    else
+      ~r/^(.+\.)?#{Regex.escape(domain)}$/i
+    end
+  end
+
   @spec subdomains_regex([String.t()]) :: [Regex.t()]
   def subdomains_regex(domains) when is_list(domains) do
-    for domain <- domains, do: ~r(^#{String.replace(domain, "*.", "(.*\\.)*")}$)i
+    Enum.map(domains, &subdomain_regex/1)
   end
 
   @spec subdomain_match?([Regex.t()], String.t()) :: boolean()

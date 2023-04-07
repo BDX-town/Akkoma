@@ -691,8 +691,8 @@ config :pleroma, :config_description, [
         key: :public,
         type: :boolean,
         description:
-          "Makes the client API in authenticated mode-only except for user-profiles." <>
-            " Useful for disabling the Local Timeline and The Whole Known Network. " <>
+          "Switching this on will allow unauthenticated users access to all public resources on your instance" <>
+            " Switching it off is useful for disabling the Local Timeline and The Whole Known Network. " <>
             " Note: when setting to `false`, please also check `:restrict_unauthenticated` setting."
       },
       %{
@@ -723,7 +723,8 @@ config :pleroma, :config_description, [
           "text/plain",
           "text/html",
           "text/markdown",
-          "text/bbcode"
+          "text/bbcode",
+          "text/x.misskeymarkdown"
         ]
       },
       %{
@@ -789,7 +790,7 @@ config :pleroma, :config_description, [
       %{
         key: :healthcheck,
         type: :boolean,
-        description: "If enabled, system data will be shown on `/api/pleroma/healthcheck`"
+        description: "If enabled, system data will be shown on `/api/v1/pleroma/healthcheck`"
       },
       %{
         key: :remote_post_retention_days,
@@ -963,6 +964,11 @@ config :pleroma, :config_description, [
         type: {:list, :string},
         description:
           "List of instances that make up your local bubble (closely-related instances). Used to populate the 'bubble' timeline (domain only)."
+      },
+      %{
+        key: :export_prometheus_metrics,
+        type: :boolean,
+        description: "Enable prometheus metrics (at /api/v1/akkoma/metrics)"
       }
     ]
   },
@@ -1147,45 +1153,6 @@ config :pleroma, :config_description, [
     ]
   },
   %{
-    group: :quack,
-    type: :group,
-    label: "Quack Logger",
-    description: "Quack-related settings",
-    children: [
-      %{
-        key: :level,
-        type: {:dropdown, :atom},
-        description: "Log level",
-        suggestions: [:debug, :info, :warn, :error]
-      },
-      %{
-        key: :meta,
-        type: {:list, :atom},
-        description: "Configure which metadata you want to report on",
-        suggestions: [
-          :application,
-          :module,
-          :file,
-          :function,
-          :line,
-          :pid,
-          :crash_reason,
-          :initial_call,
-          :registered_name,
-          :all,
-          :none
-        ]
-      },
-      %{
-        key: :webhook_url,
-        label: "Webhook URL",
-        type: :string,
-        description: "Configure the Slack incoming webhook",
-        suggestions: ["https://hooks.slack.com/services/YOUR-KEY-HERE"]
-      }
-    ]
-  },
-  %{
     group: :pleroma,
     key: :frontend_configurations,
     type: :group,
@@ -1256,6 +1223,13 @@ config :pleroma, :config_description, [
             description: "Enables green text on lines prefixed with the > character"
           },
           %{
+            key: :conversationDisplay,
+            label: "Conversation display style",
+            type: :string,
+            description: "How to display conversations (linear or tree)",
+            suggestions: ["linear", "tree"]
+          },
+          %{
             key: :hideFilteredStatuses,
             label: "Hide Filtered Statuses",
             type: :boolean,
@@ -1304,14 +1278,6 @@ config :pleroma, :config_description, [
                 "If you want a colorful logo you must disable logoMask."
           },
           %{
-            key: :minimalScopesMode,
-            label: "Minimal scopes mode",
-            type: :boolean,
-            description:
-              "Limit scope selection to Direct, User default, and Scope of post replying to. " <>
-                "Also prevents replying to a DM with a public post from PleromaFE."
-          },
-          %{
             key: :nsfwCensorImage,
             label: "NSFW Censor Image",
             type: {:string, :image},
@@ -1324,7 +1290,13 @@ config :pleroma, :config_description, [
             label: "Post Content Type",
             type: {:dropdown, :atom},
             description: "Default post formatting option",
-            suggestions: ["text/plain", "text/html", "text/markdown", "text/bbcode"]
+            suggestions: [
+              "text/plain",
+              "text/html",
+              "text/markdown",
+              "text/bbcode",
+              "text/x.misskeymarkdown"
+            ]
           },
           %{
             key: :redirectRootNoLogin,
@@ -1779,14 +1751,7 @@ config :pleroma, :config_description, [
         label: "STS max age",
         type: :integer,
         description: "The maximum age for the Strict-Transport-Security header if sent",
-        suggestions: [31_536_000]
-      },
-      %{
-        key: :ct_max_age,
-        label: "CT max age",
-        type: :integer,
-        description: "The maximum age for the Expect-CT header if sent",
-        suggestions: [2_592_000]
+        suggestions: [63_072_000]
       },
       %{
         key: :referrer_policy,
@@ -2007,6 +1972,32 @@ config :pleroma, :config_description, [
         suggestions: [
           federator_incoming: 5,
           federator_outgoing: 5
+        ]
+      },
+      %{
+        key: :timeout,
+        type: {:keyword, :integer},
+        description: "Timeout for jobs, per `Oban` queue, in ms",
+        suggestions: [
+          activity_expiration: :timer.seconds(5),
+          token_expiration: :timer.seconds(5),
+          filter_expiration: :timer.seconds(5),
+          backup: :timer.seconds(900),
+          federator_incoming: :timer.seconds(10),
+          federator_outgoing: :timer.seconds(10),
+          ingestion_queue: :timer.seconds(5),
+          web_push: :timer.seconds(5),
+          mailer: :timer.seconds(5),
+          transmogrifier: :timer.seconds(5),
+          scheduled_activities: :timer.seconds(5),
+          poll_notifications: :timer.seconds(5),
+          background: :timer.seconds(5),
+          remote_fetcher: :timer.seconds(10),
+          attachments_cleanup: :timer.seconds(900),
+          new_users_digest: :timer.seconds(10),
+          mute_expire: :timer.seconds(5),
+          search_indexing: :timer.seconds(5),
+          nodeinfo_fetcher: :timer.seconds(10)
         ]
       }
     ]
@@ -2691,6 +2682,21 @@ config :pleroma, :config_description, [
     description: "HTTP settings",
     children: [
       %{
+        key: :pool_timeout,
+        label: "HTTP Pool Request Timeout",
+        type: :integer,
+        description: "Timeout for initiating HTTP requests (in ms, default 5000)",
+        suggestions: [5000]
+      },
+      %{
+        key: :receive_timeout,
+        label: "HTTP Receive Timeout",
+        type: :integer,
+        description:
+          "Timeout for waiting on remote servers to respond to HTTP requests (in ms, default 15000)",
+        suggestions: [15000]
+      },
+      %{
         key: :proxy_url,
         label: "Proxy URL",
         type: :string,
@@ -2704,6 +2710,12 @@ config :pleroma, :config_description, [
         description:
           "What user agent to use. Must be a string or an atom `:default`. Default value is `:default`.",
         suggestions: ["Pleroma", :default]
+      },
+      %{
+        key: :pool_size,
+        type: :integer,
+        description: "Number of concurrent outbound HTTP requests to allow. Default 50.",
+        suggestions: [50]
       },
       %{
         key: :adapter,
@@ -3015,8 +3027,7 @@ config :pleroma, :config_description, [
     key: :restrict_unauthenticated,
     label: "Restrict Unauthenticated",
     type: :group,
-    description:
-      "Disallow viewing timelines, user profiles and statuses for unauthenticated users.",
+    description: "Disallow unauthenticated viewing of timelines, user profiles and statuses.",
     children: [
       %{
         key: :timelines,
@@ -3026,12 +3037,12 @@ config :pleroma, :config_description, [
           %{
             key: :local,
             type: :boolean,
-            description: "Disallow view public timeline."
+            description: "Disallow viewing the public timeline."
           },
           %{
             key: :federated,
             type: :boolean,
-            description: "Disallow view federated timeline."
+            description: "Disallow viewing the whole known network timeline."
           }
         ]
       },
@@ -3043,29 +3054,29 @@ config :pleroma, :config_description, [
           %{
             key: :local,
             type: :boolean,
-            description: "Disallow view local user profiles."
+            description: "Disallow viewing local user profiles."
           },
           %{
             key: :remote,
             type: :boolean,
-            description: "Disallow view remote user profiles."
+            description: "Disallow viewing remote user profiles."
           }
         ]
       },
       %{
         key: :activities,
         type: :map,
-        description: "Settings for statuses.",
+        description: "Settings for posts.",
         children: [
           %{
             key: :local,
             type: :boolean,
-            description: "Disallow view local statuses."
+            description: "Disallow viewing local posts."
           },
           %{
             key: :remote,
             type: :boolean,
-            description: "Disallow view remote statuses."
+            description: "Disallow viewing remote posts."
           }
         ]
       }
@@ -3094,6 +3105,19 @@ config :pleroma, :config_description, [
         key: :enabled,
         type: :boolean,
         description: "Allow/disallow displaying and getting instances favicons"
+      }
+    ]
+  },
+  %{
+    group: :pleroma,
+    key: :instances_nodeinfo,
+    type: :group,
+    description: "Control favicons for instances",
+    children: [
+      %{
+        key: :enabled,
+        type: :boolean,
+        description: "Allow/disallow getting instance nodeinfo"
       }
     ]
   },
@@ -3466,6 +3490,33 @@ config :pleroma, :config_description, [
         type: :string,
         description: "API key for libretranslate",
         suggestion: [nil]
+      }
+    ]
+  },
+  %{
+    group: :pleroma,
+    key: :argos_translate,
+    type: :group,
+    description: "ArgosTranslate Settings.",
+    children: [
+      %{
+        key: :command_argos_translate,
+        type: :string,
+        description:
+          "command for `argos-translate`. Can be the command if it's in your PATH, or the full path to the file.",
+        suggestion: ["argos-translate"]
+      },
+      %{
+        key: :command_argospm,
+        type: :string,
+        description:
+          "command for `argospm`. Can be the command if it's in your PATH, or the full path to the file.",
+        suggestion: ["argospm"]
+      },
+      %{
+        key: :strip_html,
+        type: :boolean,
+        description: "Strip html from the post before translating it."
       }
     ]
   }

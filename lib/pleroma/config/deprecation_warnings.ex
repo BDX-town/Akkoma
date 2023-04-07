@@ -25,7 +25,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
   def check_simple_policy_tuples do
     has_strings =
       Config.get([:mrf_simple])
-      |> Enum.any?(fn {_, v} -> Enum.any?(v, &is_binary/1) end)
+      |> Enum.any?(fn {_, v} -> is_list(v) and Enum.any?(v, &is_binary/1) end)
 
     if has_strings do
       Logger.warn("""
@@ -66,6 +66,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
       new_config =
         Config.get([:mrf_simple])
+        |> Enum.filter(fn {_k, v} -> not is_atom(v) end)
         |> Enum.map(fn {k, v} ->
           {k,
            Enum.map(v, fn
@@ -181,7 +182,8 @@ defmodule Pleroma.Config.DeprecationWarnings do
       check_old_chat_shoutbox(),
       check_quarantined_instances_tuples(),
       check_transparency_exclusions_tuples(),
-      check_simple_policy_tuples()
+      check_simple_policy_tuples(),
+      check_http_adapter()
     ]
     |> Enum.reduce(:ok, fn
       :ok, :ok -> :ok
@@ -207,6 +209,32 @@ defmodule Pleroma.Config.DeprecationWarnings do
       :error
     else
       :ok
+    end
+  end
+
+  def check_http_adapter do
+    http_adapter = Application.get_env(:tesla, :adapter)
+
+    case http_adapter do
+      {Tesla.Adapter.Finch, _} ->
+        :ok
+
+      Tesla.Mock ->
+        # tests do be testing
+        :ok
+
+      _anything_else ->
+        Logger.error("""
+        !!!CONFIG ERROR!!!
+        Your config is using a custom tesla adapter, this was standardised
+        to finch in 2022.06, and alternate adapters were removed in 2023.02.
+        Please ensure you either:
+        \n* do not have any custom value for `:tesla, :adapter`, or
+        \n* have `config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}`
+        (your current value is #{inspect(http_adapter)})
+        """)
+
+        :error
     end
   end
 
