@@ -423,10 +423,9 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
     test "should not return 404 if local is specified" do
       clear_config([:instance, :federated_timeline_available], false)
 
-      result =
-        build_conn()
-        |> get("/api/v1/timelines/public?local=true")
-        |> json_response_and_validate_schema(200)
+      build_conn()
+      |> get("/api/v1/timelines/public?local=true")
+      |> json_response_and_validate_schema(200)
     end
   end
 

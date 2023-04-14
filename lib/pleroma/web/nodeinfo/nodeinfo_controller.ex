@@ -5,11 +5,6 @@
 defmodule Pleroma.Web.Nodeinfo.NodeinfoController do
   use Pleroma.Web, :controller
 
-  alias Pleroma.Config
-  alias Pleroma.Stats
-  alias Pleroma.User
-  alias Pleroma.Web.Federator.Publisher
-  alias Pleroma.Web.MastodonAPI.InstanceView
   alias Pleroma.Web.Endpoint
   alias Pleroma.Web.Nodeinfo.Nodeinfo
 

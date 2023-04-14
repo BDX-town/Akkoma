@@ -120,8 +120,8 @@ defmodule Mix.Tasks.Pleroma.Diagnostics do
         params
       )
       |> limit(20)
-    
+
     Ecto.Adapters.SQL.explain(Repo, :all, query, analyze: true, timeout: :infinity)
-    |> IO.puts()    
+    |> IO.puts()
   end
 end
