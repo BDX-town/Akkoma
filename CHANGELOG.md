@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Nodeinfo keys for unauthenticated timeline visibility
 - Option to disable federated timeline
 - Option to make the bubble timeline publicly accessible
+- Ability to swap between installed standard frontends
+  - *mastodon frontends are still not counted as standard frontends due to the complexity in serving them correctly*. 
 
 ## 2023.03
 
