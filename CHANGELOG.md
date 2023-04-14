@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Added
+- Nodeinfo keys for unauthenticated timeline visibility
+- Option to disable federated timeline
+- Option to make the bubble timeline publicly accessible
+
 ## 2023.03
 
 ## Fixed
