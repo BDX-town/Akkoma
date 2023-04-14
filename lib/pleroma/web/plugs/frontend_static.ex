@@ -50,7 +50,6 @@ defmodule Pleroma.Web.Plugs.FrontendStatic do
   end
 
   def call(conn, opts) do
-    IO.inspect("OPTS: #{inspect(opts)}")
     with false <- api_route?(conn.path_info),
          false <- invalid_path?(conn.path_info),
          true <- enabled?(opts[:if]),
@@ -83,7 +82,7 @@ defmodule Pleroma.Web.Plugs.FrontendStatic do
     end
   end
 
-  def preferred_or_fallback(conn, fallback), do: fallback
+  def preferred_or_fallback(_conn, fallback), do: fallback
 
   defp enabled?(if_opt) when is_function(if_opt), do: if_opt.()
   defp enabled?(true), do: true
@@ -106,7 +105,6 @@ defmodule Pleroma.Web.Plugs.FrontendStatic do
 
   defp call_static(conn, opts, from) do
     opts = Map.put(opts, :from, from)
-    IO.inspect(opts, label: "opts")
     Plug.Static.call(conn, opts)
   end
 end
