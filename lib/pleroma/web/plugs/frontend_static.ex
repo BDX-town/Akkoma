@@ -78,7 +78,11 @@ defmodule Pleroma.Web.Plugs.FrontendStatic do
         :primary
 
       frontend ->
-        frontend
+        if Enum.member?(Pleroma.Config.get([:frontends, :pickable], []), frontend) do
+          frontend
+        else
+          :primary
+        end
     end
   end
 
