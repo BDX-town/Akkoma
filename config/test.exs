@@ -23,8 +23,7 @@ config :pleroma, :auth, oauth_consumer_strategies: []
 
 config :pleroma, Pleroma.Upload,
   filters: [],
-  link_name: false,
-  default_description: :filename
+  link_name: false
 
 config :pleroma, Pleroma.Uploaders.Local, uploads: "test/uploads"
 
