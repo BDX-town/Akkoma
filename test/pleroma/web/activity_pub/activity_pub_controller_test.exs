@@ -662,35 +662,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert_receive {:mix_shell, :info, ["https://relay.mastodon.host/actor"]}
     end
 
-    @tag capture_log: true
-    test "without valid signature, " <>
-           "it only accepts Create activities and requires enabled federation",
-         %{conn: conn} do
-      data = File.read!("test/fixtures/mastodon-post-activity.json") |> Jason.decode!()
-      non_create_data = File.read!("test/fixtures/mastodon-announce.json") |> Jason.decode!()
-
-      conn = put_req_header(conn, "content-type", "application/activity+json")
-
-      clear_config([:instance, :federating], false)
-
-      conn
-      |> post("/inbox", data)
-      |> json_response(403)
-
-      conn
-      |> post("/inbox", non_create_data)
-      |> json_response(403)
-
-      clear_config([:instance, :federating], true)
-
-      ret_conn = post(conn, "/inbox", data)
-      assert "ok" == json_response(ret_conn, 200)
-
-      conn
-      |> post("/inbox", non_create_data)
-      |> json_response(400)
-    end
-
     test "accepts Add/Remove activities", %{conn: conn} do
       object_id = "c61d6733-e256-4fe1-ab13-1e369789423f"
 

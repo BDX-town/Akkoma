@@ -969,6 +969,12 @@ config :pleroma, :config_description, [
         key: :export_prometheus_metrics,
         type: :boolean,
         description: "Enable prometheus metrics (at /api/v1/akkoma/metrics)"
+      },
+      %{
+        key: :federated_timeline_available,
+        type: :boolean,
+        description:
+          "Let people view the 'firehose' feed of all public statuses from all instances."
       }
     ]
   },
@@ -2993,6 +2999,11 @@ config :pleroma, :config_description, [
             key: :federated,
             type: :boolean,
             description: "Disallow viewing the whole known network timeline."
+          },
+          %{
+            key: :bubble,
+            type: :boolean,
+            description: "Disallow viewing the bubble timeline."
           }
         ]
       },
@@ -3148,6 +3159,12 @@ config :pleroma, :config_description, [
         description:
           "A map containing available frontends and parameters for their installation.",
         children: frontend_options
+      },
+      %{
+        key: :pickable,
+        type: {:list, :string},
+        description:
+          "A list containing all frontends users can pick as their preference, format is :name/:ref, e.g pleroma-fe/stable."
       }
     ]
   },

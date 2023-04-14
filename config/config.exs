@@ -65,7 +65,6 @@ config :pleroma, Pleroma.Upload,
   link_name: false,
   proxy_remote: false,
   filename_display_max_length: 30,
-  default_description: nil,
   base_url: nil
 
 config :pleroma, Pleroma.Uploaders.Local, uploads: "uploads"
@@ -261,7 +260,8 @@ config :pleroma, :instance,
   privileged_staff: false,
   local_bubble: [],
   max_frontend_settings_json_chars: 100_000,
-  export_prometheus_metrics: true
+  export_prometheus_metrics: true,
+  federated_timeline_available: true
 
 config :pleroma, :welcome,
   direct_message: [
@@ -745,6 +745,9 @@ config :pleroma, :frontends,
   primary: %{"name" => "pleroma-fe", "ref" => "stable"},
   admin: %{"name" => "admin-fe", "ref" => "stable"},
   mastodon: %{"name" => "mastodon-fe", "ref" => "akkoma"},
+  pickable: [
+    "pleroma-fe/stable"
+  ],
   swagger: %{
     "name" => "swagger-ui",
     "ref" => "stable",
@@ -810,7 +813,7 @@ config :pleroma, :majic_pool, size: 2
 private_instance? = :if_instance_is_private
 
 config :pleroma, :restrict_unauthenticated,
-  timelines: %{local: private_instance?, federated: private_instance?},
+  timelines: %{local: private_instance?, federated: private_instance?, bubble: true},
   profiles: %{local: private_instance?, remote: private_instance?},
   activities: %{local: private_instance?, remote: private_instance?}
 

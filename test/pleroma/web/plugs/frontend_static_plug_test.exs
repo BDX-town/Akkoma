@@ -83,6 +83,7 @@ defmodule Pleroma.Web.Plugs.FrontendStaticPlugTest do
       "main",
       "ostatus_subscribe",
       "oauth",
+      "akkoma",
       "objects",
       "activities",
       "notice",

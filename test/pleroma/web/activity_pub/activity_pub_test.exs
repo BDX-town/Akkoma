@@ -1303,31 +1303,17 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
       %{test_file: test_file}
     end
 
+    test "strips / from filename", %{test_file: file} do
+      file = %Plug.Upload{file | filename: "../../../../../nested/bad.jpg"}
+      {:ok, %Object{} = object} = ActivityPub.upload(file)
+      [%{"href" => href}] = object.data["url"]
+      assert Regex.match?(~r"/bad.jpg$", href)
+      refute Regex.match?(~r"/nested/", href)
+    end
+
     test "sets a description if given", %{test_file: file} do
       {:ok, %Object{} = object} = ActivityPub.upload(file, description: "a cool file")
       assert object.data["name"] == "a cool file"
-    end
-
-    test "it sets the default description depending on the configuration", %{test_file: file} do
-      clear_config([Pleroma.Upload, :default_description])
-
-      clear_config([Pleroma.Upload, :default_description], nil)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == ""
-
-      clear_config([Pleroma.Upload, :default_description], :filename)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "an_image.jpg"
-
-      clear_config([Pleroma.Upload, :default_description], "unnamed attachment")
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "unnamed attachment"
-    end
-
-    test "copies the file to the configured folder", %{test_file: file} do
-      clear_config([Pleroma.Upload, :default_description], :filename)
-      {:ok, %Object{} = object} = ActivityPub.upload(file)
-      assert object.data["name"] == "an_image.jpg"
     end
 
     test "works with base64 encoded images" do

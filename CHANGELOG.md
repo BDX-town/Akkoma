@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2023.04
+
+## Added
+- Nodeinfo keys for unauthenticated timeline visibility
+- Option to disable federated timeline
+- Option to make the bubble timeline publicly accessible
+- Ability to swap between installed standard frontends
+  - *mastodon frontends are still not counted as standard frontends due to the complexity in serving them correctly*. 
+
+### Upgrade Notes
+- Elixir 1.14 is now required. If your distribution does not package this, you can
+  use [asdf](https://asdf-vm.com/). At time of writing, elixir 1.14.3 / erlang 25.3
+  is confirmed to work.
+
 ## 2023.03
 
 ## Fixed
@@ -19,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 - Possibility of using the `style` parameter on `span` elements. This will break certain MFM parameters.
+- Option for "default" image description.
 
 ## 2023.02
 
