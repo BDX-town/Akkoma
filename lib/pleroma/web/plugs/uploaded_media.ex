@@ -37,7 +37,7 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
         %{query_params: %{"name" => name}} = conn ->
           name = escape_header_value(name)
 
-          put_resp_header(conn, "content-disposition", "filename=\"#{name}\"")
+          put_resp_header(conn, "content-disposition", "inline; filename=\"#{name}\"")
 
         conn ->
           conn
