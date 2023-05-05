@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Added
+
+## Fixed
+
+## Changed
+- Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
+
 ## 2025.01.01
 
 Hotfix: Federation could break if a null value found its way into `should_federate?\1`

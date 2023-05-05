@@ -1626,7 +1626,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     %{
       ap_id: data["id"],
       uri: get_actor_url(data["url"]),
-      ap_enabled: true,
       banner: normalize_image(data["image"]),
       background: normalize_image(data["backgroundUrl"]),
       fields: fields,
@@ -1743,7 +1742,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     end
   end
 
-  def fetch_and_prepare_user_from_ap_id(ap_id, additional \\ []) do
+  defp fetch_and_prepare_user_from_ap_id(ap_id, additional) do
     with {:ok, data} <- Fetcher.fetch_and_contain_remote_object_from_id(ap_id),
          {:valid, {:ok, _, _}} <- {:valid, UserValidator.validate(data, [])},
          {:ok, data} <- user_data_from_user_object(data, additional) do
@@ -1857,31 +1856,27 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   def make_user_from_ap_id(ap_id, additional \\ []) do
     user = User.get_cached_by_ap_id(ap_id)
 
-    if user && !User.ap_enabled?(user) do
-      Transmogrifier.upgrade_user_from_ap_id(ap_id)
-    else
-      with {:ok, data} <- fetch_and_prepare_user_from_ap_id(ap_id, additional) do
-        user =
-          if data.ap_id != ap_id do
-            User.get_cached_by_ap_id(data.ap_id)
-          else
-            user
-          end
-
-        if user do
-          user
-          |> User.remote_user_changeset(data)
-          |> User.update_and_set_cache()
-          |> tap(fn _ -> enqueue_pin_fetches(data) end)
+    with {:ok, data} <- fetch_and_prepare_user_from_ap_id(ap_id, additional) do
+      user =
+        if data.ap_id != ap_id do
+          User.get_cached_by_ap_id(data.ap_id)
         else
-          maybe_handle_clashing_nickname(data)
-
-          data
-          |> User.remote_user_changeset()
-          |> Repo.insert()
-          |> User.set_cache()
-          |> tap(fn _ -> enqueue_pin_fetches(data) end)
+          user
         end
+
+      if user do
+        user
+        |> User.remote_user_changeset(data)
+        |> User.update_and_set_cache()
+        |> tap(fn _ -> enqueue_pin_fetches(data) end)
+      else
+        maybe_handle_clashing_nickname(data)
+
+        data
+        |> User.remote_user_changeset()
+        |> Repo.insert()
+        |> User.set_cache()
+        |> tap(fn _ -> enqueue_pin_fetches(data) end)
       end
     end
   end

@@ -579,7 +579,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       user =
         insert(:user,
           ap_id: "https://mastodon.example.org/users/raymoo",
-          ap_enabled: true,
           local: false,
           last_refreshed_at: nil
         )
