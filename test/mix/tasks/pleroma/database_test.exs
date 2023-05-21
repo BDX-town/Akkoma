@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity
+  alias Pleroma.Bookmark
   alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
@@ -85,6 +86,29 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(Repo.all(Object)) == 1
       refute Object.get_by_id(note_remote_public_id)
       refute Object.get_by_id(note_remote_non_public_id)
+    end
+
+    test "it cleans up bookmarks", %{old_insert_date: old_insert_date} do
+      user = insert(:user)
+      {:ok, old_object_activity} = CommonAPI.post(user, %{status: "yadayada"})
+
+      Repo.one(Object)
+      |> Ecto.Changeset.change(%{updated_at: old_insert_date})
+      |> Repo.update!()
+
+      {:ok, new_object_activity} = CommonAPI.post(user, %{status: "yadayada"})
+
+      {:ok, _} = Bookmark.create(user.id, old_object_activity.id)
+      {:ok, _} = Bookmark.create(user.id, new_object_activity.id)
+
+      assert length(Repo.all(Object)) == 2
+      assert length(Repo.all(Bookmark)) == 2
+
+      Mix.Tasks.Pleroma.Database.run(["prune_objects"])
+
+      assert length(Repo.all(Object)) == 1
+      assert length(Repo.all(Bookmark)) == 1
+      refute Bookmark.get(user.id, old_object_activity.id)
     end
 
     test "with the --keep-non-public option it still keeps non-public posts even if they are not local",
