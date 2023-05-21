@@ -45,21 +45,25 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
   end
 
   describe "prune_objects" do
-    test "it prunes old objects from the database" do
+    setup do
       deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
 
-      date =
+      old_insert_date =
         Timex.now()
         |> Timex.shift(days: -deadline)
         |> Timex.to_naive_datetime()
         |> NaiveDateTime.truncate(:second)
 
+      %{old_insert_date: old_insert_date}
+    end
+
+    test "it prunes old objects from the database", %{old_insert_date: old_insert_date} do
       insert(:note)
 
       %{id: note_remote_public_id} =
         :note
         |> insert()
-        |> Ecto.Changeset.change(%{updated_at: date})
+        |> Ecto.Changeset.change(%{updated_at: old_insert_date})
         |> Repo.update!()
 
       note_remote_non_public =
@@ -69,7 +73,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
 
       note_remote_non_public
       |> Ecto.Changeset.change(%{
-        updated_at: date,
+        updated_at: old_insert_date,
         data: note_remote_non_public_data |> update_in(["to"], fn _ -> [] end)
       })
       |> Repo.update!()
@@ -83,21 +87,14 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       refute Object.get_by_id(note_remote_non_public_id)
     end
 
-    test "with the --keep-non-public option it still keeps non-public posts even if they are not local" do
-      deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
-
-      date =
-        Timex.now()
-        |> Timex.shift(days: -deadline)
-        |> Timex.to_naive_datetime()
-        |> NaiveDateTime.truncate(:second)
-
+    test "with the --keep-non-public option it still keeps non-public posts even if they are not local",
+         %{old_insert_date: old_insert_date} do
       insert(:note)
 
       %{id: note_remote_id} =
         :note
         |> insert()
-        |> Ecto.Changeset.change(%{updated_at: date})
+        |> Ecto.Changeset.change(%{updated_at: old_insert_date})
         |> Repo.update!()
 
       note_remote_non_public =
@@ -107,7 +104,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
 
       note_remote_non_public
       |> Ecto.Changeset.change(%{
-        updated_at: date,
+        updated_at: old_insert_date,
         data: note_remote_non_public_data |> update_in(["to"], fn _ -> [] end)
       })
       |> Repo.update!()
@@ -120,16 +117,10 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       refute Object.get_by_id(note_remote_id)
     end
 
-    test "with the --keep-threads and --keep-non-public option it keeps old threads with non-public replies even if the interaction is not local" do
+    test "with the --keep-threads and --keep-non-public option it keeps old threads with non-public replies even if the interaction is not local",
+         %{old_insert_date: old_insert_date} do
       # For non-public we only check Create Activities because only these are relevant for threads
       # Flags are always non-public, Announces from relays can be non-public...
-      deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
-
-      old_insert_date =
-        Timex.now()
-        |> Timex.shift(days: -deadline)
-        |> Timex.to_naive_datetime()
-        |> NaiveDateTime.truncate(:second)
 
       remote_user1 = insert(:user, local: false)
       remote_user2 = insert(:user, local: false)
@@ -212,15 +203,9 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(Repo.all(Object)) == 2
     end
 
-    test "with the --keep-threads option it deletes old threads with no local interaction" do
-      deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
-
-      old_insert_date =
-        Timex.now()
-        |> Timex.shift(days: -deadline)
-        |> Timex.to_naive_datetime()
-        |> NaiveDateTime.truncate(:second)
-
+    test "with the --keep-threads option it deletes old threads with no local interaction", %{
+      old_insert_date: old_insert_date
+    } do
       remote_user = insert(:user, local: false)
       remote_user2 = insert(:user, local: false)
 
@@ -261,15 +246,9 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(Repo.all(Object)) == 0
     end
 
-    test "with the --keep-threads option it keeps old threads with local interaction" do
-      deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
-
-      old_insert_date =
-        Timex.now()
-        |> Timex.shift(days: -deadline)
-        |> Timex.to_naive_datetime()
-        |> NaiveDateTime.truncate(:second)
-
+    test "with the --keep-threads option it keeps old threads with local interaction", %{
+      old_insert_date: old_insert_date
+    } do
       remote_user = insert(:user, local: false)
       local_user = insert(:user, local: true)
 
@@ -326,15 +305,9 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(Repo.all(Object)) == 4
     end
 
-    test "with the --keep-threads option it keeps old threads with bookmarked posts" do
-      deadline = Pleroma.Config.get([:instance, :remote_post_retention_days]) + 1
-
-      old_insert_date =
-        Timex.now()
-        |> Timex.shift(days: -deadline)
-        |> Timex.to_naive_datetime()
-        |> NaiveDateTime.truncate(:second)
-
+    test "with the --keep-threads option it keeps old threads with bookmarked posts", %{
+      old_insert_date: old_insert_date
+    } do
       remote_user = insert(:user, local: false)
       local_user = insert(:user, local: true)
 
