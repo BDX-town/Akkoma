@@ -39,9 +39,9 @@ defmodule Pleroma.Akkoma.Translators.LibreTranslate do
       detected =
         if Map.has_key?(body, "detectedLanguage") do
           get_in(body, ["detectedLanguage", "language"])
-        else
-          from_language
-        end
+	else
+          from_language || ""
+	end
 
       {:ok, detected, translated}
     else
