@@ -708,6 +708,17 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
           nullable: true,
           description:
             "Number of days after which statuses will be deleted. Set to -1 to disable."
+        },
+        accepts_direct_messages_from_followed: %Schema{
+          type: :boolean,
+          nullable: true,
+          description:
+            "Whether to accept DMs from people you follow (will be overridden by accepts_direct_messages_from_not_followed if true)"
+        },
+        accepts_direct_messages_from_not_followed: %Schema{
+          type: :boolean,
+          nullable: true,
+          description: "Whether to accept DMs from everyone"
         }
       },
       example: %{

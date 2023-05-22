@@ -2756,4 +2756,36 @@ defmodule Pleroma.UserTest do
       assert user.followed_hashtags |> Enum.count() == 0
     end
   end
+
+  describe "accepts_direct_messages?/2" do
+    test "should return true if the recipient follows the sender and has turned on 'accept from follows'" do
+      recipient =
+        insert(:user, %{
+          accepts_direct_messages_from_followed: true,
+          accepts_direct_messages_from_not_followed: false
+        })
+
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
+
+      CommonAPI.follow(recipient, sender)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return true if the recipient has 'accept from everyone' on" do
+      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: true})
+      sender = insert(:user)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return false if the receipient has 'accept from everyone' off" do
+      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: false})
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
+    end
+  end
 end

@@ -146,8 +146,7 @@ defmodule Pleroma.Akkoma.Translators.LibreTranslateTest do
           }
       end)
 
-      assert {:ok, "", "I will crush you"} =
-               LibreTranslate.translate("ギュギュ握りつぶしちゃうぞ", nil, "en")
+      assert {:ok, "", "I will crush you"} = LibreTranslate.translate("ギュギュ握りつぶしちゃうぞ", nil, "en")
     end
   end
 end

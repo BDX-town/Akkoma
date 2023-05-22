@@ -158,6 +158,8 @@ defmodule Pleroma.User do
     field(:last_status_at, :naive_datetime)
     field(:language, :string)
     field(:status_ttl_days, :integer, default: nil)
+    field(:accepts_direct_messages_from_followed, :boolean)
+    field(:accepts_direct_messages_from_not_followed, :boolean)
 
     embeds_one(
       :notification_settings,
@@ -2721,5 +2723,18 @@ defmodule Pleroma.User do
 
   def following_hashtag?(%User{} = user, %Hashtag{} = hashtag) do
     not is_nil(HashtagFollow.get(user, hashtag))
+  end
+
+  def accepts_direct_messages?(%User{} = receiver, %User{} = sender) do
+    cond do
+      User.following?(receiver, sender) && receiver.accepts_direct_messages_from_followed == true ->
+        true
+
+      receiver.accepts_direct_messages_from_not_followed == true ->
+        true
+
+      true ->
+        false
+    end
   end
 end
