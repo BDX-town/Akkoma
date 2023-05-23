@@ -2,7 +2,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
   @behaviour Pleroma.Web.ActivityPub.MRF.Policy
 
   alias Pleroma.User
-  alias Pleroma.Web.ActivityPub.Visibility
+  require Pleroma.Constants
 
   @moduledoc """
   Removes entries from the "To" field from direct messages if the user has requested to not
@@ -13,15 +13,19 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
   def filter(
         %{
           "type" => "Create",
-          "actor" => actor
+          "actor" => actor,
+          "object" => %{
+            "type" => "Note"
+          }
         } = activity
       ) do
-    with true <- Visibility.is_direct?(%{data: activity}),
-         recipients <- Map.get(activity, "to"),
+    with recipients <- Map.get(activity, "to", []),
+         cc <- Map.get(activity, "cc", []),
+         true <- is_direct?(recipients, cc),
          sender <- User.get_cached_by_ap_id(actor) do
       new_to =
         Enum.filter(recipients, fn recv ->
-          should_filter?(sender, recv)
+          should_include?(sender, recv)
         end)
 
       {:ok,
@@ -40,11 +44,11 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
   @impl true
   def describe, do: {:ok, %{}}
 
-  defp should_filter?(sender, receiver_ap_id) do
+  defp should_include?(sender, receiver_ap_id) do
     with %User{local: true} = receiver <- User.get_cached_by_ap_id(receiver_ap_id) do
       User.accepts_direct_messages?(receiver, sender)
     else
-      _ -> false
+      _ -> true
     end
   end
 
@@ -53,4 +57,9 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
   end
 
   defp maybe_replace_object_to(other, _), do: other
+
+  defp is_direct?(to, cc) do
+    !(Enum.member?(to, Pleroma.Constants.as_public()) ||
+        Enum.member?(cc, Pleroma.Constants.as_public()))
+  end
 end

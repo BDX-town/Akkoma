@@ -16,10 +16,15 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicyTest do
         "actor" => sender.ap_id,
         "to" => [recipient.ap_id],
         "cc" => [],
-        "type" => "Create"
+        "type" => "Create",
+        "object" => %{
+          "type" => "Note",
+          "to" => [recipient.ap_id]
+        }
       }
 
-      assert {:ok, %{"to" => []}} = DirectMessageDisabledPolicy.filter(message)
+      assert {:ok, %{"to" => [], "object" => %{"to" => []}}} =
+               DirectMessageDisabledPolicy.filter(message)
     end
 
     test "when the user does not deny the direct message" do
@@ -32,11 +37,16 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicyTest do
         "actor" => sender.ap_id,
         "to" => [recipient.ap_id],
         "cc" => [],
-        "type" => "Create"
+        "type" => "Create",
+        "object" => %{
+          "type" => "Note",
+          "to" => [recipient.ap_id]
+        }
       }
 
       assert {:ok, message} = DirectMessageDisabledPolicy.filter(message)
       assert message["to"] == [recipient.ap_id]
+      assert message["object"]["to"] == [recipient.ap_id]
     end
   end
 end
