@@ -354,6 +354,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
     |> Kernel.put_in([:source, :privacy], user.default_scope)
     |> Kernel.put_in([:source, :pleroma, :show_role], user.show_role)
     |> Kernel.put_in([:source, :pleroma, :no_rich_text], user.no_rich_text)
+    |> Kernel.put_in([:accepts_direct_messages_from], user.accepts_direct_messages_from)
   end
 
   defp maybe_put_settings(data, _, _, _), do: data
