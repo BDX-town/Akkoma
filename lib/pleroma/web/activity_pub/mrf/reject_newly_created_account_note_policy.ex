@@ -16,9 +16,9 @@ defmodule Pleroma.Web.ActivityPub.MRF.RejectNewlyCreatedAccountNotesPolicy do
       when type in ["Note", "Create"] do
     min_age = Pleroma.Config.get([:mrf_reject_newly_created_account_notes, :age])
 
-    with %User{} = user <- Pleroma.User.get_cached_by_ap_id(actor),
+    with %User{local: false} = user <- Pleroma.User.get_cached_by_ap_id(actor),
          true <- Timex.diff(Timex.now(), user.inserted_at, :seconds) < min_age do
-      {:reject, "Account created too recently"}
+      {:reject, "[RejectNewlyCreatedAccountNotesPolicy] Account created too recently"}
     else
       _ -> {:ok, activity}
     end

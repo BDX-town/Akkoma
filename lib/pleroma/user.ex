@@ -160,7 +160,8 @@ defmodule Pleroma.User do
     field(:status_ttl_days, :integer, default: nil)
 
     field(:accepts_direct_messages_from, Ecto.Enum,
-      values: [:everybody, :people_i_follow, :nobody]
+      values: [:everybody, :people_i_follow, :nobody],
+      default: :everybody
     )
 
     embeds_one(

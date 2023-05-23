@@ -717,8 +717,7 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
             "people_i_follow"
           ],
           nullable: true,
-          description:
-            "Who to accept DMs from"
+          description: "Who to accept DMs from"
         }
       },
       example: %{

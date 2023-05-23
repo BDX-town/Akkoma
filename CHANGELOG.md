@@ -6,8 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Added
+- Custom options for users to accept/reject private messages
+  - options: everybody, nobody, people\_i\_follow
+- MRF to reject notes from accounts newer than a given age
+  - this will have the side-effect of rejecting legitimate messages if your
+    post gets boosted outside of your local bubble and people your instance
+    does not know about reply to it.
+
 ## Fixed
 - Support for `streams` public key URIs
+- Bookmarks are cleaned up on DB prune now
 
 ## 2023.04
 

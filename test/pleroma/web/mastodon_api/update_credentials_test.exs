@@ -735,7 +735,9 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
     test "changing to :everybody", %{conn: conn} do
       account =
         conn
-        |> patch("/api/v1/accounts/update_credentials", %{accepts_direct_messages_from: "everybody"})
+        |> patch("/api/v1/accounts/update_credentials", %{
+          accepts_direct_messages_from: "everybody"
+        })
         |> json_response_and_validate_schema(200)
 
       assert account["accepts_direct_messages_from"]
@@ -757,17 +759,23 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
     test "changing to :people_i_follow", %{conn: conn} do
       account =
         conn
-        |> patch("/api/v1/accounts/update_credentials", %{accepts_direct_messages_from: "people_i_follow"})
+        |> patch("/api/v1/accounts/update_credentials", %{
+          accepts_direct_messages_from: "people_i_follow"
+        })
         |> json_response_and_validate_schema(200)
 
       assert account["accepts_direct_messages_from"]
       assert account["accepts_direct_messages_from"] == "people_i_follow"
-      assert Pleroma.User.get_by_ap_id(account["url"]).accepts_direct_messages_from == :people_i_follow
+
+      assert Pleroma.User.get_by_ap_id(account["url"]).accepts_direct_messages_from ==
+               :people_i_follow
     end
 
     test "changing to an unsupported value", %{conn: conn} do
       conn
-      |> patch("/api/v1/accounts/update_credentials", %{accepts_direct_messages_from: "unsupported"})
+      |> patch("/api/v1/accounts/update_credentials", %{
+        accepts_direct_messages_from: "unsupported"
+      })
       |> json_response(400)
     end
   end

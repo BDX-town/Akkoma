@@ -316,7 +316,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with non-array to field" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("to", "https://www.w3.org/ns/activitystreams#Public")
         |> put_in(["object", "to"], "https://www.w3.org/ns/activitystreams#Public")
 
@@ -333,7 +333,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with non-array cc field" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("cc", "http://mastodon.example.org/users/admin/followers")
         |> put_in(["object", "cc"], "http://mastodon.example.org/users/admin/followers")
 
@@ -346,7 +346,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with weirdness in address fields" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("cc", ["http://mastodon.example.org/users/admin/followers", ["¿"]])
         |> put_in(["object", "cc"], ["http://mastodon.example.org/users/admin/followers", ["¿"]])
 
@@ -412,7 +412,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
 
       activity =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Kernel.put_in(["object", "replies"], replies)
 
       %{activity: activity}

@@ -8,7 +8,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicyTest do
   describe "strips recipients" do
     test "when the user denies the direct message" do
       sender = insert(:user)
-      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: false})
+      recipient = insert(:user, %{accepts_direct_messages_from: :nobody})
 
       refute User.accepts_direct_messages?(recipient, sender)
 
@@ -16,15 +16,15 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicyTest do
         "actor" => sender.ap_id,
         "to" => [recipient.ap_id],
         "cc" => [],
-        "type" => "Note"
+        "type" => "Create"
       }
 
-      assert {:ok, %{to: []}} = DirectMessageDisabledPolicy.filter(message)
+      assert {:ok, %{"to" => []}} = DirectMessageDisabledPolicy.filter(message)
     end
 
     test "when the user does not deny the direct message" do
       sender = insert(:user)
-      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: true})
+      recipient = insert(:user, %{accepts_direct_messages_from: :everybody})
 
       assert User.accepts_direct_messages?(recipient, sender)
 
@@ -32,11 +32,11 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicyTest do
         "actor" => sender.ap_id,
         "to" => [recipient.ap_id],
         "cc" => [],
-        "type" => "Note"
+        "type" => "Create"
       }
 
       assert {:ok, message} = DirectMessageDisabledPolicy.filter(message)
-      assert message.to == [recipient.ap_id]
+      assert message["to"] == [recipient.ap_id]
     end
   end
 end

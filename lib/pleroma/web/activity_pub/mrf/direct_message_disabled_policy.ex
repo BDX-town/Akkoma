@@ -12,7 +12,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
   @impl true
   def filter(
         %{
-          "type" => "Note",
+          "type" => "Create",
           "actor" => actor
         } = activity
       ) do
@@ -24,9 +24,13 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
           should_filter?(sender, recv)
         end)
 
-      {:ok, Map.put(activity, :to, new_to)}
+      {:ok,
+       activity
+       |> Map.put("to", new_to)
+       |> maybe_replace_object_to(new_to)}
     else
-      _ -> {:ok, activity}
+      _ ->
+        {:ok, activity}
     end
   end
 
@@ -43,4 +47,10 @@ defmodule Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy do
       _ -> false
     end
   end
+
+  defp maybe_replace_object_to(%{"object" => %{"to" => _}} = activity, to) do
+    Kernel.put_in(activity, ["object", "to"], to)
+  end
+
+  defp maybe_replace_object_to(other, _), do: other
 end
