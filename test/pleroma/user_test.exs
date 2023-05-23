@@ -2758,11 +2758,10 @@ defmodule Pleroma.UserTest do
   end
 
   describe "accepts_direct_messages?/2" do
-    test "should return true if the recipient follows the sender and has turned on 'accept from follows'" do
+    test "should return true if the recipient follows the sender and has set accept to :people_i_follow" do
       recipient =
         insert(:user, %{
-          accepts_direct_messages_from_followed: true,
-          accepts_direct_messages_from_not_followed: false
+          accepts_direct_messages_from: :people_i_follow
         })
 
       sender = insert(:user)
@@ -2774,15 +2773,15 @@ defmodule Pleroma.UserTest do
       assert User.accepts_direct_messages?(recipient, sender)
     end
 
-    test "should return true if the recipient has 'accept from everyone' on" do
-      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: true})
+    test "should return true if the recipient has set accept to :everyone" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :everybody})
       sender = insert(:user)
 
       assert User.accepts_direct_messages?(recipient, sender)
     end
 
-    test "should return false if the receipient has 'accept from everyone' off" do
-      recipient = insert(:user, %{accepts_direct_messages_from_not_followed: false})
+    test "should return false if the receipient set accept to :nobody" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :nobody})
       sender = insert(:user)
 
       refute User.accepts_direct_messages?(recipient, sender)

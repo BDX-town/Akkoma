@@ -191,7 +191,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
         :show_role,
         :skip_thread_containment,
         :allow_following_move,
-        :also_known_as
+        :also_known_as,
       ]
       |> Enum.reduce(%{}, fn key, acc ->
         Maps.put_if_present(acc, key, params[key], &{:ok, Params.truthy_param?(&1)})
@@ -221,6 +221,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       |> Maps.put_if_present(:is_discoverable, params[:discoverable])
       |> Maps.put_if_present(:language, Pleroma.Web.Gettext.normalize_locale(params[:language]))
       |> Maps.put_if_present(:status_ttl_days, params[:status_ttl_days], status_ttl_days_value)
+      |> Maps.put_if_present(:accepts_direct_messages_from, params[:accepts_direct_messages_from])
 
     # What happens here:
     #

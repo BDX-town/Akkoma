@@ -158,8 +158,10 @@ defmodule Pleroma.User do
     field(:last_status_at, :naive_datetime)
     field(:language, :string)
     field(:status_ttl_days, :integer, default: nil)
-    field(:accepts_direct_messages_from_followed, :boolean)
-    field(:accepts_direct_messages_from_not_followed, :boolean)
+
+    field(:accepts_direct_messages_from, Ecto.Enum,
+      values: [:everybody, :people_i_follow, :nobody]
+    )
 
     embeds_one(
       :notification_settings,
@@ -538,7 +540,8 @@ defmodule Pleroma.User do
         :is_discoverable,
         :actor_type,
         :disclose_client,
-        :status_ttl_days
+        :status_ttl_days,
+        :accepts_direct_messages_from
       ]
     )
     |> unique_constraint(:nickname)
@@ -2725,16 +2728,15 @@ defmodule Pleroma.User do
     not is_nil(HashtagFollow.get(user, hashtag))
   end
 
-  def accepts_direct_messages?(%User{} = receiver, %User{} = sender) do
-    cond do
-      User.following?(receiver, sender) && receiver.accepts_direct_messages_from_followed == true ->
-        true
-
-      receiver.accepts_direct_messages_from_not_followed == true ->
-        true
-
-      true ->
-        false
-    end
+  def accepts_direct_messages?(
+        %User{accepts_direct_messages_from: :people_i_follow} = receiver,
+        %User{} = sender
+      ) do
+    User.following?(receiver, sender)
   end
+
+  def accepts_direct_messages?(%User{accepts_direct_messages_from: :everybody}, _), do: true
+
+  def accepts_direct_messages?(%User{accepts_direct_messages_from: :nobody}, _),
+    do: false
 end

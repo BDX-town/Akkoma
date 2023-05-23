@@ -12,7 +12,8 @@ defmodule Pleroma.Web.ActivityPub.MRF.RejectNewlyCreatedAccountNotesPolicy do
           "type" => type,
           "actor" => actor
         } = activity
-      ) when type in ["Note", "Create"] do
+      )
+      when type in ["Note", "Create"] do
     min_age = Pleroma.Config.get([:mrf_reject_newly_created_account_notes, :age])
 
     with %User{} = user <- Pleroma.User.get_cached_by_ap_id(actor),
