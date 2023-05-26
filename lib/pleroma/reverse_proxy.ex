@@ -251,6 +251,7 @@ defmodule Pleroma.ReverseProxy do
     |> Enum.filter(fn {k, _} -> k in @keep_resp_headers end)
     |> build_resp_cache_headers(opts)
     |> build_resp_content_disposition_header(opts)
+    |> build_csp_headers()
     |> Keyword.merge(Keyword.get(opts, :resp_headers, []))
   end
 
@@ -314,6 +315,10 @@ defmodule Pleroma.ReverseProxy do
     else
       headers
     end
+  end
+
+  defp build_csp_headers(headers) do
+    List.keystore(headers, "content-security-policy", 0, {"content-security-policy", "sandbox"})
   end
 
   defp header_length_constraint(headers, limit) when is_integer(limit) and limit > 0 do
