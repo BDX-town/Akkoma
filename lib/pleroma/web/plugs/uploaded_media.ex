@@ -42,7 +42,7 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
         conn ->
           conn
       end
-      |> merge_resp_headers([{"content-security-policy", "script-src none"}])
+      |> merge_resp_headers([{"content-security-policy", "sandbox"}])
 
     config = Pleroma.Config.get(Pleroma.Upload)
 
