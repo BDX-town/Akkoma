@@ -615,6 +615,12 @@ This filter only strips the GPS and location metadata with Exiftool leaving colo
 
 No specific configuration.
 
+#### Pleroma.Upload.Filter.OnlyMedia
+
+This filter rejects uploads that are not identified with Content-Type matching audio/\*, image/\*, or video/\*
+
+No specific configuration.
+
 #### Pleroma.Upload.Filter.Mogrify
 
 * `args`: List of actions for the `mogrify` command like `"strip"` or `["strip", "auto-orient", {"implode", "1"}]`.
