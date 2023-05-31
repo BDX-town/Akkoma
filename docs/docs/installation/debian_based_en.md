@@ -60,6 +60,11 @@ Add the following lines to `~/.bashrc`:
 . "$HOME/.asdf/completions/asdf.bash"
 ```
 
+Restart the shell:
+```shell
+exec $SHELL
+```
+
 Next install Erlang:
 ```shell
 asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
