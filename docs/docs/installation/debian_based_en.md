@@ -77,7 +77,7 @@ Now install Elixir:
 ```shell
 asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
 asdf install elixir 1.14.5-otp-25
-asdf global elxir 1.14.5-otp-25
+asdf global elixir 1.14.5-otp-25
 ```
 
 Confirm that Elixir is installed correctly by checking the version:
