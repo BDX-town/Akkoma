@@ -45,7 +45,7 @@ Otherwise use [asdf](https://github.com/asdf-vm/asdf) to install the latest vers
 
 First, install some dependencies needed to build Elixir and Erlang:
 ```shell
-sudo apt install curl unzip build-essential autoconf m4 libncurses5-dev libssh-dev unixodbc-dev xsltproc fop libxml2-utils libncurses-dev
+sudo apt install curl unzip build-essential autoconf m4 libncurses5-dev libssh-dev unixodbc-dev xsltproc libxml2-utils libncurses-dev
 ```
 
 Then login to the `akkoma` user and install asdf:
