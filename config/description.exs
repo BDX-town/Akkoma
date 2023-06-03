@@ -1013,6 +1013,35 @@ config :pleroma, :config_description, [
         ]
       },
       %{
+        key: :chat_message,
+        type: :keyword,
+        descpiption: "Chat message settings",
+        children: [
+          %{
+            key: :enabled,
+            type: :boolean,
+            description: "Enables sending a chat message to newly registered users"
+          },
+          %{
+            key: :message,
+            type: :string,
+            description:
+              "A message that will be sent to newly registered users as a chat message",
+            suggestions: [
+              "Hello, welcome on board!"
+            ]
+          },
+          %{
+            key: :sender_nickname,
+            type: :string,
+            description: "The nickname of the local user that sends a welcome chat message",
+            suggestions: [
+              "lain"
+            ]
+          }
+        ]
+      },
+      %{
         key: :email,
         type: :keyword,
         descpiption: "Email message settings",
@@ -2626,6 +2655,27 @@ config :pleroma, :config_description, [
             type: {:list, :string},
             suggestions: ["activity+json"]
           }
+        ]
+      }
+    ]
+  },
+  %{
+    group: :pleroma,
+    key: :shout,
+    type: :group,
+    description: "Pleroma shout settings",
+    children: [
+      %{
+        key: :enabled,
+        type: :boolean,
+        description: "Enables the backend Shoutbox chat feature."
+      },
+      %{
+        key: :limit,
+        type: :integer,
+        description: "Shout message character limit.",
+        suggestions: [
+          5_000
         ]
       }
     ]

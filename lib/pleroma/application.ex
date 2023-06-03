@@ -78,7 +78,8 @@ defmodule Pleroma.Application do
         ] ++
         elasticsearch_children() ++
         task_children(@mix_env) ++
-        dont_run_in_test(@mix_env)
+        dont_run_in_test(@mix_env) ++
+        shout_child(shout_enabled?())
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
@@ -93,16 +94,11 @@ defmodule Pleroma.Application do
       end
 
     opts = [strategy: :one_for_one, name: Pleroma.Supervisor, max_restarts: max_restarts]
+    result = Supervisor.start_link(children, opts)
 
-    with {:ok, data} <- Supervisor.start_link(children, opts) do
-      set_postgres_server_version()
-      {:ok, data}
-    else
-      e ->
-        Logger.error("Failed to start!")
-        Logger.error("#{inspect(e)}")
-        e
-    end
+    set_postgres_server_version()
+
+    result
   end
 
   defp set_postgres_server_version do
@@ -160,7 +156,11 @@ defmodule Pleroma.Application do
       build_cachex("translations", default_ttl: :timer.hours(24 * 30), limit: 2500),
       build_cachex("instances", default_ttl: :timer.hours(24), ttl_interval: 1000, limit: 2500),
       build_cachex("request_signatures", default_ttl: :timer.hours(24 * 30), limit: 3000),
-      build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300)
+      build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300),
+      build_cachex("chat_message_id_idempotency_key",
+        expiration: chat_message_id_idempotency_key_expiration(),
+        limit: 500_000
+      )
     ]
   end
 
@@ -169,6 +169,9 @@ defmodule Pleroma.Application do
 
   defp idempotency_expiration,
     do: expiration(default: :timer.seconds(6 * 60 * 60), interval: :timer.seconds(60))
+
+  defp chat_message_id_idempotency_key_expiration,
+    do: expiration(default: :timer.minutes(2), interval: :timer.seconds(60))
 
   defp seconds_valid_interval,
     do: :timer.seconds(Config.get!([Pleroma.Captcha, :seconds_valid]))
@@ -180,6 +183,8 @@ defmodule Pleroma.Application do
       start: {Cachex, :start_link, [String.to_atom(type <> "_cache"), opts]},
       type: :worker
     }
+
+  defp shout_enabled?, do: Config.get([:shout, :enabled])
 
   defp dont_run_in_test(env) when env in [:test, :benchmark], do: []
 
@@ -199,6 +204,15 @@ defmodule Pleroma.Application do
       Pleroma.Migrators.HashtagsTableMigrator
     ]
   end
+
+  defp shout_child(true) do
+    [
+      Pleroma.Web.ShoutChannel.ShoutChannelState,
+      {Phoenix.PubSub, [name: Pleroma.PubSub, adapter: Phoenix.PubSub.PG2]}
+    ]
+  end
+
+  defp shout_child(_), do: []
 
   @spec task_children(atom()) :: [map()]
 

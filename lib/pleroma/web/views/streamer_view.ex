@@ -71,9 +71,31 @@ defmodule Pleroma.Web.StreamerView do
     |> Jason.encode!()
   end
 
+  def render("chat_update.json", %{chat_message_reference: cm_ref}) do
+    # Explicitly giving the cmr for the object here, so we don't accidentally
+    # send a later 'last_message' that was inserted between inserting this and
+    # streaming it out
+    #
+    # It also contains the chat with a cache of the correct unread count
+    Logger.debug("Trying to stream out #{inspect(cm_ref)}")
+
+    representation =
+      Pleroma.Web.PleromaAPI.ChatView.render(
+        "show.json",
+        %{last_message: cm_ref, chat: cm_ref.chat}
+      )
+
+    %{
+      event: "pleroma:chat_update",
+      payload:
+        representation
+        |> Jason.encode!()
+    }
+    |> Jason.encode!()
+  end
+
   def render("status_update.json", %Activity{} = activity, topic) do
     activity = Activity.get_create_by_object_ap_id_with_object(activity.object.data["id"])
-
     %{
       stream: [topic],
       event: "status.update",

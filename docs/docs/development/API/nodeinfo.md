@@ -44,8 +44,11 @@ See also [the Nodeinfo standard](https://nodeinfo.diaspora.software/).
          "shareable_emoji_packs",
          "multifetch",
          "pleroma:api/v1/notifications:include_types_filter",
+         "chat",
+         "shout",
          "relay",
-         "pleroma_emoji_reactions"
+         "pleroma_emoji_reactions",
+         "pleroma_chat_messages"
       ],
       "federation":{
          "enabled":true,
@@ -201,8 +204,11 @@ See also [the Nodeinfo standard](https://nodeinfo.diaspora.software/).
          "shareable_emoji_packs",
          "multifetch",
          "pleroma:api/v1/notifications:include_types_filter",
+         "chat",
+         "shout",
          "relay",
-         "pleroma_emoji_reactions"
+         "pleroma_emoji_reactions",
+         "pleroma_chat_messages"
       ],
       "federation":{
          "enabled":true,

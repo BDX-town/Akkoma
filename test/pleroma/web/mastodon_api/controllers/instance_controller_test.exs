@@ -39,6 +39,7 @@ defmodule Pleroma.Web.MastodonAPI.InstanceControllerTest do
              "background_upload_limit" => _,
              "banner_upload_limit" => _,
              "background_image" => from_config_background,
+             "shout_limit" => _,
              "description_limit" => _
            } = result
 
