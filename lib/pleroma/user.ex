@@ -544,7 +544,7 @@ defmodule Pleroma.User do
         :actor_type,
         :disclose_client,
         :status_ttl_days,
-        :accepts_direct_messages_from
+        :accepts_direct_messages_from,
         :accepts_chat_messages
       ]
     )
