@@ -77,7 +77,6 @@ defmodule Pleroma.Web.StreamerView do
     # streaming it out
     #
     # It also contains the chat with a cache of the correct unread count
-    Logger.debug("Trying to stream out #{inspect(cm_ref)}")
 
     representation =
       Pleroma.Web.PleromaAPI.ChatView.render(
