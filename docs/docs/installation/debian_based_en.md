@@ -35,7 +35,7 @@ sudo useradd -r -s /bin/false -m -d /var/lib/akkoma -U akkoma
 
 ### Install Elixir and Erlang
 
-If your distribution packages Elixir 1.14+, you can install it directly from the distro repositories and skip to the next section of the guide:
+If your distribution packages a recent enough version of Elixir, you can install it directly from the distro repositories and skip to the next section of the guide:
 
 ```shell
 sudo apt install elixir erlang-dev erlang-nox
