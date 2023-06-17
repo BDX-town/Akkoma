@@ -163,11 +163,11 @@ config :logger, :ex_syslogger,
   metadata: [:request_id]
 
 config :mime, :types, %{
-  "application/xml" => ["xml"],
-  "application/xrd+xml" => ["xrd+xml"],
-  "application/jrd+json" => ["jrd+json"],
-  "application/activity+json" => ["activity+json"],
-  "application/ld+json" => ["activity+json"]
+  "application/xml" => ["xml", "application/xml"],
+  "application/xrd+xml" => ["xrd+xml", "application/xrd+xml"],
+  "application/jrd+json" => ["jrd+json", "application/jrd+json"],
+  "application/activity+json" => ["activity+json", "application/activity+json"],
+  "application/ld+json" => ["activity+json", "application/ld+json"]
 }
 
 config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
