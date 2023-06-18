@@ -1643,11 +1643,19 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   defp generate_nickname(_), do: nil
 
   def fetch_follow_information_for_user(user) do
-    with {:ok, following_data} <-
-           Fetcher.fetch_and_contain_remote_object_from_id(user.following_address),
+    with {:ok, following_data} <- (
+            case user.following_address do
+                nil -> {:ok, %{ "totalItems" => 0 }}
+                _ -> Fetcher.fetch_and_contain_remote_object_from_id(user.following_address)
+            end
+           ),
          {:ok, hide_follows} <- collection_private(following_data),
-         {:ok, followers_data} <-
-           Fetcher.fetch_and_contain_remote_object_from_id(user.follower_address),
+         {:ok, followers_data}<- (
+            case user.follower_address do
+                nil -> {:ok, %{ "totalItems" => 0 }}
+                _ -> Fetcher.fetch_and_contain_remote_object_from_id(user.follower_address)
+            end
+          ),
          {:ok, hide_followers} <- collection_private(followers_data) do
       {:ok,
        %{
@@ -1657,8 +1665,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
          hide_followers: hide_followers
        }}
     else
-      {:error, _} = e -> e
-      e -> {:error, e}
+      {:error, _} = e ->
+        e
+      e ->
+        {:error, e}
     end
   end
 
