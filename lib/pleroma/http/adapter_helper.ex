@@ -47,6 +47,17 @@ defmodule Pleroma.HTTP.AdapterHelper do
     |> put_in([:pools, :default, :conn_opts, :proxy], proxy)
   end
 
+  def maybe_add_cacerts(opts, nil), do: opts
+
+  def maybe_add_cacerts(opts, cacerts) do
+    opts
+    |> maybe_add_pools()
+    |> maybe_add_default_pool()
+    |> maybe_add_conn_opts()
+    |> maybe_add_transport_opts()
+    |> put_in([:pools, :default, :conn_opts, :transport_opts, :cacerts], cacerts)
+  end
+
   def add_pool_size(opts, pool_size) do
     opts
     |> maybe_add_pools()
@@ -79,6 +90,16 @@ defmodule Pleroma.HTTP.AdapterHelper do
       opts
     else
       put_in(opts, [:pools, :default, :conn_opts], [])
+    end
+  end
+
+  defp maybe_add_transport_opts(opts) do
+    transport_opts = get_in(opts, [:pools, :default, :conn_opts, :transport_opts])
+
+    unless is_nil(transport_opts) do
+      opts
+    else
+      put_in(opts, [:pools, :default, :conn_opts, :transport_opts], [])
     end
   end
 

@@ -203,7 +203,8 @@ defmodule Pleroma.Mixfile do
       {:excoveralls, "0.15.1", only: :test},
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mint, "~> 1.5.1", override: true}
     ] ++ oauth_deps()
   end
 
