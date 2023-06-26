@@ -52,7 +52,7 @@ defmodule Pleroma.Web.MediaProxy do
 
   @spec url_proxiable?(String.t()) :: boolean()
   def url_proxiable?(url) do
-    not local?(url) and not whitelisted?(url)
+    not local?(url) and not whitelisted?(url) and not blocked?(url)
   end
 
   def preview_url(url, preview_params \\ []) do
@@ -81,6 +81,11 @@ defmodule Pleroma.Web.MediaProxy do
       |> Enum.map(&maybe_get_domain_from_url/1)
 
     domain in mediaproxy_whitelist_domains
+  end
+
+  def blocked?(url) do
+    %{host: domain} = URI.parse(url)
+    domain in Config.get([:media_proxy, :whitelist])
   end
 
   defp maybe_get_domain_from_url("http" <> _ = url) do
