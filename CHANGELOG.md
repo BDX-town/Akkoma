@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Added
+- Added a new configuration option to the MediaProxy feature that allows the blocking of specific domains from using the media proxy or being explicitly allowed by the Content-Security-Policy.
+  - Please make sure instances you wanted to block media from are not in the MediaProxy `whitelist`, and instead use `blocklist`.
+
 ## 2023.05
 
 ## Added
