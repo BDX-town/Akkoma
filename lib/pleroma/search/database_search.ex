@@ -132,21 +132,29 @@ defmodule Pleroma.Search.DatabaseSearch do
     )
   end
 
-  def maybe_restrict_local(q, user) do
+  def should_restrict_local(user) do
     limit = Pleroma.Config.get([:instance, :limit_to_local_content], :unauthenticated)
 
     case {limit, user} do
-      {:all, _} -> restrict_local(q)
-      {:unauthenticated, %User{}} -> q
-      {:unauthenticated, _} -> restrict_local(q)
-      {false, _} -> q
+      {:all, _} -> true
+      {:unauthenticated, %User{}} -> false
+      {:unauthenticated, _} -> true
+      {false, _} -> false
+    end
+  end
+
+  def maybe_restrict_local(q, user) do
+    case should_restrict_local(user) do
+      true -> restrict_local(q)
+      false -> q
     end
   end
 
   defp restrict_local(q), do: where(q, local: true)
 
   def maybe_fetch(activities, user, search_query) do
-    with true <- Regex.match?(~r/https?:/, search_query),
+    with false <- should_restrict_local(user),
+         true <- Regex.match?(~r/https?:/, search_query),
          {:ok, object} <- Fetcher.fetch_object_from_id(search_query),
          %Activity{} = activity <- Activity.get_create_by_object_ap_id(object.data["id"]),
          true <- Visibility.visible_for_user?(activity, user) do
