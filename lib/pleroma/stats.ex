@@ -6,12 +6,15 @@ defmodule Pleroma.Stats do
   use GenServer
 
   import Ecto.Query
+  require Logger
 
   alias Pleroma.CounterCache
   alias Pleroma.Repo
   alias Pleroma.User
 
   @interval :timer.seconds(300)
+
+  @stats_timeout Pleroma.Config.get([Pleroma.Stats, :get_stats_timeout], 5000)
 
   def start_link(_) do
     GenServer.start_link(
@@ -42,7 +45,7 @@ defmodule Pleroma.Stats do
           user_count: non_neg_integer()
         }
   def get_stats do
-    %{stats: stats} = GenServer.call(__MODULE__, :get_state)
+    %{stats: stats} = GenServer.call(__MODULE__, :get_state, @stats_timeout)
 
     stats
   end
@@ -50,7 +53,7 @@ defmodule Pleroma.Stats do
   @doc "Returns list peers"
   @spec get_peers() :: list(String.t())
   def get_peers do
-    %{peers: peers} = GenServer.call(__MODULE__, :get_state)
+    %{peers: peers} = GenServer.call(__MODULE__, :get_state, @stats_timeout)
 
     peers
   end
