@@ -6,10 +6,10 @@ defmodule Pleroma.Stats do
   use GenServer
 
   import Ecto.Query
-
   alias Pleroma.CounterCache
   alias Pleroma.Repo
   alias Pleroma.User
+  alias Pleroma.Config
 
   @interval :timer.seconds(300)
 
@@ -23,7 +23,7 @@ defmodule Pleroma.Stats do
 
   @impl true
   def init(_args) do
-    if Pleroma.Config.get(:env) != :test do
+    if Config.get(:env) != :test do
       {:ok, nil, {:continue, :calculate_stats}}
     else
       {:ok, calculate_stat_data()}
@@ -42,7 +42,7 @@ defmodule Pleroma.Stats do
           user_count: non_neg_integer()
         }
   def get_stats do
-    %{stats: stats} = GenServer.call(__MODULE__, :get_state)
+    %{stats: stats} = GenServer.call(__MODULE__, :get_state, Config.get([__MODULE__, :get_stats_timeout], 5000))
 
     stats
   end
@@ -50,7 +50,7 @@ defmodule Pleroma.Stats do
   @doc "Returns list peers"
   @spec get_peers() :: list(String.t())
   def get_peers do
-    %{peers: peers} = GenServer.call(__MODULE__, :get_state)
+    %{peers: peers} = GenServer.call(__MODULE__, :get_state, Config.get([__MODULE__, :get_stats_timeout], 5000))
 
     peers
   end
@@ -120,7 +120,7 @@ defmodule Pleroma.Stats do
   def handle_continue(:calculate_stats, _) do
     stats = calculate_stat_data()
 
-    unless Pleroma.Config.get(:env) == :test do
+    unless Config.get(:env) == :test do
       Process.send_after(self(), :run_update, @interval)
     end
 
