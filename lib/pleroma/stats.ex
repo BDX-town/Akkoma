@@ -6,13 +6,14 @@ defmodule Pleroma.Stats do
   use GenServer
 
   import Ecto.Query
-
   alias Pleroma.CounterCache
   alias Pleroma.Repo
   alias Pleroma.User
   alias Pleroma.Config
 
   @interval :timer.seconds(300)
+
+  @stats_timeout Pleroma.Config.get([Stats, :get_stats_timeout], 5000)
 
   def start_link(_) do
     GenServer.start_link(
