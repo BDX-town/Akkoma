@@ -13,7 +13,7 @@ defmodule Pleroma.Stats do
 
   @interval :timer.seconds(300)
 
-  @stats_timeout Pleroma.Config.get([Stats, :get_stats_timeout], 5000)
+  @stats_timeout Pleroma.Config.get([Stats, :get_stats_timeout], 6000)
 
   def start_link(_) do
     GenServer.start_link(
