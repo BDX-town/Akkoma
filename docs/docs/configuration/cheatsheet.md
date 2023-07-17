@@ -246,11 +246,11 @@ Notes:
 
 ### :frontend_configurations
 
-This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [Pleroma-FE configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
+This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [Akkoma-FE configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
 
 Frontends can access these settings at `/api/v1/pleroma/frontend_configurations`
 
-To add your own configuration for Pleroma-FE, use it like this:
+To add your own configuration for Akkoma-FE, use it like this:
 
 ```elixir
 config :pleroma, :frontend_configurations,

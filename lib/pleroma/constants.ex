@@ -25,7 +25,7 @@ defmodule Pleroma.Constants do
 
   const(static_only_files,
     do:
-      ~w(index.html robots.txt static static-fe finmoji emoji packs sounds images instance sw.js sw-pleroma.js favicon.png schemas doc embed.js embed.css)
+      ~w(index.html robots.txt static static-fe finmoji emoji packs sounds images instance embed sw.js sw-pleroma.js favicon.png schemas doc)
   )
 
   const(status_updatable_fields,
