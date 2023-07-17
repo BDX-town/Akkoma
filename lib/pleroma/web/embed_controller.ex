@@ -16,7 +16,7 @@ defmodule Pleroma.Web.EmbedController do
   def show(conn, %{"id" => id}) do
     with %Activity{local: true} = activity <-
            Activity.get_by_id_with_object(id),
-         true <- Visibility.is_public?(activity.object) do
+         true <- Visibility.visible_for_user?(activity.object, nil) do
       {:ok, author} = User.get_or_fetch(activity.object.data["actor"])
 
       conn
