@@ -6,7 +6,7 @@ To add a custom theme to your instance, you'll first need to get a custom theme,
 
 ### Create your own theme
 
-* You can create your own theme using the Pleroma FE by going to settings (gear on the top right) and choose the Theme tab. Here you have the options to create a personal theme.
+* You can create your own theme using the Akkoma FE by going to settings (gear on the top right) and choose the Theme tab. Here you have the options to create a personal theme.
 * To download your theme, you can do Save preset
 * If you want to upload a theme to customise it further, you can upload it using Load preset
 
