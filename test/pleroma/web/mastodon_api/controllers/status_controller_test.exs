@@ -1960,6 +1960,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, "🎅")
       User.mute(user, other_user)
 
+      deactivated_user = insert(:user)
+      {:ok, _} = CommonAPI.react_with_emoji(activity.id, deactivated_user, "🎅")
+      User.set_activation(deactivated_user, false)
+
       result =
         conn
         |> get("/api/v1/statuses/?ids[]=#{activity.id}")
@@ -1967,6 +1971,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       assert [
                %{
+                 "emoji_reactions" => [],
                  "pleroma" => %{
                    "emoji_reactions" => []
                  }

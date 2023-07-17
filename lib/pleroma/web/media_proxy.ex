@@ -84,8 +84,13 @@ defmodule Pleroma.Web.MediaProxy do
   end
 
   def blocked?(url) do
-    %{host: domain} = URI.parse(url)
-    domain in Config.get([:media_proxy, :whitelist])
+    %{scheme: scheme, host: domain} = URI.parse(url)
+    # Block either the bare domain or the scheme-domain combo
+    scheme_domain = "#{scheme}://#{domain}"
+    blocklist = Config.get([:media_proxy, :blocklist])
+
+    Enum.member?(blocklist, domain) ||
+      Enum.member?(blocklist, scheme_domain)
   end
 
   defp maybe_get_domain_from_url("http" <> _ = url) do
