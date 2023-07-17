@@ -1,7 +1,7 @@
 # Optional software packages needed for specific functionality
 
 For specific Akkoma functionality (which is disabled by default) some or all of the below packages are required:
-  * `ImageMagic`
+  * `ImageMagick`
   * `ffmpeg`
   * `exiftool`
   
