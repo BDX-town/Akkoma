@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Fixed
 
 - Deactivated users can no longer show up in the emoji reaction list
+- Embedded posts can no longer bypass `:restrict\_unauthenticated`
 
 ## 2023.05
 
