@@ -1,0 +1,65 @@
+platform: linux/arm64
+
+variables:
+  - &scw-secrets
+    - SCW_ACCESS_KEY
+    - SCW_SECRET_KEY
+    - SCW_DEFAULT_ORGANIZATION_ID
+  - &setup-hex "mix local.hex --force && mix local.rebar --force"
+  - &on-release
+    when:
+      event:
+        - push
+        - tag
+      branch:
+        - develop
+        - stable
+        - refs/tags/v*
+        - refs/tags/stable-*
+  - &on-stable
+    when:
+      event:
+        - push
+        - tag
+      branch:
+        - stable
+        - refs/tags/stable-*
+  - &on-point-release
+    when:
+      event:
+        - push
+      branch:
+        - develop
+        - stable
+  - &on-pr-open
+    when:
+      event:
+        - pull_request
+
+  - &tag-build "export BUILD_TAG=$${CI_COMMIT_TAG:-\"$CI_COMMIT_BRANCH\"} && export PLEROMA_BUILD_BRANCH=$BUILD_TAG"
+
+  - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
+  - &mix-clean "mix deps.clean --all && mix clean"
+
+pipeline:
+  # Canonical amd64
+  ubuntu22:
+    image: hexpm/elixir:1.14.3-erlang-25.2.2-ubuntu-jammy-20221130
+    when:
+      event:
+        - push
+      branch:
+        - arm
+    <<: *on-release
+    environment:
+      MIX_ENV: prod
+      DEBIAN_FRONTEND: noninteractive
+    commands:
+      - apt-get update && apt-get install -y cmake libmagic-dev rclone zip imagemagick libmagic-dev git build-essential g++ wget
+      - *clean
+      - echo "import Config" > config/prod.secret.exs
+      - *setup-hex
+      - *tag-build
+      - mix deps.get --only prod
+      - mix release --path release
+      - zip akkoma-ubuntu-jammy.zip -r release
