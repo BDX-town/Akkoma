@@ -62,3 +62,16 @@ pipeline:
       - mix deps.get --only prod
       - mix release --path release
       - zip akkoma-ubuntu-jammy.zip -r release
+
+  release-ubuntu22:
+    image: akkoma/releaser:arm64
+    when:
+      event:
+        - push
+      branch:
+        - arm
+    secrets: *scw-secrets
+    commands:
+      - export SOURCE=akkoma-ubuntu-jammy.zip
+      - export DEST=scaleway:akkoma-updates/$${CI_COMMIT_TAG:-"$CI_COMMIT_BRANCH"}/akkoma-arm64-ubuntu-jammy.zip
+      - /bin/sh /entrypoint.sh    
