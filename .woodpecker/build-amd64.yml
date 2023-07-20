@@ -44,17 +44,6 @@ variables:
   - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
   - &mix-clean "mix deps.clean --all && mix clean"
 
-services:
-  postgres:
-    image: postgres:15
-    when:
-      event:
-        - pull_request
-    environment:
-      POSTGRES_DB: pleroma_test
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
 pipeline:
   # Canonical amd64
   ubuntu22:
