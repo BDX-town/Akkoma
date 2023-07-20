@@ -1,3 +1,5 @@
+platform: linux/amd64
+
 variables:
   - &scw-secrets
     - SCW_ACCESS_KEY
