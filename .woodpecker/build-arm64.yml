@@ -1,5 +1,8 @@
 platform: linux/arm64
 
+depends_on:
+  - test
+
 variables:
   - &scw-secrets
     - SCW_ACCESS_KEY
