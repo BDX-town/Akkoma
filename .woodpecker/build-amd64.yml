@@ -1,3 +1,8 @@
+platform: linux/amd64
+
+depends_on:
+  - test
+
 variables:
   - &scw-secrets
     - SCW_ACCESS_KEY
@@ -39,60 +44,7 @@ variables:
   - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
   - &mix-clean "mix deps.clean --all && mix clean"
 
-services:
-  postgres:
-    image: postgres:15
-    when:
-      event:
-        - pull_request
-    environment:
-      POSTGRES_DB: pleroma_test
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
 pipeline:
-  lint:
-    <<: *on-pr-open
-    image: akkoma/ci-base:1.14
-    commands:
-    - mix local.hex --force
-    - mix local.rebar --force
-    - mix format --check-formatted
-
-  build:
-    image: akkoma/ci-base:1.14
-    <<: *on-pr-open
-    environment:
-      MIX_ENV: test
-      POSTGRES_DB: pleroma_test
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      DB_HOST: postgres
-    commands:
-      - mix local.hex --force
-      - mix local.rebar --force
-      - mix deps.get
-      - mix compile
-
-  test:
-    image: akkoma/ci-base:1.14
-    <<: *on-pr-open
-    environment:
-      MIX_ENV: test
-      POSTGRES_DB: pleroma_test
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      DB_HOST: postgres
-    commands:
-    - mix local.hex --force
-    - mix local.rebar --force
-    - mix deps.get
-    - mix compile
-    - mix ecto.drop -f -q
-    - mix ecto.create
-    - mix ecto.migrate
-    - mix test --preload-modules --exclude erratic --exclude federated --max-cases 4
-
   # Canonical amd64
   ubuntu22:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-ubuntu-jammy-20221130
@@ -151,7 +103,7 @@ pipeline:
 
   # Canonical amd64-musl
   musl:
-    image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.15.6
+    image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.18.0
     <<: *on-release
     environment:
       MIX_ENV: prod

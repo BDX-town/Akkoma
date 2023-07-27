@@ -919,11 +919,12 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   end
 
   def prepare_attachments(object) do
-    attachments = case Map.get(object, "attachment", []) do
-      [_ | _] = list -> list
-      _ -> []
-    end
-    
+    attachments =
+      case Map.get(object, "attachment", []) do
+        [_ | _] = list -> list
+        _ -> []
+      end
+
     attachments =
       attachments
       |> Enum.map(fn data ->
