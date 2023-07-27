@@ -65,7 +65,6 @@ config :pleroma, Pleroma.Upload,
   link_name: false,
   proxy_remote: false,
   filename_display_max_length: 30,
-  default_description: nil,
   base_url: nil
 
 config :pleroma, Pleroma.Uploaders.Local, uploads: "uploads"
@@ -261,7 +260,8 @@ config :pleroma, :instance,
   privileged_staff: false,
   local_bubble: [],
   max_frontend_settings_json_chars: 100_000,
-  export_prometheus_metrics: true
+  export_prometheus_metrics: true,
+  federated_timeline_available: true
 
 config :pleroma, :welcome,
   direct_message: [
@@ -354,7 +354,7 @@ config :pleroma, :manifest,
 
 config :pleroma, :activitypub,
   unfollow_blocked: true,
-  outgoing_blocks: true,
+  outgoing_blocks: false,
   blockers_visible: true,
   follow_handshake_timeout: 500,
   note_replies_output_limit: 5,
@@ -418,6 +418,8 @@ config :pleroma, :mrf_object_age,
 
 config :pleroma, :mrf_follow_bot, follower_nickname: nil
 
+config :pleroma, :mrf_reject_newly_created_account_notes, age: 86_400
+
 config :pleroma, :rich_media,
   enabled: true,
   ignore_hosts: [],
@@ -441,7 +443,8 @@ config :pleroma, :media_proxy,
     # Note: max_read_duration defaults to Pleroma.ReverseProxy.max_read_duration_default/1
     max_read_duration: 30_000
   ],
-  whitelist: []
+  whitelist: [],
+  blocklist: []
 
 config :pleroma, Pleroma.Web.MediaProxy.Invalidation.Http,
   method: :purge,
@@ -745,6 +748,9 @@ config :pleroma, :frontends,
   primary: %{"name" => "pleroma-fe", "ref" => "stable"},
   admin: %{"name" => "admin-fe", "ref" => "stable"},
   mastodon: %{"name" => "mastodon-fe", "ref" => "akkoma"},
+  pickable: [
+    "pleroma-fe/stable"
+  ],
   swagger: %{
     "name" => "swagger-ui",
     "ref" => "stable",
@@ -810,7 +816,7 @@ config :pleroma, :majic_pool, size: 2
 private_instance? = :if_instance_is_private
 
 config :pleroma, :restrict_unauthenticated,
-  timelines: %{local: private_instance?, federated: private_instance?},
+  timelines: %{local: private_instance?, federated: private_instance?, bubble: true},
   profiles: %{local: private_instance?, remote: private_instance?},
   activities: %{local: private_instance?, remote: private_instance?}
 

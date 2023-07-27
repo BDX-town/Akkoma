@@ -128,6 +128,12 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlugTest do
       clear_config([:media_proxy, :whitelist], ["example4.com", "example5.com"])
       assert_media_img_src(conn, "example5.com example4.com")
     end
+
+    test "with media_proxy blocklist", %{conn: conn} do
+      clear_config([:media_proxy, :whitelist], ["https://example6.com", "https://example7.com"])
+      clear_config([:media_proxy, :blocklist], ["https://example8.com"])
+      assert_media_img_src(conn, "https://example7.com https://example6.com")
+    end
   end
 
   defp assert_media_img_src(conn, url) do

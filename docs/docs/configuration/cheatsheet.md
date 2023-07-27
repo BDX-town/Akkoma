@@ -246,11 +246,11 @@ Notes:
 
 ### :frontend_configurations
 
-This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [Pleroma-FE configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
+This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [Akkoma-FE configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
 
 Frontends can access these settings at `/api/v1/pleroma/frontend_configurations`
 
-To add your own configuration for Pleroma-FE, use it like this:
+To add your own configuration for Akkoma-FE, use it like this:
 
 ```elixir
 config :pleroma, :frontend_configurations,
@@ -562,7 +562,6 @@ the source code is here: [kocaptcha](https://github.com/koto-bank/kocaptcha). Th
 * `proxy_remote`: If you're using a remote uploader, Akkoma will proxy media requests instead of redirecting to it.
 * `proxy_opts`: Proxy options, see `Pleroma.ReverseProxy` documentation.
 * `filename_display_max_length`: Set max length of a filename to display. 0 = no limit. Default: 30.
-* `default_description`: Sets which default description an image has if none is set explicitly. Options: nil (default) - Don't set a default, :filename - use the filename of the file, a string (e.g. "attachment") - Use this string
 
 !!! warning
     `strip_exif` has been replaced by `Pleroma.Upload.Filter.Mogrify`.
@@ -613,6 +612,12 @@ No specific configuration.
 #### Pleroma.Upload.Filter.Exiftool
 
 This filter only strips the GPS and location metadata with Exiftool leaving color profiles and attributes intact.
+
+No specific configuration.
+
+#### Pleroma.Upload.Filter.OnlyMedia
+
+This filter rejects uploads that are not identified with Content-Type matching audio/\*, image/\*, or video/\*
 
 No specific configuration.
 

@@ -124,14 +124,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
           target,
           &User.blocks_user?(&1, &2)
         ),
-      blocked_by:
-        UserRelationship.exists?(
-          user_relationships,
-          :block,
-          target,
-          reading_user,
-          &User.blocks_user?(&1, &2)
-        ),
+      blocked_by: false,
       muting:
         UserRelationship.exists?(
           user_relationships,
@@ -334,7 +327,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
          %User{id: user_id}
        ) do
     count =
-      User.get_follow_requests(user)
+      user
+      |> User.get_follow_requests()
       |> length()
 
     data
@@ -353,6 +347,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
     |> Kernel.put_in([:source, :privacy], user.default_scope)
     |> Kernel.put_in([:source, :pleroma, :show_role], user.show_role)
     |> Kernel.put_in([:source, :pleroma, :no_rich_text], user.no_rich_text)
+    |> Kernel.put_in([:accepts_direct_messages_from], user.accepts_direct_messages_from)
   end
 
   defp maybe_put_settings(data, _, _, _), do: data

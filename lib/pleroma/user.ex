@@ -159,6 +159,11 @@ defmodule Pleroma.User do
     field(:language, :string)
     field(:status_ttl_days, :integer, default: nil)
 
+    field(:accepts_direct_messages_from, Ecto.Enum,
+      values: [:everybody, :people_i_follow, :nobody],
+      default: :everybody
+    )
+
     embeds_one(
       :notification_settings,
       Pleroma.User.NotificationSetting,
@@ -273,7 +278,13 @@ defmodule Pleroma.User do
   defdelegate following(user), to: FollowingRelationship
   defdelegate following?(follower, followed), to: FollowingRelationship
   defdelegate following_ap_ids(user), to: FollowingRelationship
-  defdelegate get_follow_requests(user), to: FollowingRelationship
+  defdelegate get_follow_requests_query(user), to: FollowingRelationship
+
+  def get_follow_requests(user) do
+    get_follow_requests_query(user)
+    |> Repo.all()
+  end
+
   defdelegate search(query, opts \\ []), to: User.Search
 
   @doc """
@@ -360,21 +371,21 @@ defmodule Pleroma.User do
   def invisible?(_), do: false
 
   def avatar_url(user, options \\ []) do
-    case user.avatar do
-      %{"url" => [%{"href" => href} | _]} ->
-        href
-
-      _ ->
-        unless options[:no_default] do
-          Config.get([:assets, :default_user_avatar], "#{Endpoint.url()}/images/avi.png")
-        end
-    end
+    default = Config.get([:assets, :default_user_avatar], "#{Endpoint.url()}/images/avi.png")
+    do_optional_url(user.avatar, default, options)
   end
 
   def banner_url(user, options \\ []) do
-    case user.banner do
-      %{"url" => [%{"href" => href} | _]} -> href
-      _ -> !options[:no_default] && "#{Endpoint.url()}/images/banner.png"
+    do_optional_url(user.banner, "#{Endpoint.url()}/images/banner.png", options)
+  end
+
+  defp do_optional_url(field, default, options) do
+    case field do
+      %{"url" => [%{"href" => href} | _]} when is_binary(href) ->
+        href
+
+      _ ->
+        unless options[:no_default], do: default
     end
   end
 
@@ -530,7 +541,8 @@ defmodule Pleroma.User do
         :is_discoverable,
         :actor_type,
         :disclose_client,
-        :status_ttl_days
+        :status_ttl_days,
+        :accepts_direct_messages_from
       ]
     )
     |> unique_constraint(:nickname)
@@ -864,12 +876,16 @@ defmodule Pleroma.User do
     end
   end
 
-  defp send_user_approval_email(user) do
+  defp send_user_approval_email(%User{email: email} = user) when is_binary(email) do
     user
     |> Pleroma.Emails.UserEmail.approval_pending_email()
     |> Pleroma.Emails.Mailer.deliver_async()
 
     {:ok, :enqueued}
+  end
+
+  defp send_user_approval_email(_user) do
+    {:ok, :skipped}
   end
 
   defp send_admin_approval_emails(user) do
@@ -2070,10 +2086,14 @@ defmodule Pleroma.User do
     # TODO: get profile URLs other than user.ap_id
     profile_urls = [user.ap_id]
 
-    bio
-    |> CommonUtils.format_input("text/plain",
+    CommonUtils.format_input(bio, "text/plain",
       mentions_format: :full,
-      rel: &RelMe.maybe_put_rel_me(&1, profile_urls)
+      rel: fn link ->
+        case RelMe.maybe_put_rel_me(link, profile_urls) do
+          "me" -> "me"
+          _ -> nil
+        end
+      end
     )
     |> elem(0)
   end
@@ -2711,4 +2731,16 @@ defmodule Pleroma.User do
   def following_hashtag?(%User{} = user, %Hashtag{} = hashtag) do
     not is_nil(HashtagFollow.get(user, hashtag))
   end
+
+  def accepts_direct_messages?(
+        %User{accepts_direct_messages_from: :people_i_follow} = receiver,
+        %User{} = sender
+      ) do
+    User.following?(receiver, sender)
+  end
+
+  def accepts_direct_messages?(%User{accepts_direct_messages_from: :everybody}, _), do: true
+
+  def accepts_direct_messages?(%User{accepts_direct_messages_from: :nobody}, _),
+    do: false
 end

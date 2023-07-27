@@ -4,8 +4,8 @@ defmodule Pleroma.Mixfile do
   def project do
     [
       app: :pleroma,
-      version: version("3.5.0"),
-      elixir: "~> 1.12",
+      version: version("3.9.3"),
+      elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       elixirc_options: [warnings_as_errors: warnings_as_errors()],
@@ -190,7 +190,6 @@ defmodule Pleroma.Mixfile do
       {:mfm_parser,
        git: "https://akkoma.dev/AkkomaGang/mfm-parser.git",
        ref: "912fba81152d4d572e457fd5427f9875b2bc3dbe"},
-      {:poison, ">= 0.0.0"},
 
       ## dev & test
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
@@ -204,7 +203,8 @@ defmodule Pleroma.Mixfile do
       {:excoveralls, "0.15.1", only: :test},
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mint, "~> 1.5.1", override: true}
     ] ++ oauth_deps()
   end
 

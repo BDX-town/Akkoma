@@ -15,7 +15,7 @@ defmodule Pleroma.Web.EmbedView do
   alias Pleroma.Web.Metadata.Utils
   alias Pleroma.Web.Router.Helpers
 
-  use Phoenix.HTML
+  import Phoenix.HTML
 
   defdelegate full_nickname(user), to: User
 
@@ -55,9 +55,12 @@ defmodule Pleroma.Web.EmbedView do
     data["url"] || data["external_url"] || data["id"]
   end
 
-  defp attachments(%Activity{object: %Object{data: %{"attachment" => attachments}}}) do
+  defp attachments(%Activity{object: %Object{data: %{"attachment" => attachments}}})
+       when is_list(attachments) do
     attachments
   end
+
+  defp attachments(_), do: []
 
   defp sensitive?(%Activity{object: %Object{data: %{"sensitive" => sensitive}}}) do
     sensitive

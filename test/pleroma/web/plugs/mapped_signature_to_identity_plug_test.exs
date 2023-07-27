@@ -69,6 +69,47 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlugTest do
     assert %{valid_signature: false} == conn.assigns
   end
 
+  test "allowlist federation: it considers a mapped identity to be valid when the associated instance is allowed" do
+    clear_config([:activitypub, :authorized_fetch_mode], true)
+
+    clear_config([:mrf_simple, :accept], [
+      {"mastodon.example.org", "anime is allowed"}
+    ])
+
+    on_exit(fn ->
+      Pleroma.Config.put([:activitypub, :authorized_fetch_mode], false)
+      Pleroma.Config.put([:mrf_simple, :accept], [])
+    end)
+
+    conn =
+      build_conn(:post, "/doesntmattter", %{"actor" => "http://mastodon.example.org/users/admin"})
+      |> set_signature("http://mastodon.example.org/users/admin")
+      |> MappedSignatureToIdentityPlug.call(%{})
+
+    assert conn.assigns[:valid_signature]
+    refute is_nil(conn.assigns.user)
+  end
+
+  test "allowlist federation: it considers a mapped identity to be invalid when the associated instance is not allowed" do
+    clear_config([:activitypub, :authorized_fetch_mode], true)
+
+    clear_config([:mrf_simple, :accept], [
+      {"misskey.example.org", "anime is allowed"}
+    ])
+
+    on_exit(fn ->
+      Pleroma.Config.put([:activitypub, :authorized_fetch_mode], false)
+      Pleroma.Config.put([:mrf_simple, :accept], [])
+    end)
+
+    conn =
+      build_conn(:post, "/doesntmattter", %{"actor" => "http://mastodon.example.org/users/admin"})
+      |> set_signature("http://mastodon.example.org/users/admin")
+      |> MappedSignatureToIdentityPlug.call(%{})
+
+    assert %{valid_signature: false} == conn.assigns
+  end
+
   @tag skip: "known breakage; the testsuite presently depends on it"
   test "it considers a mapped identity to be invalid when the identity cannot be found" do
     conn =

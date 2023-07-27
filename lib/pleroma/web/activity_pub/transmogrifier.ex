@@ -419,28 +419,19 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def handle_incoming(
         %{
           "type" => "Like",
-          "_misskey_reaction" => reaction,
-          "tag" => _
+          "content" => reaction
         } = data,
         options
       ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
-  end
-
-  def handle_incoming(
-        %{
-          "type" => "Like",
-          "_misskey_reaction" => reaction
-        } = data,
-        options
-      ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
+    if Pleroma.Emoji.is_unicode_emoji?(reaction) || Pleroma.Emoji.matches_shortcode?(reaction) do
+      data
+      |> Map.put("type", "EmojiReact")
+      |> handle_incoming(options)
+    else
+      data
+      |> Map.delete("content")
+      |> handle_incoming(options)
+    end
   end
 
   def handle_incoming(
@@ -929,8 +920,13 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   def prepare_attachments(object) do
     attachments =
-      object
-      |> Map.get("attachment", [])
+      case Map.get(object, "attachment", []) do
+        [_ | _] = list -> list
+        _ -> []
+      end
+
+    attachments =
+      attachments
       |> Enum.map(fn data ->
         [%{"mediaType" => media_type, "href" => href} = url | _] = data["url"]
 

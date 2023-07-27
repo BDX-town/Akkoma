@@ -6,6 +6,79 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Added
+
+- Added a new configuration option to the MediaProxy feature that allows the blocking of specific domains from using the media proxy or being explicitly allowed by the Content-Security-Policy.
+  - Please make sure instances you wanted to block media from are not in the MediaProxy `whitelist`, and instead use `blocklist`.
+- `OnlyMedia` Upload Filter to simplify restricting uploads to audio, image, and video types
+- ARM64 OTP builds
+  - Ubuntu22 builds are available for develop and stable
+  - other distributions are stable only
+
+## Changed
+
+- Alpine OTP builds are now from alpine 3.18, which is SSLv3 compatible.
+  If you use alpine OTP builds you will have to update your local system.
+
+## Fixed
+
+- Deactivated users can no longer show up in the emoji reaction list
+- Embedded posts can no longer bypass `:restrict\_unauthenticated`
+
+## Security
+
+- Add `no_new_privs` hardening to OpenRC and systemd service files
+
+## 2023.05
+
+## Added
+- Custom options for users to accept/reject private messages
+  - options: everybody, nobody, people\_i\_follow
+- MRF to reject notes from accounts newer than a given age
+  - this will have the side-effect of rejecting legitimate messages if your
+    post gets boosted outside of your local bubble and people your instance
+    does not know about reply to it.
+
+## Fixed
+- Support for `streams` public key URIs
+- Bookmarks are cleaned up on DB prune now
+
+## Security
+- Fixed mediaproxy being a bit of a silly billy
+
+## 2023.04
+
+## Added
+- Nodeinfo keys for unauthenticated timeline visibility
+- Option to disable federated timeline
+- Option to make the bubble timeline publicly accessible
+- Ability to swap between installed standard frontends
+  - *mastodon frontends are still not counted as standard frontends due to the complexity in serving them correctly*. 
+
+### Upgrade Notes
+- Elixir 1.14 is now required. If your distribution does not package this, you can
+  use [asdf](https://asdf-vm.com/). At time of writing, elixir 1.14.3 / erlang 25.3
+  is confirmed to work.
+
+## 2023.03
+
+## Fixed
+- Allowed contentMap to be updated on edit
+- Filter creation now accepts expires\_at
+
+### Changed
+- Restoring the database from a dump now goes much faster without need for work-arounds
+- Misskey reaction matching uses `content` parameter now
+
+### Added
+- Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
+
+### Removed
+- Possibility of using the `style` parameter on `span` elements. This will break certain MFM parameters.
+- Option for "default" image description.
+
+## 2023.02
+
 ### Added
 - Prometheus metrics exporting from `/api/v1/akkoma/metrics`
 - Ability to alter http pool size
@@ -37,6 +110,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplified HTTP signature processing
 - Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
 - HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
+- Follow requests are now paginated, matches mastodon API spec, so use the Link header to paginate.
 
 ### Fixed 
 - /api/v1/accounts/lookup will now respect restrict\_unauthenticated

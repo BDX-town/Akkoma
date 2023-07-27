@@ -118,3 +118,15 @@ To fix this, run:
     ```
 
 which will remove the config from the database. Things should work now.
+
+## Migrating back to Pleroma
+
+Akkoma is a hard fork of Pleroma. As such, migrating back is not guaranteed to always work. But if you want to migrate back to Pleroma, you can always try. Just note that you may run into unexpected issues and you're basically on your own. The following are some tips that may help, but note that these are barely tested, so proceed at your own risk.
+
+First you will need to roll back the database migrations. The latest migration both Akkoma and Pleroma still have in common should be 20210416051708, so roll back to that. If you run from source, that should be
+
+```sh
+MIX_ENV=prod mix ecto.rollback --to 20210416051708
+```
+
+Then switch back to Pleroma for updates (similar to how was done to migrate to Akkoma), and remove the front-ends. The front-ends are installed in the `frontends` folder in the [static directory](../configuration/static_dir.md). Once you are back to Pleroma, you will need to run the database migrations again. See the Pleroma documentation for this.

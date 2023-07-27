@@ -71,6 +71,7 @@ defmodule Pleroma.Web.CommonAPITest do
 
     test "it blocks and federates", %{blocker: blocker, blocked: blocked} do
       clear_config([:instance, :federating], true)
+      clear_config([:activitypub, :outgoing_blocks], true)
 
       with_mock Pleroma.Web.Federator,
         publish: fn _ -> nil end do
@@ -221,6 +222,20 @@ defmodule Pleroma.Web.CommonAPITest do
         assert delete.local
         refute called(Pleroma.Web.Federator.publish(:_))
       end
+
+      refute Activity.get_by_id(post.id)
+    end
+
+    test "it allows privileged users to delete banned user's posts" do
+      clear_config([:instance, :moderator_privileges], [:messages_delete])
+      user = insert(:user)
+      moderator = insert(:user, is_moderator: true)
+
+      {:ok, post} = CommonAPI.post(user, %{status: "namu amida butsu"})
+      User.set_activation(user, false)
+
+      assert {:ok, delete} = CommonAPI.delete(post.id, moderator)
+      assert delete.local
 
       refute Activity.get_by_id(post.id)
     end

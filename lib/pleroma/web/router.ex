@@ -466,6 +466,29 @@ defmodule Pleroma.Web.Router do
     put("/statuses/:id/emoji_reactions/:emoji", EmojiReactionController, :create)
   end
 
+  scope "/akkoma/", Pleroma.Web.AkkomaAPI do
+    pipe_through(:browser)
+
+    get("/frontend", FrontendSwitcherController, :switch)
+    post("/frontend", FrontendSwitcherController, :do_switch)
+  end
+
+  scope "/api/v1/akkoma", Pleroma.Web.AkkomaAPI do
+    pipe_through(:api)
+
+    get(
+      "/api/v1/akkoma/preferred_frontend/available",
+      FrontendSettingsController,
+      :available_frontends
+    )
+
+    put(
+      "/api/v1/akkoma/preferred_frontend",
+      FrontendSettingsController,
+      :update_preferred_frontend
+    )
+  end
+
   scope "/api/v1/akkoma", Pleroma.Web.AkkomaAPI do
     pipe_through(:authenticated_api)
     get("/metrics", MetricsController, :show)
@@ -598,7 +621,6 @@ defmodule Pleroma.Web.Router do
     get("/timelines/home", TimelineController, :home)
     get("/timelines/direct", TimelineController, :direct)
     get("/timelines/list/:list_id", TimelineController, :list)
-    get("/timelines/bubble", TimelineController, :bubble)
 
     get("/announcements", AnnouncementController, :index)
     post("/announcements/:id/dismiss", AnnouncementController, :mark_read)
@@ -653,6 +675,7 @@ defmodule Pleroma.Web.Router do
 
     get("/timelines/public", TimelineController, :public)
     get("/timelines/tag/:tag", TimelineController, :hashtag)
+    get("/timelines/bubble", TimelineController, :bubble)
 
     get("/polls/:id", PollController, :show)
 

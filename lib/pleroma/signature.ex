@@ -17,6 +17,7 @@ defmodule Pleroma.Signature do
       key_id
       |> URI.parse()
       |> Map.put(:fragment, nil)
+      |> Map.put(:query, nil)
       |> remove_suffix(@known_suffixes)
 
     maybe_ap_id = URI.to_string(uri)

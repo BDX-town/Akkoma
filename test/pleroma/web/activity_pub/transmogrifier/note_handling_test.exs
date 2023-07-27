@@ -316,7 +316,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with non-array to field" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("to", "https://www.w3.org/ns/activitystreams#Public")
         |> put_in(["object", "to"], "https://www.w3.org/ns/activitystreams#Public")
 
@@ -333,7 +333,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with non-array cc field" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("cc", "http://mastodon.example.org/users/admin/followers")
         |> put_in(["object", "cc"], "http://mastodon.example.org/users/admin/followers")
 
@@ -346,7 +346,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     test "it correctly processes messages with weirdness in address fields" do
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Map.put("cc", ["http://mastodon.example.org/users/admin/followers", ["¿"]])
         |> put_in(["object", "cc"], ["http://mastodon.example.org/users/admin/followers", ["¿"]])
 
@@ -412,7 +412,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
 
       activity =
         File.read!("test/fixtures/mastodon-post-activity.json")
-        |> Poison.decode!()
+        |> Jason.decode!()
         |> Kernel.put_in(["object", "replies"], replies)
 
       %{activity: activity}
@@ -782,5 +782,43 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
         "quoteUri" => "https://misskey.io/notes/934gok3482"
       } = Transmogrifier.fix_quote_url(note)
     end
+  end
+
+  test "the standalone note uses its own ID when context is missing" do
+    insert(:user, ap_id: "https://mk.absturztau.be/users/8ozbzjs3o8")
+
+    activity =
+      "test/fixtures/tesla_mock/mk.absturztau.be-93e7nm8wqg-activity.json"
+      |> File.read!()
+      |> Jason.decode!()
+
+    {:ok, %Activity{} = modified} = Transmogrifier.handle_incoming(activity)
+    object = Object.normalize(modified, fetch: false)
+
+    assert object.data["context"] == object.data["id"]
+    assert modified.data["context"] == object.data["id"]
+  end
+
+  test "the reply note uses its parent's ID when context is missing and reply is unreachable" do
+    insert(:user, ap_id: "https://mk.absturztau.be/users/8ozbzjs3o8")
+
+    activity =
+      "test/fixtures/tesla_mock/mk.absturztau.be-93e7nm8wqg-activity.json"
+      |> File.read!()
+      |> Jason.decode!()
+
+    object =
+      activity["object"]
+      |> Map.put("inReplyTo", "https://404.site/object/went-to-buy-milk")
+
+    activity =
+      activity
+      |> Map.put("object", object)
+
+    {:ok, %Activity{} = modified} = Transmogrifier.handle_incoming(activity)
+    object = Object.normalize(modified, fetch: false)
+
+    assert object.data["context"] == object.data["inReplyTo"]
+    assert modified.data["context"] == object.data["inReplyTo"]
   end
 end

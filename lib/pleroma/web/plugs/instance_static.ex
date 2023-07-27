@@ -12,11 +12,11 @@ defmodule Pleroma.Web.Plugs.InstanceStatic do
   """
   @behaviour Plug
 
-  def file_path(path) do
+  def file_path(path, frontend_type \\ :primary) do
     instance_path =
       Path.join(Pleroma.Config.get([:instance, :static_dir], "instance/static/"), path)
 
-    frontend_path = Pleroma.Web.Plugs.FrontendStatic.file_path(path, :primary)
+    frontend_path = Pleroma.Web.Plugs.FrontendStatic.file_path(path, frontend_type)
 
     (File.exists?(instance_path) && instance_path) ||
       (frontend_path && File.exists?(frontend_path) && frontend_path) ||

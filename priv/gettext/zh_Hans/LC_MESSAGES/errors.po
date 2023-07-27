@@ -3,16 +3,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-09-20 13:18+0000\n"
-"PO-Revision-Date: 2020-12-14 06:00+0000\n"
-"Last-Translator: shironeko <shironeko@tesaguri.club>\n"
-"Language-Team: Chinese (Simplified) <https://translate.pleroma.social/"
-"projects/pleroma/pleroma/zh_Hans/>\n"
+"PO-Revision-Date: 2023-02-26 08:57+0000\n"
+"Last-Translator: SevicheCC <sevicheee@outlook.com>\n"
+"Language-Team: Chinese (Simplified) <http://translate.akkoma.dev/projects/"
+"akkoma/akkoma-backend-errors/zh_Hans/>\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.0.4\n"
+"X-Generator: Weblate 4.14\n"
 
 ## This file is a PO Template file.
 ##
@@ -146,7 +146,7 @@ msgid "Cannot post an empty status without attachments"
 msgstr "无法发送空白且不包含附件的状态"
 
 #: lib/pleroma/web/common_api/utils.ex:511
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Comment must be up to %{max_size} characters"
 msgstr "评论最多可使用 %{max_size} 字符"
 
@@ -250,7 +250,7 @@ msgstr "没有该对话"
 
 #: lib/pleroma/web/admin_api/controllers/admin_api_controller.ex:388
 #: lib/pleroma/web/admin_api/controllers/admin_api_controller.ex:414 lib/pleroma/web/admin_api/controllers/admin_api_controller.ex:456
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "No such permission_group"
 msgstr "没有该权限组"
 
@@ -297,7 +297,7 @@ msgid "This resource requires authentication."
 msgstr "该资源需要认证。"
 
 #: lib/pleroma/plugs/rate_limiter/rate_limiter.ex:206
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Throttled"
 msgstr "节流了"
 
@@ -380,7 +380,7 @@ msgid "Failed"
 msgstr "失败"
 
 #: lib/pleroma/web/oauth/oauth_controller.ex:410
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Failed to authenticate: %{message}."
 msgstr "认证失败：%{message}。"
 
@@ -406,7 +406,7 @@ msgid "Invalid Username/Password"
 msgstr "无效的用户名/密码"
 
 #: lib/pleroma/web/twitter_api/twitter_api.ex:118
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Invalid answer data"
 msgstr "无效的回答数据"
 
@@ -437,7 +437,7 @@ msgid "Unsupported OAuth provider: %{provider}."
 msgstr "不支持的 OAuth 提供者：%{provider}。"
 
 #: lib/pleroma/uploaders/uploader.ex:72
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Uploader callback timeout"
 msgstr "上传回复超时"
 
@@ -452,7 +452,7 @@ msgid "CAPTCHA Error"
 msgstr "验证码错误"
 
 #: lib/pleroma/web/common_api/common_api.ex:290
-#, elixir-format, fuzzy
+#, elixir-format
 msgid "Could not add reaction emoji"
 msgstr "无法添加表情反应"
 

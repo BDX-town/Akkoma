@@ -557,6 +557,21 @@ defmodule Pleroma.UserTest do
       refute_email_sent()
     end
 
+    test "it works when the registering user does not provide an email" do
+      clear_config([Pleroma.Emails.Mailer, :enabled], false)
+      clear_config([:instance, :account_activation_required], false)
+      clear_config([:instance, :account_approval_required], true)
+
+      cng = User.register_changeset(%User{}, @full_user_data |> Map.put(:email, ""))
+
+      # The user is still created
+      assert {:ok, %User{nickname: "nick"}} = User.register(cng)
+
+      # No emails are sent
+      ObanHelpers.perform_all()
+      refute_email_sent()
+    end
+
     test "it requires an email, name, nickname and password, bio is optional when account_activation_required is enabled" do
       clear_config([:instance, :account_activation_required], true)
 
@@ -2509,6 +2524,16 @@ defmodule Pleroma.UserTest do
     assert User.avatar_url(user, no_default: true) == nil
   end
 
+  test "avatar object with nil in href" do
+    user = insert(:user, avatar: %{"url" => [%{"href" => nil}]})
+    assert User.avatar_url(user) != nil
+  end
+
+  test "banner object with nil in href" do
+    user = insert(:user, banner: %{"url" => [%{"href" => nil}]})
+    assert User.banner_url(user) != nil
+  end
+
   test "get_host/1" do
     user = insert(:user, ap_id: "https://lain.com/users/lain", nickname: "lain")
     assert User.get_host(user) == "lain.com"
@@ -2744,6 +2769,37 @@ defmodule Pleroma.UserTest do
       user = User.get_cached_by_ap_id(user.ap_id)
 
       assert user.followed_hashtags |> Enum.count() == 0
+    end
+  end
+
+  describe "accepts_direct_messages?/2" do
+    test "should return true if the recipient follows the sender and has set accept to :people_i_follow" do
+      recipient =
+        insert(:user, %{
+          accepts_direct_messages_from: :people_i_follow
+        })
+
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
+
+      CommonAPI.follow(recipient, sender)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return true if the recipient has set accept to :everyone" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :everybody})
+      sender = insert(:user)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return false if the receipient set accept to :nobody" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :nobody})
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
     end
   end
 end
