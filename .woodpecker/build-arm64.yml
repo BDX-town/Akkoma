@@ -58,8 +58,6 @@ pipeline:
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-ubuntu-jammy.zip
-      - export DEST=scaleway:akkoma-updates/$${CI_COMMIT_TAG:-"$CI_COMMIT_BRANCH"}/akkoma-ubuntu-jammy.zip
-      - /bin/sh /entrypoint.sh
       - export DEST=scaleway:akkoma-updates/$${CI_COMMIT_TAG:-"$CI_COMMIT_BRANCH"}/akkoma-arm64-ubuntu-jammy.zip
       - /bin/sh /entrypoint.sh
 
