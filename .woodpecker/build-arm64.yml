@@ -15,10 +15,7 @@ variables:
         - push
         - tag
       branch:
-        - develop
         - stable
-        - refs/tags/v*
-        - refs/tags/stable-*
   - &on-stable
     when:
       event:
@@ -26,13 +23,11 @@ variables:
         - tag
       branch:
         - stable
-        - refs/tags/stable-*
   - &on-point-release
     when:
       event:
         - push
       branch:
-        - develop
         - stable
   - &on-pr-open
     when:
@@ -75,7 +70,7 @@ pipeline:
 
   debian-bullseye:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-debian-bullseye-20230109
-    <<: *on-release
+    <<: *on-point-release
     environment:
       MIX_ENV: prod
       DEBIAN_FRONTEND: noninteractive
@@ -92,7 +87,7 @@ pipeline:
 
   release-debian:
     image: akkoma/releaser:arm64
-    <<: *on-release
+    <<: *on-point-release
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-arm64.zip
@@ -104,7 +99,7 @@ pipeline:
   # Canonical arm64-musl
   musl:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.18.0
-    <<: *on-release
+    <<: *on-point-release
     environment:
       MIX_ENV: prod
     commands:
@@ -119,31 +114,9 @@ pipeline:
 
   release-musl:
     image: akkoma/releaser:arm64
-    <<: *on-release
+    <<: *on-point-release
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-arm64-musl.zip
       - export DEST=scaleway:akkoma-updates/$${CI_COMMIT_TAG:-"$CI_COMMIT_BRANCH"}/akkoma-arm64-musl.zip
       - /bin/sh /entrypoint.sh
-
-  docs:
-    <<: *on-point-release
-    secrets:
-    - SCW_ACCESS_KEY
-    - SCW_SECRET_KEY
-    - SCW_DEFAULT_ORGANIZATION_ID
-    environment:
-      CI: "true"
-    image: python:3.10-slim
-    commands:
-      - apt-get update && apt-get install -y rclone wget git zip
-      - wget https://github.com/scaleway/scaleway-cli/releases/download/v2.5.1/scaleway-cli_2.5.1_linux_arm64
-      - mv scaleway-cli_2.5.1_linux_arm64 scaleway-cli
-      - chmod +x scaleway-cli
-      - ./scaleway-cli object config install type=rclone
-      - cd docs
-      - pip install -r requirements.txt
-      - mkdocs build
-      - zip -r docs.zip site/*
-      - cd site
-      - rclone copy . scaleway:akkoma-docs/$CI_COMMIT_BRANCH/
