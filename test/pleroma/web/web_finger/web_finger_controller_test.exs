@@ -8,6 +8,7 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
   import ExUnit.CaptureLog
   import Pleroma.Factory
   import Tesla.Mock
+  alias Pleroma.Web.Metadata.Utils
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
@@ -59,6 +60,8 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
     clear_config([Pleroma.Web.WebFinger, :domain], "example.com")
 
     user = insert(:user, ap_id: "https://sub.example.com/users/bobby", nickname: "bobby")
+
+    assert Utils.user_name_string(user) == "#{user.name} (@bobby@example.com)"
 
     response =
       build_conn()
