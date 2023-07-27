@@ -23,12 +23,6 @@ variables:
         - tag
       branch:
         - stable
-  - &on-point-release
-    when:
-      event:
-        - push
-      branch:
-        - stable
   - &on-pr-open
     when:
       event:
@@ -70,7 +64,7 @@ pipeline:
 
   debian-bullseye:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-debian-bullseye-20230109
-    <<: *on-point-release
+    <<: *on-stable
     environment:
       MIX_ENV: prod
       DEBIAN_FRONTEND: noninteractive
@@ -87,7 +81,7 @@ pipeline:
 
   release-debian:
     image: akkoma/releaser:arm64
-    <<: *on-point-release
+    <<: *on-stable
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-arm64.zip
@@ -99,7 +93,7 @@ pipeline:
   # Canonical arm64-musl
   musl:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.18.0
-    <<: *on-point-release
+    <<: *on-stable
     environment:
       MIX_ENV: prod
     commands:
@@ -114,7 +108,7 @@ pipeline:
 
   release-musl:
     image: akkoma/releaser:arm64
-    <<: *on-point-release
+    <<: *on-stable
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-arm64-musl.zip

@@ -24,7 +24,7 @@ Use the following mapping to figure out your flavour:
 | debian bullseye | amd64              | amd64               | develop, stable     |
 | debian bullseye | arm64              | arm64               | stable              |
 | ubuntu focal    | amd64              | amd64               | develop, stable     |
-| ubuntu focal    | arm64              | arm64               | stable              |
+| ubuntu focal    | arm64              | arm64               | develop, stable     |
 | ubuntu jammy    | amd64              | amd64-ubuntu-jammy  | develop, stable     |
 | ubuntu jammy    | arm64              | arm64-ubuntu-jammy  | stable              |
 | alpine          | amd64              | amd64-musl          | stable              |

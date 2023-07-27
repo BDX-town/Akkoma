@@ -24,13 +24,6 @@ variables:
         - tag
       branch:
         - stable
-  - &on-point-release
-    when:
-      event:
-        - push
-      branch:
-        - develop
-        - stable
   - &on-pr-open
     when:
       event:
@@ -101,7 +94,7 @@ pipeline:
   # Canonical amd64-musl
   musl:
     image: hexpm/elixir:1.14.3-erlang-25.2.2-alpine-3.18.0
-    <<: *on-point-release
+    <<: *on-stable
     environment:
       MIX_ENV: prod
     commands:
@@ -116,7 +109,7 @@ pipeline:
 
   release-musl:
     image: akkoma/releaser
-    <<: *on-point-release
+    <<: *on-stable
     secrets: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64-musl.zip
