@@ -16,6 +16,7 @@ variables:
         - tag
       branch:
         - stable
+        - develop
   - &on-stable
     when:
       event:
