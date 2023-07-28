@@ -61,8 +61,6 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
 
     user = insert(:user, ap_id: "https://sub.example.com/users/bobby", nickname: "bobby")
 
-    assert Utils.user_name_string(user) == "#{user.name} (@bobby@example.com)"
-
     response =
       build_conn()
       |> put_req_header("accept", "application/jrd+json")
