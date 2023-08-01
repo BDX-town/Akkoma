@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deactivated users can no longer show up in the emoji reaction list
 - Embedded posts can no longer bypass `:restrict\_unauthenticated`
+- GET/HEAD requests will now work when requesting AWS-based instances.
 
 ## Security
 
