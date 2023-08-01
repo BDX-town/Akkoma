@@ -4,7 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   use Oban.Testing, repo: Pleroma.Repo
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   alias Pleroma.Activity
   alias Pleroma.Object

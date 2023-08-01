@@ -4,7 +4,7 @@
 
 defmodule Mix.Tasks.Pleroma.UploadsTest do
   alias Pleroma.Upload
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   import Mock
 
@@ -24,15 +24,15 @@ defmodule Mix.Tasks.Pleroma.UploadsTest do
         store: fn %Upload{name: _file, path: _path}, _opts -> {:ok, %{}} end do
         Mix.Tasks.Pleroma.Uploads.run(["migrate_local", "S3"])
 
-        assert_received {:mix_shell, :info, [message]}
+        assert_receive {:mix_shell, :info, [message]}
         assert message =~ "Migrating files from local"
 
-        assert_received {:mix_shell, :info, [message]}
+        assert_receive {:mix_shell, :info, [message]}
 
         assert %{"total_count" => total_count} =
                  Regex.named_captures(~r"^Found (?<total_count>\d+) uploads$", message)
 
-        assert_received {:mix_shell, :info, [message]}
+        assert_receive {:mix_shell, :info, [message]}
 
         # @logevery in Mix.Tasks.Pleroma.Uploads
         count =

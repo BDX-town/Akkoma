@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.OAuth.LDAPAuthorizationTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   alias Pleroma.Repo
   alias Pleroma.Web.OAuth.Token
   import Pleroma.Factory
@@ -50,7 +50,7 @@ defmodule Pleroma.Web.OAuth.LDAPAuthorizationTest do
       token = Repo.get_by(Token, token: token)
 
       assert token.user_id == user.id
-      assert_received :close_connection
+      assert_receive :close_connection
     end
   end
 
@@ -71,7 +71,7 @@ defmodule Pleroma.Web.OAuth.LDAPAuthorizationTest do
          equalityMatch: fn _type, _value -> :ok end,
          wholeSubtree: fn -> :ok end,
          search: fn _connection, _options ->
-           {:ok, {:eldap_search_result, [{:eldap_entry, '', []}], [], []}}
+           {:ok, {:eldap_search_result, [{:eldap_entry, ~c"", []}], [], []}}
          end,
          close: fn _connection ->
            send(self(), :close_connection)
@@ -94,7 +94,7 @@ defmodule Pleroma.Web.OAuth.LDAPAuthorizationTest do
       token = Repo.get_by(Token, token: token) |> Repo.preload(:user)
 
       assert token.user.nickname == user.nickname
-      assert_received :close_connection
+      assert_receive :close_connection
     end
   end
 
@@ -129,7 +129,7 @@ defmodule Pleroma.Web.OAuth.LDAPAuthorizationTest do
         })
 
       assert %{"error" => "Invalid credentials"} = json_response(conn, 400)
-      assert_received :close_connection
+      assert_receive :close_connection
     end
   end
 end

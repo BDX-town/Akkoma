@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity

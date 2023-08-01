@@ -14,11 +14,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - ARM64 OTP builds
   - Ubuntu22 builds are available for develop and stable
   - other distributions are stable only
+- Support for Elixir 1.15
+  - 1.14 is still supported
 
 ## Changed
 
 - Alpine OTP builds are now from alpine 3.18, which is SSLv3 compatible.
   If you use alpine OTP builds you will have to update your local system.
+- Debian OTP builds are now from a base of bookwork, which is SSLv3 compatible.
+  If you use debian OTP builds you will have to update your local system to
+  bookworm (currently: stable).
 
 ## Fixed
 
@@ -29,6 +34,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Security
 
 - Add `no_new_privs` hardening to OpenRC and systemd service files
+
+## Removed
+
+- Builds for debian oldstable (bullseye)
+  - If you are on oldstable you should NOT attempt to update OTP builds without
+    first updating your machine.
 
 ## 2023.05
 

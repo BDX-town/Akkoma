@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity
@@ -31,6 +31,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
   end
 
   setup do: clear_config([:instance, :federating], true)
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "/relay" do
     setup do: clear_config([:instance, :allow_relay], true)

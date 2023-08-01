@@ -15,6 +15,8 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   alias Pleroma.Web.Endpoint
   alias Pleroma.Web.Router.Helpers
 
+  require Pleroma.Web.ActivityPub.Transmogrifier
+
   import Ecto.Query
 
   def render("endpoints.json", %{user: %User{nickname: nil, local: true} = _user}) do

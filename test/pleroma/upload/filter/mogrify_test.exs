@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Upload.Filter.MogrifyTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
   import Mock
 
   alias Pleroma.Upload.Filter

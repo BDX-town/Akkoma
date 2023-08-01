@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Object.FetcherTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   alias Pleroma.Activity
   alias Pleroma.Instances

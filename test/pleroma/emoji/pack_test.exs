@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Emoji.PackTest do
-  use Pleroma.DataCase, async: false
+  use Pleroma.DataCase
   alias Pleroma.Emoji.Pack
 
   @emoji_path Path.join(
@@ -13,7 +13,7 @@ defmodule Pleroma.Emoji.PackTest do
 
   setup do
     pack_path = Path.join(@emoji_path, "dump_pack")
-    File.mkdir(pack_path)
+    File.mkdir_p!(pack_path)
 
     File.write!(Path.join(pack_path, "pack.json"), """
     {

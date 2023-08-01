@@ -11,7 +11,7 @@ defmodule Pleroma.Web.Plugs.PlugHelperTest do
 
   import Mock
 
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   describe "when plug is skipped, " do
     setup_with_mocks(

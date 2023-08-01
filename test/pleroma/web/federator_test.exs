@@ -9,7 +9,7 @@ defmodule Pleroma.Web.FederatorTest do
   alias Pleroma.Web.Federator
   alias Pleroma.Workers.PublisherWorker
 
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   import Pleroma.Factory
@@ -49,7 +49,7 @@ defmodule Pleroma.Web.FederatorTest do
         ObanHelpers.perform(all_enqueued(worker: PublisherWorker))
       end
 
-      assert_received :relay_publish
+      assert_receive :relay_publish
     end
 
     test "with relays deactivated, it does not publish to the relay", %{

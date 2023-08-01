@@ -3,9 +3,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.PleromaAPI.MascotControllerTest do
-  use Pleroma.Web.ConnCase, async: true
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.User
+
+  setup do
+    clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+  end
 
   test "mascot upload" do
     %{conn: conn} = oauth_access(["write:accounts"])

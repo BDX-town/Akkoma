@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Uploaders.S3Test do
-  use Pleroma.DataCase
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.Uploaders.S3
 

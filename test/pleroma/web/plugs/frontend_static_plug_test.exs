@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.Plugs.FrontendStaticPlugTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   import Mock
 
   @dir "test/tmp/instance_static"
@@ -14,6 +14,7 @@ defmodule Pleroma.Web.Plugs.FrontendStaticPlugTest do
   end
 
   setup do: clear_config([:instance, :static_dir], @dir)
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   test "init will give a static plug config + the frontend type" do
     opts =

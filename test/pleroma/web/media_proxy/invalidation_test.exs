@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MediaProxy.InvalidationTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   alias Pleroma.Web.MediaProxy.Invalidation
 

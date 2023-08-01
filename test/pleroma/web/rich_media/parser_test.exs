@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.RichMedia.ParserTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
 
   alias Pleroma.Web.RichMedia.Parser
 

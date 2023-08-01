@@ -1,5 +1,5 @@
 defmodule Pleroma.Web.AkkomaAPI.FrontendSettingsControllerTest do
-  use Pleroma.Web.ConnCase, async: true
+  use Pleroma.Web.ConnCase, async: false
 
   import Pleroma.Factory
   alias Pleroma.Akkoma.FrontendSettingsProfile

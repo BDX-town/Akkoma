@@ -136,7 +136,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.drop(["conversation", "inReplyToAtomUri"])
       else
         e ->
-          Logger.warn("Couldn't fetch reply@#{inspect(in_reply_to_id)}, error: #{inspect(e)}")
+          Logger.warning("Couldn't fetch reply@#{inspect(in_reply_to_id)}, error: #{inspect(e)}")
           object
       end
     else
@@ -159,7 +159,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.put("quoteUri", quoted_object.data["id"])
       else
         e ->
-          Logger.warn("Couldn't fetch quote@#{inspect(quote_url)}, error: #{inspect(e)}")
+          Logger.warning("Couldn't fetch quote@#{inspect(quote_url)}, error: #{inspect(e)}")
           object
       end
     else
