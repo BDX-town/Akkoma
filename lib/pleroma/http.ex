@@ -27,10 +27,10 @@ defmodule Pleroma.HTTP do
           nil | {:ok, Env.t()} | {:error, any()}
   def get(url, headers \\ [], options \\ [])
   def get(nil, _, _), do: nil
-  def get(url, headers, options), do: request(:get, url, "", headers, options)
+  def get(url, headers, options), do: request(:get, url, nil, headers, options)
 
   @spec head(Request.url(), Request.headers(), keyword()) :: {:ok, Env.t()} | {:error, any()}
-  def head(url, headers \\ [], options \\ []), do: request(:head, url, "", headers, options)
+  def head(url, headers \\ [], options \\ []), do: request(:head, url, nil, headers, options)
 
   @doc """
   Performs POST request.
