@@ -8,7 +8,6 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
   import ExUnit.CaptureLog
   import Pleroma.Factory
   import Tesla.Mock
-  alias Pleroma.Web.Metadata.Utils
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)

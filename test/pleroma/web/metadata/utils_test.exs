@@ -80,24 +80,12 @@ defmodule Pleroma.Web.Metadata.UtilsTest do
 
   describe "user_name_string/1" do
     test "it uses the Endpoint by default" do
-      Pleroma.Web.Endpoint.config_change(
-        [{Pleroma.Web.Endpoint, url: [host: "sub.example.com"]}],
-        []
-      )
-
       user = insert(:user)
 
-      assert Utils.user_name_string(user) == "#{user.name} (@#{user.nickname}@sub.example.com)"
+      assert Utils.user_name_string(user) == "#{user.name} (@#{user.nickname}@localhost)"
     end
 
     test "it uses any custom WebFinger domain" do
-      Pleroma.Web.Endpoint.config_change(
-        [{Pleroma.Web.Endpoint, url: [host: "sub.example.com"]}],
-        []
-      )
-
-      clear_config([Pleroma.Web.Endpoint, :url, :host], "sub.example.com")
-
       clear_config([Pleroma.Web.WebFinger, :domain], "example.com")
 
       user = insert(:user)
