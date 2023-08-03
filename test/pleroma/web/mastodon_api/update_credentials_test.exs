@@ -11,6 +11,8 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
   import Mock
   import Pleroma.Factory
 
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+
   describe "updating credentials" do
     setup do: oauth_access(["write:accounts"])
     setup :request_content_type
