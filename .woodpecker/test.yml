@@ -110,9 +110,4 @@ pipeline:
     - mix ecto.create
     - mix ecto.migrate
     - mkdir -p test/tmp
-    - |
-      for i in $(seq 1 10)
-      do
-        echo "PARTITION $i"
-        MIX_TEST_PARTITION=$i mix test --preload-modules --exclude erratic --exclude federated --partitions 10 --max-cases 1
-      done
+    - mix test --preload-modules --exclude erratic --exclude federated 
