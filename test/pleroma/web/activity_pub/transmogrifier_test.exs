@@ -25,6 +25,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   end
 
   setup do: clear_config([:instance, :max_remote_account_fields])
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "handle_incoming" do
     test "it works for incoming unfollows with an existing follow" do
