@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Debian OTP builds are now from a base of bookworm, which is OpenSSLv3 compatible.
   If you use debian OTP builds you will have to update your local system to
   bookworm (currently: stable).
+- Blocks/Mutes now return from max ID to min ID, in line with mastodon.
 
 ## Fixed
 
