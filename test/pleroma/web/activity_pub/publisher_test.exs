@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.PublisherTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import ExUnit.CaptureLog
   import Pleroma.Factory

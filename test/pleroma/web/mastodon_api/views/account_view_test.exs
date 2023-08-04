@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.User
   alias Pleroma.UserRelationship
@@ -16,6 +17,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
+    clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
     :ok
   end
 

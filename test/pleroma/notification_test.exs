@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.NotificationTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   import Pleroma.Factory
   import Mock
@@ -466,7 +467,10 @@ defmodule Pleroma.NotificationTest do
         |> Repo.preload(:activity)
 
       assert %{type: "follow"} =
-               NotificationView.render("show.json", notification: notification, for: followed_user)
+               NotificationView.render("show.json",
+                 notification: notification,
+                 for: followed_user
+               )
     end
 
     test "it doesn't create a notification for follow-unfollow-follow chains" do

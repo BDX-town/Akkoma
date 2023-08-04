@@ -87,7 +87,7 @@ defmodule Pleroma.Application do
     # Go for the default 3 unless we're in test
     max_restarts =
       if @mix_env == :test do
-        100
+        1000
       else
         3
       end
@@ -112,7 +112,7 @@ defmodule Pleroma.Application do
         num
       else
         e ->
-          Logger.warn(
+          Logger.warning(
             "Could not get the postgres version: #{inspect(e)}.\nSetting the default value of 9.6"
           )
 

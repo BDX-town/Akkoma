@@ -131,7 +131,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
       {:ok, type, uri.host, uri.port}
     else
       e ->
-        Logger.warn("Parsing proxy failed #{inspect(proxy)}, #{inspect(e)}")
+        Logger.warning("Parsing proxy failed #{inspect(proxy)}, #{inspect(e)}")
         {:error, :invalid_proxy}
     end
   end
@@ -141,7 +141,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
       {:ok, type, host, port}
     else
       _ ->
-        Logger.warn("Parsing proxy failed #{inspect(proxy)}")
+        Logger.warning("Parsing proxy failed #{inspect(proxy)}")
         {:error, :invalid_proxy}
     end
   end

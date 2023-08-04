@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Config.DeprecationWarningsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   use Pleroma.Tests.Helpers
 
   import ExUnit.CaptureLog

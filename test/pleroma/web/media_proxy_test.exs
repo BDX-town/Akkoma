@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MediaProxyTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   use Pleroma.Tests.Helpers
 
   alias Pleroma.Config
@@ -14,6 +14,8 @@ defmodule Pleroma.Web.MediaProxyTest do
     {:ok, decoded} = MediaProxy.decode_url(encoded)
     decoded
   end
+
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "when enabled" do
     setup do: clear_config([:media_proxy, :enabled], true)

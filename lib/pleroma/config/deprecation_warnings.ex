@@ -28,7 +28,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
       |> Enum.any?(fn {_, v} -> is_list(v) and Enum.any?(v, &is_binary/1) end)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the SimplePolicy configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -87,7 +87,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     has_strings = Config.get([:instance, :quarantined_instances], []) |> Enum.any?(&is_binary/1)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the quarantined_instances configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -124,7 +124,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     has_strings = Config.get([:mrf, :transparency_exclusions]) |> Enum.any?(&is_binary/1)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the transparency_exclusions configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -159,7 +159,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
   def check_hellthread_threshold do
     if Config.get([:mrf_hellthread, :threshold]) do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       You are using the old configuration mechanism for the hellthread filter. Please check config.md.
       """)
@@ -264,7 +264,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     if warning == "" do
       :ok
     else
-      Logger.warn(warning_preface <> warning)
+      Logger.warning(warning_preface <> warning)
       :error
     end
   end
@@ -274,7 +274,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     whitelist = Config.get([:media_proxy, :whitelist])
 
     if Enum.any?(whitelist, &(not String.starts_with?(&1, "http"))) do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using old format (only domain) for MediaProxy whitelist option. Setting should work for now, but you are advised to change format to scheme with port to prevent possible issues later.
       """)

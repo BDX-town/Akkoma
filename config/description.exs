@@ -1081,7 +1081,7 @@ config :pleroma, :config_description, [
         key: :level,
         type: {:dropdown, :atom},
         description: "Log level",
-        suggestions: [:debug, :info, :warn, :error]
+        suggestions: [:debug, :info, :warning, :error]
       },
       %{
         key: :ident,
@@ -1114,7 +1114,7 @@ config :pleroma, :config_description, [
         key: :level,
         type: {:dropdown, :atom},
         description: "Log level",
-        suggestions: [:debug, :info, :warn, :error]
+        suggestions: [:debug, :info, :warning, :error]
       },
       %{
         key: :format,
@@ -1858,7 +1858,7 @@ config :pleroma, :config_description, [
         key: :log,
         type: {:dropdown, :atom},
         description: "Logs verbose mode",
-        suggestions: [false, :error, :warn, :info, :debug]
+        suggestions: [false, :error, :warning, :info, :debug]
       },
       %{
         key: :queues,

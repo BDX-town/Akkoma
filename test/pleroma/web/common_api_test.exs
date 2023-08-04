@@ -4,7 +4,8 @@
 
 defmodule Pleroma.Web.CommonAPITest do
   use Oban.Testing, repo: Pleroma.Repo
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Conversation.Participation
@@ -50,10 +51,12 @@ defmodule Pleroma.Web.CommonAPITest do
       assert object.data["type"] == "Question"
       assert object.data["oneOf"] |> length() == 2
 
+      {:ok, time, _} = DateTime.from_iso8601(object.data["closed"])
+
       assert_enqueued(
         worker: PollWorker,
         args: %{op: "poll_end", activity_id: activity.id},
-        scheduled_at: NaiveDateTime.from_iso8601!(object.data["closed"])
+        scheduled_at: time
       )
     end
   end

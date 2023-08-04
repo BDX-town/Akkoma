@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.StreamerTest do
-  use Pleroma.DataCase, async: false
+  use Pleroma.DataCase
 
   import Pleroma.Factory
 

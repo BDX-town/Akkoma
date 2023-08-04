@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.Repo
   alias Pleroma.User
@@ -14,6 +14,10 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
   alias Pleroma.Web.Plugs.SetLocalePlug
 
   import Pleroma.Factory
+
+  setup do
+    clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+  end
 
   describe "account fetching" do
     test "works by id" do

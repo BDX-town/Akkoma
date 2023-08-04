@@ -58,7 +58,7 @@ defmodule Mix.Tasks.Pleroma.ConfigTest do
 
       MixTask.migrate_to_db("test/fixtures/config/temp.secret.exs")
 
-      assert_received {:mix_shell, :error, [message]}
+      assert_receive {:mix_shell, :error, [message]}
 
       assert message =~
                "Migration is not allowed until all deprecation warnings have been resolved."
