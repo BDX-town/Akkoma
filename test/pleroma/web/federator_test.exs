@@ -10,6 +10,7 @@ defmodule Pleroma.Web.FederatorTest do
   alias Pleroma.Workers.PublisherWorker
 
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   import Pleroma.Factory

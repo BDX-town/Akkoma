@@ -5,6 +5,7 @@
 defmodule Mix.Tasks.Pleroma.UploadsTest do
   alias Pleroma.Upload
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   import Mock
 

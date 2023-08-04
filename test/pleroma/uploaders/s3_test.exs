@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Uploaders.S3Test do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Uploaders.S3
 

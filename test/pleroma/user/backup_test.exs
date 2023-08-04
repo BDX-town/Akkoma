@@ -5,6 +5,7 @@
 defmodule Pleroma.User.BackupTest do
   use Oban.Testing, repo: Pleroma.Repo
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   import Mock
   import Pleroma.Factory

@@ -5,6 +5,7 @@
 defmodule Pleroma.Workers.ReceiverWorkerTest do
   use Pleroma.DataCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
+  @moduletag :mocked
 
   import Mock
   import Pleroma.Factory

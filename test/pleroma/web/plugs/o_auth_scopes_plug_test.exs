@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.Plugs.OAuthScopesPlugTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Repo
   alias Pleroma.Web.Plugs.OAuthScopesPlug

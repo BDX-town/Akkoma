@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.PublisherTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import ExUnit.CaptureLog
   import Pleroma.Factory

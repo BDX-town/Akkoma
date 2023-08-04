@@ -7,6 +7,7 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
   alias Pleroma.User
 
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import Mock
   import Pleroma.Factory

@@ -15,6 +15,7 @@ defmodule Mix.Tasks.Pleroma.UserTest do
 
   use Pleroma.DataCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
+  @moduletag :mocked
 
   import ExUnit.CaptureIO
   import Mock

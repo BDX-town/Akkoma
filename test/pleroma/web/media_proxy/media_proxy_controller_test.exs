@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MediaProxy.MediaProxyControllerTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import Mock
 

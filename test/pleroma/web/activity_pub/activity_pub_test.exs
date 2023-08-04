@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity

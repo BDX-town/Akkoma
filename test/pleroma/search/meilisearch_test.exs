@@ -6,6 +6,7 @@ defmodule Pleroma.Search.MeilisearchTest do
   require Pleroma.Constants
 
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   import Pleroma.Factory

@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Activity.Ir.TopicsTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Activity.Ir.Topics

@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.MRF.MediaProxyWarmingPolicyTest do
   use ExUnit.Case, async: false
+  @moduletag :mocked
   use Pleroma.Tests.Helpers
 
   alias Pleroma.HTTP

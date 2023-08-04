@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MastodonAPI.SearchControllerTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.Endpoint

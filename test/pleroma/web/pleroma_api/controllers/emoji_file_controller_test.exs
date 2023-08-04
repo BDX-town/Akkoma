@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.PleromaAPI.EmojiFileControllerTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import Mock
   import Tesla.Mock

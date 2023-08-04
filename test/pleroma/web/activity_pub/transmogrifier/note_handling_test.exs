@@ -5,6 +5,7 @@
 defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
   use Oban.Testing, repo: Pleroma.Repo
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Object

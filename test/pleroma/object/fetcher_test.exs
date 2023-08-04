@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Object.FetcherTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Instances

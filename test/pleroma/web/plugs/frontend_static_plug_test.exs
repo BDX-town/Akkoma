@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.Plugs.FrontendStaticPlugTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
   import Mock
 
   @dir "test/tmp/instance_static"

@@ -5,7 +5,7 @@
 defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   use Oban.Testing, repo: Pleroma.Repo
   use Pleroma.DataCase, async: false
-
+  @moduletag :mocked
   alias Pleroma.Activity
   alias Pleroma.Object
   alias Pleroma.Tests.ObanHelpers
@@ -536,7 +536,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
     test "returns nil when cannot normalize object" do
       assert capture_log(fn ->
                refute Transmogrifier.get_obj_helper("test-obj-id")
-             end) =~ "Unsupported URI scheme"
+             end) =~ "URI Scheme Invalid"
     end
 
     @tag capture_log: true

@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.Plugs.AdminSecretAuthenticationPlugTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import Mock
   import Pleroma.Factory

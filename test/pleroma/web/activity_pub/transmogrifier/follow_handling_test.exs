@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.Transmogrifier.FollowHandlingTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
   alias Pleroma.Activity
   alias Pleroma.Notification
   alias Pleroma.Repo

@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.PleromaAPI.UserImportControllerTest do
   use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Tests.ObanHelpers

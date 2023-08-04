@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MediaProxy.InvalidationTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Web.MediaProxy.Invalidation
 

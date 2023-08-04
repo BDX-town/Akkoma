@@ -6,6 +6,7 @@ defmodule Pleroma.ApplicationRequirementsTest do
   use Pleroma.DataCase, async: false
 
   import ExUnit.CaptureLog
+  @moduletag :mocked
   import Mock
 
   alias Pleroma.ApplicationRequirements

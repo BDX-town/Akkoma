@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.User
   alias Pleroma.UserRelationship

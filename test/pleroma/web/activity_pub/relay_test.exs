@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.ActivityPub.RelayTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.User

@@ -5,6 +5,7 @@
 defmodule Pleroma.Web.ActivityPub.SideEffectsTest do
   use Oban.Testing, repo: Pleroma.Repo
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Notification
