@@ -4,7 +4,7 @@
 
 ## Installation
 
-This guide will assume you are on Debian 11 (“bullseye”) or later. This guide should also work with Ubuntu 18.04 (“Bionic Beaver”) and later. It also assumes that you have administrative rights, either as root or a user with [sudo permissions](https://www.digitalocean.com/community/tutorials/how-to-add-delete-and-grant-sudo-privileges-to-users-on-a-debian-vps). If you want to run this guide with root, ignore the `sudo` at the beginning of the lines, unless it calls a user like `sudo -Hu akkoma`; in this case, use `su <username> -s $SHELL -c 'command'` instead.
+This guide will assume you are on Debian 12 (“bookworm”) or later. This guide should also work with Ubuntu 22.04 (“Jammy Jellyfish”) and later. It also assumes that you have administrative rights, either as root or a user with [sudo permissions](https://www.digitalocean.com/community/tutorials/how-to-add-delete-and-grant-sudo-privileges-to-users-on-a-debian-vps). If you want to run this guide with root, ignore the `sudo` at the beginning of the lines, unless it calls a user like `sudo -Hu akkoma`; in this case, use `su <username> -s $SHELL -c 'command'` instead.
 
 {! installation/generic_dependencies.include !}
 
@@ -69,15 +69,15 @@ Next install Erlang:
 ```shell
 asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
 export KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac"
-asdf install erlang 25.3.2.1
-asdf global erlang 25.3.2.1
+asdf install erlang 25.3.2.5
+asdf global erlang 25.3.2.5
 ```
 
 Now install Elixir:
 ```shell
 asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
-asdf install elixir 1.14.5-otp-25
-asdf global elixir 1.14.5-otp-25
+asdf install elixir 1.15.4-otp-25
+asdf global elixir 1.15.4-otp-25
 ```
 
 Confirm that Elixir is installed correctly by checking the version:
