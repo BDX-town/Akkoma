@@ -1915,7 +1915,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
 
     assert [
              %{
-               "id" => ^id1,
+               "id" => ^id3,
                "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
              },
              %{
@@ -1923,7 +1923,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
                "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
              },
              %{
-               "id" => ^id3,
+               "id" => ^id1,
                "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
              }
            ] =
