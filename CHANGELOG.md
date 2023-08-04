@@ -19,9 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Changed
 
-- Alpine OTP builds are now from alpine 3.18, which is SSLv3 compatible.
+- Alpine OTP builds are now from alpine 3.18, which is OpenSSLv3 compatible.
   If you use alpine OTP builds you will have to update your local system.
-- Debian OTP builds are now from a base of bookwork, which is SSLv3 compatible.
+- Debian OTP builds are now from a base of bookworm, which is OpenSSLv3 compatible.
   If you use debian OTP builds you will have to update your local system to
   bookworm (currently: stable).
 
