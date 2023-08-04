@@ -184,12 +184,9 @@ defmodule Pleroma.Emoji.Pack do
   @spec import_from_filesystem() :: {:ok, [String.t()]} | {:error, File.posix() | atom()}
   def import_from_filesystem do
     emoji_path = emoji_path()
-    IO.inspect(emoji_path)
 
     with {:ok, %{access: :read_write}} <- File.stat(emoji_path),
          {:ok, results} <- File.ls(emoji_path) do
-      IO.inspect(results)
-
       names =
         results
         |> Enum.map(&Path.join(emoji_path, &1))
