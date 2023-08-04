@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - other distributions are stable only
 - Support for Elixir 1.15
   - 1.14 is still supported
+  - OTP26 is currently "unsupported". It will probably work, but due to the way
+    it handles map ordering, the test suite will not pass for it as yet.
 
 ## Changed
 
@@ -25,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   If you use debian OTP builds you will have to update your local system to
   bookworm (currently: stable).
 - Blocks/Mutes now return from max ID to min ID, in line with mastodon.
+- The AnonymizeFilename filter is now enabled by default.
 
 ## Fixed
 
