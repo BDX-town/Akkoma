@@ -15,18 +15,14 @@ While in theory OTP releases are possbile to install on any compatible machine, 
 
 ### Detecting flavour
 
-This is a little more complex than it used to be (thanks ubuntu)
-
 Use the following mapping to figure out your flavour:
 
 | distribution    | architecture       | flavour             | available branches  |
 | --------------- | ------------------ | ------------------- | ------------------- |
-| debian bullseye | amd64              | amd64               | develop, stable     |
-| debian bullseye | arm64              | arm64               | stable              |
-| ubuntu focal    | amd64              | amd64               | develop, stable     |
-| ubuntu focal    | arm64              | arm64               | stable              |
-| ubuntu jammy    | amd64              | amd64-ubuntu-jammy  | develop, stable     |
-| ubuntu jammy    | arm64              | arm64-ubuntu-jammy  | develop, stable     |
+| debian bookworm | amd64              | amd64               | develop, stable     |
+| debian bookworm | arm64              | arm64               | stable              |
+| ubuntu jammy    | amd64              | amd64               | develop, stable     |
+| ubuntu jammy    | arm64              | arm64               | develop, stable     |
 | alpine          | amd64              | amd64-musl          | stable              |
 | alpine          | arm64              | arm64-musl          | stable              |
 
