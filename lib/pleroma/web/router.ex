@@ -477,13 +477,13 @@ defmodule Pleroma.Web.Router do
     pipe_through(:api)
 
     get(
-      "/api/v1/akkoma/preferred_frontend/available",
+      "/preferred_frontend/available",
       FrontendSettingsController,
       :available_frontends
     )
 
     put(
-      "/api/v1/akkoma/preferred_frontend",
+      "/preferred_frontend",
       FrontendSettingsController,
       :update_preferred_frontend
     )
