@@ -62,6 +62,13 @@ defmodule Pleroma.HTTP do
     uri = URI.parse(url)
     adapter_opts = AdapterHelper.options(uri, options || [])
 
+    adapter_opts =
+      if uri.scheme == :https do
+        AdapterHelper.maybe_add_cacerts(adapter_opts, :public_key.cacerts_get())
+      else
+        adapter_opts
+      end
+
     options = put_in(options[:adapter], adapter_opts)
     params = options[:params] || []
     request = build_request(method, headers, options, url, body, params)
