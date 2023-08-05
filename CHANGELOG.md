@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Security
 
 - Add `no_new_privs` hardening to OpenRC and systemd service files
-- Ensured that XML parsers cannot load external entities (thanks @Mae@is.badat.dev!)
+- XML parsers cannot load any entities (thanks @Mae@is.badat.dev!)
 - Reduced permissions of config files and directories, distros requiring greater permissions like group-read need to pre-create the directories
 
 ## Removed
