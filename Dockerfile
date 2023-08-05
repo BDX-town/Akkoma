@@ -1,4 +1,4 @@
-FROM hexpm/elixir:1.14.3-erlang-25.3-alpine-3.17.2
+FROM hexpm/elixir:1.15.4-erlang-25.3.2.5-alpine-3.18.2
 
 ENV MIX_ENV=prod
 ENV ERL_EPMD_ADDRESS=127.0.0.1

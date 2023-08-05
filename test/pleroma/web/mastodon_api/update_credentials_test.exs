@@ -6,10 +6,13 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
   alias Pleroma.Repo
   alias Pleroma.User
 
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
 
   import Mock
   import Pleroma.Factory
+
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "updating credentials" do
     setup do: oauth_access(["write:accounts"])

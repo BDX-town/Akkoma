@@ -497,7 +497,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
     users =
       user
       |> User.muted_users_relation(_restrict_deactivated = true)
-      |> Pleroma.Pagination.fetch_paginated(Map.put(params, :skip_order, true))
+      |> Pleroma.Pagination.fetch_paginated(params)
 
     conn
     |> add_link_headers(users)
@@ -514,11 +514,16 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
     users =
       user
       |> User.blocked_users_relation(_restrict_deactivated = true)
-      |> Pleroma.Pagination.fetch_paginated(Map.put(params, :skip_order, true))
+      |> Pleroma.Pagination.fetch_paginated(params)
 
     conn
     |> add_link_headers(users)
-    |> render("index.json", users: users, for: user, as: :user)
+    |> render("index.json",
+      users: users,
+      for: user,
+      as: :user,
+      embed_relationships: embed_relationships?(params)
+    )
   end
 
   @doc "GET /api/v1/accounts/lookup"

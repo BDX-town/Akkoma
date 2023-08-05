@@ -15,16 +15,16 @@ While in theory OTP releases are possbile to install on any compatible machine, 
 
 ### Detecting flavour
 
-This is a little more complex than it used to be (thanks ubuntu)
-
 Use the following mapping to figure out your flavour:
 
-| distribution  | flavour            | available branches  |
-| ------------- | ------------------ | ------------------- |
-| debian stable | amd64              | develop, stable     |
-| ubuntu focal  | amd64              | develop, stable     |
-| ubuntu jammy  | amd64-ubuntu-jammy | develop, stable     |
-| alpine        | amd64-musl         | stable              |
+| distribution    | architecture       | flavour             | available branches  |
+| --------------- | ------------------ | ------------------- | ------------------- |
+| debian bookworm | amd64              | amd64               | develop, stable     |
+| debian bookworm | arm64              | arm64               | stable              |
+| ubuntu jammy    | amd64              | amd64               | develop, stable     |
+| ubuntu jammy    | arm64              | arm64               | develop, stable     |
+| alpine          | amd64              | amd64-musl          | stable              |
+| alpine          | arm64              | arm64-musl          | stable              |
 
 Other similar distributions will _probably_ work, but if it is not listed above, there is no official
 support.
@@ -118,8 +118,12 @@ Restart PostgreSQL to apply configuration changes:
 adduser --system --shell  /bin/false --home /opt/akkoma akkoma
 
 # Set the flavour environment variable to the string you got in Detecting flavour section.
-# For example if the flavour is `amd64` the command will be
-export FLAVOUR="amd64"
+# For example if the flavour is `amd64-musl` the command will be
+#     export FLAVOUR="amd64-musl"
+export FLAVOUR="<replace-this-with-the-correct-flavour-string>"
+
+# Make sure the SHELL variable is set
+export SHELL="${SHELL:-/bin/sh}"
 
 # Clone the release build into a temporary directory and unpack it
 su akkoma -s $SHELL -lc "

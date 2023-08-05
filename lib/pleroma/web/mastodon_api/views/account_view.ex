@@ -124,14 +124,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
           target,
           &User.blocks_user?(&1, &2)
         ),
-      blocked_by:
-        UserRelationship.exists?(
-          user_relationships,
-          :block,
-          target,
-          reading_user,
-          &User.blocks_user?(&1, &2)
-        ),
+      blocked_by: false,
       muting:
         UserRelationship.exists?(
           user_relationships,

@@ -390,7 +390,8 @@ defmodule Pleroma.Activity do
       active in fragment(
         "SELECT is_active from users WHERE ap_id = ? AND is_active = TRUE",
         activity.actor
-      )
+      ),
+      on: true
     )
   end
 

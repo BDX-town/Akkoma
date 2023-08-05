@@ -63,6 +63,9 @@ defmodule Pleroma.Upload do
           blurhash: String.t(),
           path: String.t()
         }
+
+  @always_enabled_filters [Pleroma.Upload.Filter.AnonymizeFilename]
+
   defstruct [:id, :name, :tempfile, :content_type, :width, :height, :blurhash, :path]
 
   @spec store(source, options :: [option()]) :: {:ok, Map.t()} | {:error, any()}
@@ -132,7 +135,11 @@ defmodule Pleroma.Upload do
       activity_type: Keyword.get(opts, :activity_type, activity_type),
       size_limit: Keyword.get(opts, :size_limit, size_limit),
       uploader: Keyword.get(opts, :uploader, Pleroma.Config.get([__MODULE__, :uploader])),
-      filters: Keyword.get(opts, :filters, Pleroma.Config.get([__MODULE__, :filters])),
+      filters:
+        Enum.uniq(
+          Keyword.get(opts, :filters, Pleroma.Config.get([__MODULE__, :filters])) ++
+            @always_enabled_filters
+        ),
       description: Keyword.get(opts, :description),
       base_url: base_url()
     }

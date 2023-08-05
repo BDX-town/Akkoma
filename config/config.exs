@@ -443,7 +443,8 @@ config :pleroma, :media_proxy,
     # Note: max_read_duration defaults to Pleroma.ReverseProxy.max_read_duration_default/1
     max_read_duration: 30_000
   ],
-  whitelist: []
+  whitelist: [],
+  blocklist: []
 
 config :pleroma, Pleroma.Web.MediaProxy.Invalidation.Http,
   method: :purge,

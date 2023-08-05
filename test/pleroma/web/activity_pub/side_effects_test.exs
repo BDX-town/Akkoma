@@ -4,7 +4,8 @@
 
 defmodule Pleroma.Web.ActivityPub.SideEffectsTest do
   use Oban.Testing, repo: Pleroma.Repo
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.Activity
   alias Pleroma.Notification
@@ -512,10 +513,12 @@ defmodule Pleroma.Web.ActivityPub.SideEffectsTest do
     test "enqueues the poll end", %{activity: activity, meta: meta} do
       {:ok, activity, meta} = SideEffects.handle(activity, meta)
 
+      {:ok, time, _} = DateTime.from_iso8601(meta[:object_data]["closed"])
+
       assert_enqueued(
         worker: Pleroma.Workers.PollWorker,
         args: %{op: "poll_end", activity_id: activity.id},
-        scheduled_at: NaiveDateTime.from_iso8601!(meta[:object_data]["closed"])
+        scheduled_at: time
       )
     end
   end
@@ -732,9 +735,7 @@ defmodule Pleroma.Web.ActivityPub.SideEffectsTest do
       ]) do
         {:ok, announce, _} = SideEffects.handle(announce)
 
-        assert called(
-                 Pleroma.Web.Streamer.stream(["user", "list", "public", "public:local"], announce)
-               )
+        assert called(Pleroma.Web.Streamer.stream(["user", "list"], announce))
 
         assert called(Pleroma.Web.Push.send(:_))
       end
