@@ -156,8 +156,10 @@ defmodule Pleroma.Application do
       mod
       |> to_string()
       |> String.to_existing_atom()
+      |> Code.ensure_loaded!()
     end)
-    |> Code.ensure_all_loaded!()
+    # Use this when 1.15 is standard
+    #|> Code.ensure_all_loaded!()
   end
 
   defp cachex_children do
