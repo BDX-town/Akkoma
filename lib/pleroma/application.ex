@@ -53,6 +53,7 @@ defmodule Pleroma.Application do
     Config.DeprecationWarnings.warn()
     Pleroma.Web.Plugs.HTTPSecurityPlug.warn_if_disabled()
     Pleroma.ApplicationRequirements.verify!()
+    load_all_pleroma_modules()
     load_custom_modules()
     Pleroma.Docs.JSON.compile()
     limiters_setup()
@@ -142,6 +143,21 @@ defmodule Pleroma.Application do
           :ok
       end
     end
+  end
+
+  def load_all_pleroma_modules do
+    :code.all_available()
+    |> Enum.filter(fn {mod, _, _} ->
+      mod
+      |> to_string()
+      |> String.starts_with?("Elixir.Pleroma.")
+    end)
+    |> Enum.map(fn {mod, _, _} ->
+      mod
+      |> to_string()
+      |> String.to_existing_atom()
+    end)
+    |> Code.ensure_all_loaded!()
   end
 
   defp cachex_children do
