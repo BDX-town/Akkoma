@@ -6,7 +6,7 @@ defmodule Pleroma.MFA.TOTPTest do
   use Pleroma.DataCase, async: true
 
   alias Pleroma.MFA.TOTP
-  import Pleroma.Test.URIHelpers
+  import Pleroma.Test.Matchers.URI
 
   test "create provisioning_uri to generate qrcode" do
     uri =

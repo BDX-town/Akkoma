@@ -1,4 +1,4 @@
-defmodule Pleroma.Test.URIHelpers do
+defmodule Pleroma.Test.Matchers.URI do
   import ExUnit.Assertions
 
   def assert_uri_equals(%URI{} = uri_a, %URI{} = uri_b) do
