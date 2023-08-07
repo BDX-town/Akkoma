@@ -204,14 +204,7 @@ defmodule Mix.Tasks.Pleroma.ConfigTest do
                  avatar_upload_limit: 2_000_000,
                  background_upload_limit: 4_000_000,
                  banner_upload_limit: 4_000_000,
-                 poll_limits:
-                   {_, _,
-                    [
-                      max_options: 20,
-                      max_option_chars: 200,
-                      min_expiration: 0,
-                      max_expiration: 31_536_000
-                    ]},
+                 poll_limits: {_, _, poll_limits},
                  registrations_open: true,
                  federating: true,
                  federation_incoming_replies_max_depth: 100,
@@ -256,6 +249,14 @@ defmodule Mix.Tasks.Pleroma.ConfigTest do
                  ]
                ]
              ] = config_quote
+
+      assert Keyword.equal?(
+               poll_limits,
+               max_options: 20,
+               max_option_chars: 200,
+               min_expiration: 0,
+               max_expiration: 31_536_000
+             )
     end
   end
 
