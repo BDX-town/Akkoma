@@ -45,7 +45,7 @@ services:
     volumes:
       - .:/opt/akkoma
 
-  # Uncomment the following if you want to use a reverse proxy
+  # Copy this into docker-compose.override.yml and uncomment there if you want to use a reverse proxy
   #proxy:
   #  image: caddy:2-alpine
   #  restart: unless-stopped
