@@ -182,7 +182,7 @@ defmodule Pleroma.Mixfile do
       {:restarter, path: "./restarter"},
       {:majic,
        git: "https://akkoma.dev/AkkomaGang/majic.git",
-       ref: "baf7e236aeceb03387c1314f65654601e3dbb6d1"},
+       ref: "15138d478bd19163481ae5d82df5fb602ec6ed90"},
       {:eblurhash, "~> 1.2.2"},
       {:open_api_spex, "~> 3.17"},
       {:search_parser,
