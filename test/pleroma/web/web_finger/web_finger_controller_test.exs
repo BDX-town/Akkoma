@@ -8,6 +8,7 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
   import ExUnit.CaptureLog
   import Pleroma.Factory
   import Tesla.Mock
+  import Pleroma.Test.Matchers.XML
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
@@ -23,8 +24,8 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
 
     assert response.status == 200
 
-    assert response.resp_body ==
-             ~s(<?xml version="1.0" encoding="UTF-8"?><XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><Link rel="lrdd" template="#{Pleroma.Web.Endpoint.url()}/.well-known/webfinger?resource={uri}" type="application/xrd+xml" /></XRD>)
+    assert_xml_equals(response.resp_body,
+             ~s(<?xml version="1.0" encoding="UTF-8"?><XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><Link rel="lrdd" template="#{Pleroma.Web.Endpoint.url()}/.well-known/webfinger?resource={uri}" type="application/xrd+xml" /></XRD>))
   end
 
   test "Webfinger JRD" do

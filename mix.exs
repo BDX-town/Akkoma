@@ -204,6 +204,7 @@ defmodule Pleroma.Mixfile do
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
+      {:elixir_xml_to_map, "~> 3.0", only: :test},
       {:mint, "~> 1.5.1", override: true},
       {:nimble_pool, "~> 1.0", override: true}
     ] ++ oauth_deps()
