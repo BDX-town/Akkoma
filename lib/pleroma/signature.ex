@@ -76,6 +76,6 @@ defmodule Pleroma.Signature do
   def signed_date, do: signed_date(NaiveDateTime.utc_now())
 
   def signed_date(%NaiveDateTime{} = date) do
-    Timex.format!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
+    Timex.lformat!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT", "en")
   end
 end
