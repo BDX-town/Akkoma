@@ -115,6 +115,7 @@ defmodule Pleroma.Mixfile do
   defp deps do
     [
       {:phoenix, "~> 1.6.15"},
+      {:mime, "~> 2.0"},
       {:tzdata, "~> 1.1.1"},
       {:plug_cowboy, "~> 2.6"},
       {:phoenix_pubsub, "~> 2.1"},
@@ -177,7 +178,9 @@ defmodule Pleroma.Mixfile do
        git: "https://git.pleroma.social/pleroma/elixir-libraries/elixir-captcha.git",
        ref: "3bbfa8b5ea13accc1b1c40579a380d8e5cfd6ad2"},
       {:restarter, path: "./restarter"},
-      {:majic, "~> 1.0"},
+      {:majic,
+       git: "https://akkoma.dev/AkkomaGang/majic.git",
+       ref: "93a3c8e617a96e20f6f17844c5e45b3b30ba1789"},
       {:eblurhash, "~> 1.2.2"},
       {:open_api_spex, "~> 3.17"},
       {:search_parser,
@@ -190,7 +193,7 @@ defmodule Pleroma.Mixfile do
        git: "https://akkoma.dev/AkkomaGang/elasticsearch-elixir.git", ref: "main"},
       {:mfm_parser,
        git: "https://akkoma.dev/AkkomaGang/mfm-parser.git",
-       ref: "912fba81152d4d572e457fd5427f9875b2bc3dbe"},
+       ref: "b21ab7754024af096f2d14247574f55f0063295b"},
 
       ## dev & test
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
@@ -201,7 +204,8 @@ defmodule Pleroma.Mixfile do
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
-      {:mint, "~> 1.5.1", override: true}
+      {:mint, "~> 1.5.1", override: true},
+      {:nimble_pool, "~> 1.0", override: true}
     ] ++ oauth_deps()
   end
 
