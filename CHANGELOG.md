@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## Added
+- Full compatibility with Erlang OTP26
 
 ## 2023.08
 
