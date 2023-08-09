@@ -170,6 +170,10 @@ config :mime, :types, %{
   "application/ld+json" => ["activity+json"]
 }
 
+config :mime, :extensions, %{
+  "activity+json" => "application/activity+json"
+}
+
 config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 
 # Configures http settings, upstream proxy etc.

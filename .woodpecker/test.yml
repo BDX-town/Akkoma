@@ -12,9 +12,8 @@ matrix:
       OTP_VERSION: 25
     - ELIXIR_VERSION: 1.15
       OTP_VERSION: 25
-    # Soon
-    #- ELIXIR_VERSION: 1.15
-    #  OTP_VERSION: 26
+    - ELIXIR_VERSION: 1.15
+      OTP_VERSION: 26
 
 variables:
   - &scw-secrets
