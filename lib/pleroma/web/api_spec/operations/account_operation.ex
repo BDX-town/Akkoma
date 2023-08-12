@@ -451,6 +451,20 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
     }
   end
 
+  def preferences_operation do
+    %Operation{
+      tags: ["Account Preferences"],
+      description: "Preferences defined by the user in their account settings.",
+      summary: "Preferred common behaviors to be shared across clients.",
+      operationId: "AccountController.preferences",
+      security: [%{"oAuth" => ["read:accounts"]}],
+      responses: %{
+        200 => Operation.response("Preferences", "application/json", Account),
+        401 => Operation.response("Error", "application/json", ApiError)
+      }
+    }
+  end
+
   def identity_proofs_operation do
     %Operation{
       tags: ["Retrieve account information"],

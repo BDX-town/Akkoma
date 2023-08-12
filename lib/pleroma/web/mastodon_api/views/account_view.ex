@@ -315,6 +315,17 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
     |> maybe_put_email_address(user, opts[:for])
   end
 
+  def render("preferences.json", %{user: user} = opts) do
+    # TODO: Do we expose more settings that make sense to plug in here?
+    %{
+      "posting:default:visibility": user.default_scope,
+      "posting:default:sensitive": false,
+      "posting:default:language": nil,
+      "reading:expand:media": "default",
+      "reading:expand:spoilers": false
+    }
+  end
+
   defp username_from_nickname(string) when is_binary(string) do
     hd(String.split(string, "@"))
   end

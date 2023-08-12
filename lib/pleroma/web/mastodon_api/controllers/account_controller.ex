@@ -51,7 +51,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
   plug(
     OAuthScopesPlug,
     %{scopes: ["read:accounts"]}
-    when action in [:verify_credentials, :endorsements, :identity_proofs]
+    when action in [:verify_credentials, :endorsements, :identity_proofs, :preferences]
   )
 
   plug(
@@ -544,4 +544,9 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
 
   @doc "GET /api/v1/identity_proofs"
   def identity_proofs(conn, params), do: MastodonAPIController.empty_array(conn, params)
+
+  @doc "GET /api/v1/preferences"
+  def preferences(%{assigns: %{user: user}} = conn, params) do
+    render(conn, "preferences.json", user: user)
+  end
 end
