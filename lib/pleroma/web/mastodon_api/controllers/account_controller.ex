@@ -546,7 +546,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
   def identity_proofs(conn, params), do: MastodonAPIController.empty_array(conn, params)
 
   @doc "GET /api/v1/preferences"
-  def preferences(%{assigns: %{user: user}} = conn, params) do
+  def preferences(%{assigns: %{user: user}} = conn, _params) do
     render(conn, "preferences.json", user: user)
   end
 end

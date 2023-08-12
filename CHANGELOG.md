@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Added
 - Full compatibility with Erlang OTP26
+- handling of GET /api/v1/preferences
 
 ## Changed
 - OTP builds are now built on erlang OTP26
