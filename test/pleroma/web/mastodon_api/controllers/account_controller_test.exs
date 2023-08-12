@@ -2060,4 +2060,32 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       assert %{"error" => "Record not found"} = json_response_and_validate_schema(conn_res, 404)
     end
   end
+
+  describe "preferences" do
+    test "get account preferences" do
+      user = insert(:user, default_scope: "public")
+      %{conn: conn} = oauth_access(["read:accounts"], user: user)
+
+      conn = get(conn, "/api/v1/preferences")
+      response = json_response_and_validate_schema(conn, 200)
+
+      assert %{
+               "posting:default:language" => nil,
+               "posting:default:sensitive" => false,
+               "posting:default:visibility" => "public",
+               "reading:expand:media" => "default",
+               "reading:expand:spoilers" => false
+             } = response
+    end
+
+    test "test changing account preferences" do
+      user = insert(:user, default_scope: "unlisted")
+      %{conn: conn} = oauth_access(["read:accounts"], user: user)
+
+      conn = get(conn, "/api/v1/preferences")
+      response = json_response_and_validate_schema(conn, 200)
+
+      assert response["posting:default:visibility"] == "unlisted"
+    end
+  end
 end
