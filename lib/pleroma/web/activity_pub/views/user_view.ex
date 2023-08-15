@@ -18,7 +18,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   import Ecto.Query
 
   def render("endpoints.json", %{user: %User{nickname: nil, local: true} = _user}) do
-    %{"sharedInbox" => ~p"/inbox"}
+    %{"sharedInbox" => url(~p"/inbox")}
   end
 
   def render("endpoints.json", %{user: %User{local: true} = _user}) do
