@@ -1,23 +1,5 @@
 platform: linux/amd64
 
-depends_on:
-  - lint
-
-matrix:
-  ELIXIR_VERSION:
-    - 1.14
-    - 1.15
-  OTP_VERSION:
-    - 25
-    - 26
-  include:
-    - ELIXIR_VERSION: 1.14
-      OTP_VERSION: 25
-    - ELIXIR_VERSION: 1.15
-      OTP_VERSION: 25
-    - ELIXIR_VERSION: 1.15
-      OTP_VERSION: 26
-
 variables:
   - &scw-secrets
     - SCW_ACCESS_KEY
@@ -59,35 +41,15 @@ variables:
   - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
   - &mix-clean "mix deps.clean --all && mix clean"
 
-services:
-  postgres:
-    image: postgres:15
-    when:
-      event:
-        - pull_request
-    environment:
-      POSTGRES_DB: pleroma_test_${ELIXIR_VERSION}_${OTP_VERSION}
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
 pipeline:
-  test:
-    image: akkoma/ci-base:${ELIXIR_VERSION}-otp${OTP_VERSION}
+  lint:
+    image: akkoma/ci-base:1.15-otp26
     <<: *on-pr-open
     environment:
       MIX_ENV: test
-      POSTGRES_DB: pleroma_test_${ELIXIR_VERSION}_${OTP_VERSION}
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      DB_HOST: postgres
     commands:
       - mix local.hex --force
       - mix local.rebar --force
       - mix deps.get
       - mix compile
-      - mix ecto.drop -f -q
-      - mix ecto.create
-      - mix ecto.migrate
-      - mkdir -p test/tmp
-      - mix test --preload-modules --exclude erratic --exclude federated --exclude mocked
-      - mix test --preload-modules --only mocked
+      - mix format --check-formatted

@@ -12,7 +12,6 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCardTest do
   alias Pleroma.Web.MediaProxy
   alias Pleroma.Web.Metadata.Providers.TwitterCard
   alias Pleroma.Web.Metadata.Utils
-  alias Pleroma.Web.Router
 
   setup do: clear_config([Pleroma.Web.Metadata, :unfurl_nsfw])
 
@@ -189,7 +188,7 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCardTest do
              {:meta,
               [
                 name: "twitter:player",
-                content: Router.Helpers.o_status_url(Endpoint, :notice_player, activity.id)
+                content: url(Endpoint, ~p[/notice/#{activity.id}/embed_player])
               ], []},
              {:meta, [name: "twitter:player:width", content: "800"], []},
              {:meta, [name: "twitter:player:height", content: "600"], []},

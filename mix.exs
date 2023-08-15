@@ -7,7 +7,7 @@ defmodule Pleroma.Mixfile do
       version: version("3.10.3"),
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix] ++ Mix.compilers(),
+      compilers: Mix.compilers(),
       elixirc_options: [warnings_as_errors: warnings_as_errors()],
       xref: [exclude: [:eldap]],
       start_permanent: Mix.env() == :prod,
@@ -114,7 +114,9 @@ defmodule Pleroma.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.6.15"},
+      {:phoenix, "~> 1.7.0"},
+      {:phoenix_view, "~> 2.0"},
+      {:phoenix_live_dashboard, "~> 0.7.2"},
       {:tzdata, "~> 1.1.1"},
       {:plug_cowboy, "~> 2.6"},
       {:phoenix_pubsub, "~> 2.1"},
@@ -188,7 +190,6 @@ defmodule Pleroma.Mixfile do
        git: "https://github.com/FloatingGhost/pleroma-contrib-search-parser.git",
        ref: "08971a81e68686f9ac465cfb6661d51c5e4e1e7f"},
       {:nimble_parsec, "~> 1.3", override: true},
-      {:phoenix_live_dashboard, "~> 0.7.2"},
       {:ecto_psql_extras, "~> 0.7"},
       {:elasticsearch,
        git: "https://akkoma.dev/AkkomaGang/elasticsearch-elixir.git", ref: "main"},

@@ -2,7 +2,7 @@
 
 <h3>After you submit, you will need to refresh manually to get your new frontend!</h3>
 
-<%= form_for @conn, Routes.frontend_switcher_path(@conn, :do_switch), fn f -> %>
+<%= form_for @conn, ~p"/akkoma/frontend", fn f -> %>
   <%= select(f, :frontend, @choices) %>
 
   <%= submit do: "submit" %>

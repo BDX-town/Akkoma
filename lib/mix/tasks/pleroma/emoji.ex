@@ -236,6 +236,7 @@ defmodule Mix.Tasks.Pleroma.Emoji do
 
       IO.puts("#{pack_file} has been created with the #{name} pack")
     end
+
     Pleroma.Emoji.reload()
   end
 

@@ -212,7 +212,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     test "returns empty response when no reports created", %{conn: conn} do
       response =
         conn
-        |> get(report_path(conn, :index))
+        |> get(~p"/api/v1/pleroma/admin/reports")
         |> json_response_and_validate_schema(:ok)
 
       assert Enum.empty?(response["reports"])
@@ -232,7 +232,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index))
+        |> get(~p"/api/v1/pleroma/admin/reports")
         |> json_response_and_validate_schema(:ok)
 
       [report] = response["reports"]
@@ -264,7 +264,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index, %{state: "open"}))
+        |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "open"]}])
         |> json_response_and_validate_schema(:ok)
 
       assert [open_report] = response["reports"]
@@ -276,7 +276,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index, %{state: "closed"}))
+        |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "closed"]}])
         |> json_response_and_validate_schema(:ok)
 
       assert [closed_report] = response["reports"]
@@ -288,7 +288,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       assert %{"total" => 0, "reports" => []} ==
                conn
-               |> get(report_path(conn, :index, %{state: "resolved"}))
+               |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "resolved"]}])
                |> json_response_and_validate_schema(:ok)
     end
 

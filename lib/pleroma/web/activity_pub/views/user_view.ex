@@ -12,24 +12,22 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.Utils
-  alias Pleroma.Web.Endpoint
-  alias Pleroma.Web.Router.Helpers
 
   require Pleroma.Web.ActivityPub.Transmogrifier
 
   import Ecto.Query
 
   def render("endpoints.json", %{user: %User{nickname: nil, local: true} = _user}) do
-    %{"sharedInbox" => Helpers.activity_pub_url(Endpoint, :inbox)}
+    %{"sharedInbox" => ~p"/inbox"}
   end
 
   def render("endpoints.json", %{user: %User{local: true} = _user}) do
     %{
-      "oauthAuthorizationEndpoint" => Helpers.o_auth_url(Endpoint, :authorize),
-      "oauthRegistrationEndpoint" => Helpers.app_url(Endpoint, :create),
-      "oauthTokenEndpoint" => Helpers.o_auth_url(Endpoint, :token_exchange),
-      "sharedInbox" => Helpers.activity_pub_url(Endpoint, :inbox),
-      "uploadMedia" => Helpers.activity_pub_url(Endpoint, :upload_media)
+      "oauthAuthorizationEndpoint" => ~p"/oauth/authorize",
+      "oauthRegistrationEndpoint" => ~p"/api/v1/apps",
+      "oauthTokenEndpoint" => ~p"/oauth/token",
+      "sharedInbox" => ~p"/inbox",
+      "uploadMedia" => ~p"/api/ap/upload_media"
     }
   end
 

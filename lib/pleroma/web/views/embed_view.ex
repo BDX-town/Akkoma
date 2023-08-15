@@ -13,7 +13,6 @@ defmodule Pleroma.Web.EmbedView do
   alias Pleroma.Web.Gettext
   alias Pleroma.Web.MediaProxy
   alias Pleroma.Web.Metadata.Utils
-  alias Pleroma.Web.Router.Helpers
 
   import Phoenix.HTML
 
@@ -48,7 +47,7 @@ defmodule Pleroma.Web.EmbedView do
   defp activity_content(_), do: nil
 
   defp activity_url(%User{local: true}, activity) do
-    Helpers.o_status_url(Pleroma.Web.Endpoint, :notice, activity)
+    ~p[/notice/#{activity}]
   end
 
   defp activity_url(%User{local: false}, %Activity{object: %Object{data: data}}) do

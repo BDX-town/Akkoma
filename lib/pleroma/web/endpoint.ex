@@ -97,7 +97,7 @@ defmodule Pleroma.Web.Endpoint do
     Plug.Static,
     at: "/",
     from: :pleroma,
-    only: Pleroma.Constants.static_only_files(),
+    only: Pleroma.Web.static_paths(),
     # credo:disable-for-previous-line Credo.Check.Readability.MaxLineLength
     gzip: true,
     cache_control_for_etags: @static_cache_control,

@@ -44,6 +44,8 @@ defmodule Pleroma.User do
   alias Pleroma.Web.RelMe
   alias Pleroma.Workers.BackgroundWorker
 
+  use Pleroma.Web, :verified_routes
+
   require Logger
 
   @type t :: %__MODULE__{}
@@ -2447,12 +2449,7 @@ defmodule Pleroma.User do
           end
 
         if is_url(raw_value) do
-          frontend_url =
-            Pleroma.Web.Router.Helpers.redirect_url(
-              Pleroma.Web.Endpoint,
-              :redirector_with_meta,
-              nickname
-            )
+          frontend_url = url(~p[/#{nickname}])
 
           possible_urls = [ap_id, frontend_url]
 

@@ -529,7 +529,7 @@ defmodule Pleroma.Web.MastodonAPI.UpdateCredentialsTest do
       user: user,
       conn: conn
     } do
-      fe_url = "#{Pleroma.Web.Endpoint.url()}/#{user.nickname}"
+      fe_url = url(~p[/#{user.nickname}])
 
       Tesla.Mock.mock(fn
         %{url: "http://example.com/rel_me/fe_path"} ->

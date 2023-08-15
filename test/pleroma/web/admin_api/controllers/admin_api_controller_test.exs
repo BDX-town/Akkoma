@@ -783,7 +783,8 @@ defmodule Pleroma.Web.AdminAPI.AdminAPIControllerTest do
 
   describe "PATCH /resend_confirmation_email" do
     test "it resend emails for two users", %{conn: conn, admin: admin} do
-      [first_user, second_user] = insert_pair(:user, is_confirmed: false)
+      [first_user, second_user] =
+        insert_pair(:user, is_confirmed: false, confirmation_token: "something")
 
       ret_conn =
         patch(conn, "/api/v1/pleroma/admin/users/resend_confirmation_email", %{
