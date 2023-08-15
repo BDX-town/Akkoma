@@ -487,4 +487,11 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
              )
     end
   end
+
+  describe "should_federate/1" do
+    test "should not obliterate itself if the inbox URL is bad" do
+      url = "/inbox"
+      refute Pleroma.Web.ActivityPub.Publisher.should_federate?(url)
+    end
+  end
 end

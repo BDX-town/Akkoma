@@ -115,13 +115,17 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
   def should_federate?(url) do
     %{host: host} = URI.parse(url)
 
-    with allowed <- allowed_instances(),
+    with {:nil, false} <- {:nil, is_nil(host)},
+         allowed <- allowed_instances(),
          false <- Enum.empty?(allowed) do
       allowed
       |> Pleroma.Web.ActivityPub.MRF.instance_list_from_tuples()
       |> Pleroma.Web.ActivityPub.MRF.subdomains_regex()
       |> Pleroma.Web.ActivityPub.MRF.subdomain_match?(host)
     else
+      # oi!
+      {:nil, true} ->
+        false
       _ ->
         quarantined_instances =
           blocked_instances()
