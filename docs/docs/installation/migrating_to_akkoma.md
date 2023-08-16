@@ -40,7 +40,7 @@ If you are on pleroma develop, and have updated since 2022-08, you may have issu
 Please roll back the given migrations:
 
 ```bash
-MIX_ENV=prod mix ecto.rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n3
+MIX_ENV=prod mix ecto.rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n5
 ```
 
 Then compile, migrate and restart as usual.
