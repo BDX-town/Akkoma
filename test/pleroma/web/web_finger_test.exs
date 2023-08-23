@@ -188,7 +188,6 @@ defmodule Pleroma.Web.WebFingerTest do
 
       {:error, _data} = WebFinger.finger("meanie@bad.com")
     end
-
   end
 
   @tag capture_log: true

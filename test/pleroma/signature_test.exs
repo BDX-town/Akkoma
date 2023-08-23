@@ -155,7 +155,7 @@ defmodule Pleroma.SignatureTest do
 
     test "it deduces the actor ID for bridgy" do
       assert Signature.key_id_to_actor_id("https://example.com/1234#key") ==
-        {:ok, "https://example.com/1234"}
+               {:ok, "https://example.com/1234"}
     end
 
     test "it calls webfinger for 'acct:' accounts" do

@@ -233,7 +233,6 @@ defmodule Pleroma.Web.WebFinger do
         {:ok, data} -> validate_webfinger(address, data)
         error -> error
       end
-
     else
       error ->
         Logger.debug("Couldn't finger #{account}: #{inspect(error)}")
@@ -254,5 +253,4 @@ defmodule Pleroma.Web.WebFinger do
   end
 
   defp validate_webfinger(url, data), do: {:error, {:webfinger_invalid, url, data}}
-
 end
