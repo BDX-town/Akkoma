@@ -76,6 +76,7 @@ pipeline:
       - *clean
       - echo "import Config" > config/prod.secret.exs
       - *setup-hex
+      - *mix-clean
       - *tag-build
       - mix deps.get --only prod
       - mix release --path release
