@@ -876,12 +876,16 @@ defmodule Pleroma.User do
     end
   end
 
-  defp send_user_approval_email(user) do
+  defp send_user_approval_email(%User{email: email} = user) when is_binary(email) do
     user
     |> Pleroma.Emails.UserEmail.approval_pending_email()
     |> Pleroma.Emails.Mailer.deliver_async()
 
     {:ok, :enqueued}
+  end
+
+  defp send_user_approval_email(_user) do
+    {:ok, :skipped}
   end
 
   defp send_admin_approval_emails(user) do
@@ -1489,7 +1493,7 @@ defmodule Pleroma.User do
       unmute(muter, mutee)
     else
       {who, result} = error ->
-        Logger.warn(
+        Logger.warning(
           "User.unmute/2 failed. #{who}: #{result}, muter_id: #{muter_id}, mutee_id: #{mutee_id}"
         )
 
@@ -2006,7 +2010,6 @@ defmodule Pleroma.User do
     %User{
       invisible: true,
       local: true,
-      actor_type: "Application",
       ap_id: uri,
       nickname: nickname,
       follower_address: uri <> "/followers"

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.WebFingerTest do
-  use Pleroma.DataCase, async: true
+  use Pleroma.DataCase
   alias Pleroma.Web.WebFinger
   import Pleroma.Factory
   import Tesla.Mock

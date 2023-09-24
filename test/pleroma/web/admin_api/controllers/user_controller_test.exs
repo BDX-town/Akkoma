@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.AdminAPI.UserControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   import Mock

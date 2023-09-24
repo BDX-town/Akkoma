@@ -117,6 +117,8 @@ defmodule Pleroma.Object.Fetcher do
   # Note: will create a Create activity, which we need internally at the moment.
   def fetch_object_from_id(id, options \\ []) do
     with %URI{} = uri <- URI.parse(id),
+         # let's check the URI is even vaguely valid first
+         {:scheme, true} <- {:scheme, uri.scheme == "http" or uri.scheme == "https"},
          # If we have instance restrictions, apply them here to prevent fetching from unwanted instances
          {:ok, nil} <- Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri),
          {:ok, _} <- Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri),
@@ -134,6 +136,9 @@ defmodule Pleroma.Object.Fetcher do
     else
       {:allowed_depth, false} ->
         {:error, "Max thread distance exceeded."}
+
+      {:scheme, false} ->
+        {:error, "URI Scheme Invalid"}
 
       {:containment, _} ->
         {:error, "Object containment failed."}

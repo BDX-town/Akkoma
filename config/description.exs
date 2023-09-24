@@ -1081,7 +1081,7 @@ config :pleroma, :config_description, [
         key: :level,
         type: {:dropdown, :atom},
         description: "Log level",
-        suggestions: [:debug, :info, :warn, :error]
+        suggestions: [:debug, :info, :warning, :error]
       },
       %{
         key: :ident,
@@ -1114,7 +1114,7 @@ config :pleroma, :config_description, [
         key: :level,
         type: {:dropdown, :atom},
         description: "Log level",
-        suggestions: [:debug, :info, :warn, :error]
+        suggestions: [:debug, :info, :warning, :error]
       },
       %{
         key: :format,
@@ -1558,7 +1558,21 @@ config :pleroma, :config_description, [
       %{
         key: :whitelist,
         type: {:list, :string},
-        description: "List of hosts with scheme to bypass the MediaProxy",
+        description: """
+        List of hosts with scheme to bypass the MediaProxy.\n
+        The media will be fetched by the client, directly from the remote server.\n
+        To allow this, it will Content-Security-Policy exceptions for each instance listed.\n
+        This is to be used for instances you trust and do not want to cache media for.
+        """,
+        suggestions: ["http://example.com"]
+      },
+      %{
+        key: :blocklist,
+        type: {:list, :string},
+        description: """
+        List of hosts with scheme which will not go through the MediaProxy, and will not be explicitly allowed by the Content-Security-Policy.
+        This is to be used for instances where you do not want their media to go through your server or to be accessed by clients.
+        """,
         suggestions: ["http://example.com"]
       }
     ]
@@ -1844,7 +1858,7 @@ config :pleroma, :config_description, [
         key: :log,
         type: {:dropdown, :atom},
         description: "Logs verbose mode",
-        suggestions: [false, :error, :warn, :info, :debug]
+        suggestions: [false, :error, :warning, :info, :debug]
       },
       %{
         key: :queues,

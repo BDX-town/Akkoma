@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
   use Pleroma.DataCase, async: false
+  @moduletag :mocked
 
   alias Pleroma.User
   alias Pleroma.UserRelationship
@@ -16,6 +17,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
+    clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
     :ok
   end
 
@@ -397,7 +399,22 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
       expected =
         Map.merge(
           @blank_response,
-          %{following: false, blocking: true, blocked_by: true, id: to_string(other_user.id)}
+          %{following: false, blocking: true, blocked_by: false, id: to_string(other_user.id)}
+        )
+
+      test_relationship_rendering(user, other_user, expected)
+    end
+
+    test "blocks are not visible to the blocked user" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      {:ok, _user_relationship} = User.block(other_user, user)
+
+      expected =
+        Map.merge(
+          @blank_response,
+          %{following: false, blocking: false, blocked_by: false, id: to_string(other_user.id)}
         )
 
       test_relationship_rendering(user, other_user, expected)

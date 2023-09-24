@@ -2,6 +2,14 @@
 Note: Additional clients may work, but these are known to work with Akkoma.
 Apps listed here might not support all of Akkoma's features.
 
+## Multiplatform
+### Kaiteki
+- Homepage: <https://kaiteki.app/>
+- Source Code: <https://github.com/Kaiteki-Fedi/Kaiteki>
+- Contact: [@kaiteki@fedi.software](https://fedi.software/@Kaiteki)
+- Platforms: Web, Windows, Linux, Android
+- Features: MastoAPI, Supports multiple backends
+
 ## Desktop
 ### Whalebird
 - Homepage: <https://whalebird.social/>

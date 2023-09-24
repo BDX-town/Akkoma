@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.Metadata.Providers.OpenGraphTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
   import Pleroma.Factory
   alias Pleroma.Web.Metadata.Providers.OpenGraph
 
   setup do: clear_config([Pleroma.Web.Metadata, :unfurl_nsfw])
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   test "it renders all supported types of attachments and skips unknown types" do
     user = insert(:user)

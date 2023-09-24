@@ -14,6 +14,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
   import Ecto.Changeset
 
   require Logger
+  require Pleroma.Web.ActivityPub.Transmogrifier
 
   @primary_key false
   @derive Jason.Encoder

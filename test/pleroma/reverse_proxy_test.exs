@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.ReverseProxyTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   import ExUnit.CaptureLog
 
   alias Pleroma.ReverseProxy

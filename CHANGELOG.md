@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Fixed
+- Issue where a bad inbox URL could break federation
+
+## 2023.08
+
+## Added
+
+- Added a new configuration option to the MediaProxy feature that allows the blocking of specific domains from using the media proxy or being explicitly allowed by the Content-Security-Policy.
+  - Please make sure instances you wanted to block media from are not in the MediaProxy `whitelist`, and instead use `blocklist`.
+- `OnlyMedia` Upload Filter to simplify restricting uploads to audio, image, and video types
+- ARM64 OTP builds
+  - Ubuntu22 builds are available for develop and stable
+  - other distributions are stable only
+- Support for Elixir 1.15
+  - 1.14 is still supported
+  - OTP26 is currently "unsupported". It will probably work, but due to the way
+    it handles map ordering, the test suite will not pass for it as yet.
+
+## Changed
+
+- Alpine OTP builds are now from alpine 3.18, which is OpenSSLv3 compatible.
+  If you use alpine OTP builds you will have to update your local system.
+- Debian OTP builds are now from a base of bookworm, which is OpenSSLv3 compatible.
+  If you use debian OTP builds you will have to update your local system to
+  bookworm (currently: stable).
+- Ubuntu and debian builds are compatible again! (for now...)
+- Blocks/Mutes now return from max ID to min ID, in line with mastodon.
+- The AnonymizeFilename filter is now enabled by default.
+
+## Fixed
+
+- Deactivated users can no longer show up in the emoji reaction list
+- Embedded posts can no longer bypass `:restrict\_unauthenticated`
+- GET/HEAD requests will now work when requesting AWS-based instances.
+
+## Security
+
+- Add `no_new_privs` hardening to OpenRC and systemd service files
+- XML parsers cannot load any entities (thanks @Mae@is.badat.dev!)
+- Reduced permissions of config files and directories, distros requiring greater permissions like group-read need to pre-create the directories
+
+## Removed
+
+- Builds for debian oldstable (bullseye)
+  - If you are on oldstable you should NOT attempt to update OTP builds without
+    first updating your machine.
+
 ## 2023.05
 
 ## Added
@@ -86,7 +135,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
 - HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
 - Follow requests are now paginated, matches mastodon API spec, so use the Link header to paginate.
-- `internal.fetch` and `relay` actors are now represented with the actor type `Application`
 
 ### Fixed 
 - /api/v1/accounts/lookup will now respect restrict\_unauthenticated
@@ -184,6 +232,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure key generation happens at registration-time to prevent potential race-conditions
 - Ensured websockets get closed on logout
 - Allowed GoToSocial-style `?query_string` signatures
+
+### Removed
+- Non-finch HTTP adapters. `:tesla, :adapter` is now highly recommended to be set to the default.
+
+## 2022.08
 
 ### Removed
 - Non-finch HTTP adapters. `:tesla, :adapter` is now highly recommended to be set to the default.

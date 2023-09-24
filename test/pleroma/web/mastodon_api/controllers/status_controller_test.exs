@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity
@@ -674,7 +674,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> put_req_header("content-type", "application/json")
         |> post("/api/v1/statuses", %{
           "status" => "desu~",
-          "poll" => %{"options" => Enum.map(0..limit, fn _ -> "desu" end), "expires_in" => 1}
+          "poll" => %{
+            "options" => Enum.map(0..limit, fn num -> "desu #{num}" end),
+            "expires_in" => 1
+          }
         })
 
       %{"error" => error} = json_response_and_validate_schema(conn, 422)
@@ -690,7 +693,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> post("/api/v1/statuses", %{
           "status" => "...",
           "poll" => %{
-            "options" => [Enum.reduce(0..limit, "", fn _, acc -> acc <> "." end)],
+            "options" => [String.duplicate(".", limit + 1), "lol"],
             "expires_in" => 1
           }
         })
@@ -771,6 +774,32 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert object.data["content"] == "very cool poll"
       assert object.data["type"] == "Question"
       assert length(object.data["oneOf"]) == 3
+    end
+
+    test "cannot have only one option", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "desu~",
+          "poll" => %{"options" => ["mew"], "expires_in" => 1}
+        })
+
+      %{"error" => error} = json_response_and_validate_schema(conn, 422)
+      assert error == "Poll must contain at least 2 options"
+    end
+
+    test "cannot have only duplicated options", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "desu~",
+          "poll" => %{"options" => ["mew", "mew"], "expires_in" => 1}
+        })
+
+      %{"error" => error} = json_response_and_validate_schema(conn, 422)
+      assert error == "Poll must contain at least 2 options"
     end
   end
 
@@ -1043,6 +1072,27 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       refute Activity.get_by_id(activity1.id)
       refute Activity.get_by_id(activity2.id)
+    end
+
+    test "when you're privileged and the user is banned", %{conn: conn} do
+      clear_config([:instance, :moderator_privileges], [:messages_delete])
+      posting_user = insert(:user, is_active: false)
+      refute posting_user.is_active
+      activity = insert(:note_activity, user: posting_user)
+      user = insert(:user, is_moderator: true)
+
+      res_conn =
+        conn
+        |> assign(:user, user)
+        |> assign(:token, insert(:oauth_token, user: user, scopes: ["write:statuses"]))
+        |> delete("/api/v1/statuses/#{activity.id}")
+
+      assert %{} = json_response_and_validate_schema(res_conn, 200)
+
+      # assert ModerationLog |> Repo.one() |> ModerationLog.get_log_entry_message() ==
+      #          "@#{user.nickname} deleted status ##{activity.id}"
+
+      refute Activity.get_by_id(activity.id)
     end
   end
 
@@ -1960,6 +2010,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, "🎅")
       User.mute(user, other_user)
 
+      deactivated_user = insert(:user)
+      {:ok, _} = CommonAPI.react_with_emoji(activity.id, deactivated_user, "🎅")
+      User.set_activation(deactivated_user, false)
+
       result =
         conn
         |> get("/api/v1/statuses/?ids[]=#{activity.id}")
@@ -1967,6 +2021,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       assert [
                %{
+                 "emoji_reactions" => [],
                  "pleroma" => %{
                    "emoji_reactions" => []
                  }

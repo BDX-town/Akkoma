@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest do
-  use Pleroma.DataCase, async: true
+  use Pleroma.DataCase
 
   alias Pleroma.Web.ActivityPub.ObjectValidator
   alias Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator
