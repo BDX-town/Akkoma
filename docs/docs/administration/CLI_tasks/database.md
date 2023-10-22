@@ -53,6 +53,28 @@ This will prune remote posts older than 90 days (configurable with [`config :ple
 - `--prune-orphaned-activities` - Also prune orphaned activities afterwards. Activities are things like Like, Create, Announce, Flag (aka reports)... They can significantly help reduce the database size.
 - `--vacuum` - Run `VACUUM FULL` after the objects are pruned. This should not be used on a regular basis, but is useful if your instance has been running for a long time before pruning.
 
+## Prune orphaned activities from the database
+
+This will prune activities which are no longer referenced by anything.
+Such activities might be the result of running `prune_objects` without `--prune-orphaned-activities`.
+The same notes and warnings apply as for `prune_objects`.
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl database prune_orphaned_activities [option ...]
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.database prune_orphaned_activities [option ...]
+    ```
+
+### Options
+
+- `--limit n` - Only delete up to `n` activities in each query making up this job, i.e. if this job runs two queries at most `2n` activities will be deleted. Running this task repeatedly in limited batches can help maintain the instance’s responsiveness while still freeing up some space.
+
 ## Create a conversation for all existing DMs
 
 Can be safely re-run

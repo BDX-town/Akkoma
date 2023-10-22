@@ -106,6 +106,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Akkoma API is now documented
 - ability to auto-approve follow requests from users you are already following
 - The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
+- New standalone `prune_orphaned_activities` mix task with configurable batch limit
 
 ## Changed
 - OTP builds are now built on erlang OTP26

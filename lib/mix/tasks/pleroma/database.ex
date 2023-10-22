@@ -20,7 +20,14 @@ defmodule Mix.Tasks.Pleroma.Database do
   @shortdoc "A collection of database related tasks"
   @moduledoc File.read!("docs/docs/administration/CLI_tasks/database.md")
 
-  def prune_orphaned_activities() do
+  def prune_orphaned_activities(limit \\ 0) when is_number(limit) do
+    limit_arg =
+      if limit > 0 do
+        "LIMIT #{limit}"
+      else
+        ""
+      end
+
     # Prune activities who link to a single object
     """
     delete from public.activities
@@ -34,6 +41,7 @@ defmodule Mix.Tasks.Pleroma.Database do
       and o.id is null
       and a2.id is null
       and u.id is null
+      #{limit_arg}
     )
     """
     |> Repo.query([], timeout: :infinity)
@@ -51,6 +59,7 @@ defmodule Mix.Tasks.Pleroma.Database do
       having max(o.data ->> 'id') is null
       and max(a2.data ->> 'id') is null
       and max(u.ap_id) is null
+      #{limit_arg}
     )
     """
     |> Repo.query([], timeout: :infinity)
@@ -96,6 +105,33 @@ defmodule Mix.Tasks.Pleroma.Database do
       end,
       timeout: :infinity
     )
+  end
+
+  def run(["prune_orphaned_activities" | args]) do
+    {options, [], []} =
+      OptionParser.parse(
+        args,
+        strict: [
+          limit: :integer
+        ]
+      )
+
+    start_pleroma()
+
+    limit = Keyword.get(options, :limit, 0)
+
+    log_message = "Pruning orphaned activities"
+
+    log_message =
+      if limit > 0 do
+        log_message <> ", limiting deletion to #{limit} rows"
+      else
+        log_message
+      end
+
+    Logger.info(log_message)
+
+    prune_orphaned_activities(limit)
   end
 
   def run(["prune_objects" | args]) do
