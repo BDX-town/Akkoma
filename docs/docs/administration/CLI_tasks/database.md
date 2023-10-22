@@ -59,6 +59,11 @@ This will prune activities which are no longer referenced by anything.
 Such activities might be the result of running `prune_objects` without `--prune-orphaned-activities`.
 The same notes and warnings apply as for `prune_objects`.
 
+The task will print out how many rows were freed in total in its last
+line of output in the form `Deleted 345 rows`.  
+When running the job in limited batches this can be used to determine
+when all orphaned activities have been deleted.
+
 === "OTP"
 
     ```sh
