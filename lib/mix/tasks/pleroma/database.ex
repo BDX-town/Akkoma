@@ -20,6 +20,42 @@ defmodule Mix.Tasks.Pleroma.Database do
   @shortdoc "A collection of database related tasks"
   @moduledoc File.read!("docs/docs/administration/CLI_tasks/database.md")
 
+  def prune_orphaned_activities() do
+    # Prune activities who link to a single object
+    """
+    delete from public.activities
+    where id in (
+      select a.id from public.activities a
+      left join public.objects o on a.data ->> 'object' = o.data ->> 'id'
+      left join public.activities a2 on a.data ->> 'object' = a2.data ->> 'id'
+      left join public.users u  on a.data ->> 'object' = u.ap_id
+      where not a.local
+      and jsonb_typeof(a."data" -> 'object') = 'string'
+      and o.id is null
+      and a2.id is null
+      and u.id is null
+    )
+    """
+    |> Repo.query([], timeout: :infinity)
+
+    # Prune activities who link to an array of objects
+    """
+    delete from public.activities
+    where id in (
+      select a.id from public.activities a
+      join json_array_elements_text((a."data" -> 'object')::json) as j on jsonb_typeof(a."data" -> 'object') = 'array'
+      left join public.objects o on j.value = o.data ->> 'id'
+      left join public.activities a2 on j.value = a2.data ->> 'id'
+      left join public.users u  on j.value = u.ap_id
+      group by a.id
+      having max(o.data ->> 'id') is null
+      and max(a2.data ->> 'id') is null
+      and max(u.ap_id) is null
+    )
+    """
+    |> Repo.query([], timeout: :infinity)
+  end
+
   def run(["remove_embedded_objects" | args]) do
     {options, [], []} =
       OptionParser.parse(
@@ -187,39 +223,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     end
 
     if Keyword.get(options, :prune_orphaned_activities) do
-      # Prune activities who link to a single object
-      """
-      delete from public.activities
-      where id in (
-        select a.id from public.activities a
-        left join public.objects o on a.data ->> 'object' = o.data ->> 'id'
-        left join public.activities a2 on a.data ->> 'object' = a2.data ->> 'id'
-        left join public.users u  on a.data ->> 'object' = u.ap_id
-        where not a.local
-        and jsonb_typeof(a."data" -> 'object') = 'string'
-        and o.id is null
-        and a2.id is null
-        and u.id is null
-      )
-      """
-      |> Repo.query([], timeout: :infinity)
-
-      # Prune activities who link to an array of objects
-      """
-      delete from public.activities
-      where id in (
-        select a.id from public.activities a
-        join json_array_elements_text((a."data" -> 'object')::json) as j on jsonb_typeof(a."data" -> 'object') = 'array'
-        left join public.objects o on j.value = o.data ->> 'id'
-        left join public.activities a2 on j.value = a2.data ->> 'id'
-        left join public.users u  on j.value = u.ap_id
-        group by a.id
-        having max(o.data ->> 'id') is null
-        and max(a2.data ->> 'id') is null
-        and max(u.ap_id) is null
-      )
-      """
-      |> Repo.query([], timeout: :infinity)
+      prune_orphaned_activities()
     end
 
     """
