@@ -20,6 +20,14 @@ defmodule Mix.Tasks.Pleroma.Database do
   @shortdoc "A collection of database related tasks"
   @moduledoc File.read!("docs/docs/administration/CLI_tasks/database.md")
 
+  defp maybe_limit(query, limit_cnt) do
+    if is_number(limit_cnt) and limit_cnt > 0 do
+      limit(query, [], ^limit_cnt)
+    else
+      query
+    end
+  end
+
   def prune_orphaned_activities(limit \\ 0) when is_number(limit) do
     limit_arg =
       if limit > 0 do
@@ -148,7 +156,8 @@ defmodule Mix.Tasks.Pleroma.Database do
           vacuum: :boolean,
           keep_threads: :boolean,
           keep_non_public: :boolean,
-          prune_orphaned_activities: :boolean
+          prune_orphaned_activities: :boolean,
+          limit: :integer
         ]
       )
 
@@ -156,6 +165,8 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     deadline = Pleroma.Config.get([:instance, :remote_post_retention_days])
     time_deadline = NaiveDateTime.utc_now() |> NaiveDateTime.add(-(deadline * 86_400))
+
+    limit_cnt = Keyword.get(options, :limit, 0)
 
     log_message = "Pruning objects older than #{deadline} days"
 
@@ -184,6 +195,13 @@ defmodule Mix.Tasks.Pleroma.Database do
       if Keyword.get(options, :vacuum) do
         log_message <>
           ", doing a full vacuum (you shouldn't do this as a recurring maintanance task)"
+      else
+        log_message
+      end
+
+    log_message =
+      if limit_cnt > 0 do
+        log_message <> ", limiting to #{limit_cnt} rows"
       else
         log_message
       end
@@ -221,31 +239,38 @@ defmodule Mix.Tasks.Pleroma.Database do
         |> having([a], max(a.updated_at) < ^time_deadline)
         |> having([a], not fragment("bool_or(?)", a.local))
         |> having([_, b], fragment("max(?::text) is null", b.id))
+        |> maybe_limit(limit_cnt)
         |> select([a], fragment("? ->> 'context'::text", a.data))
 
       Pleroma.Object
       |> where([o], fragment("? ->> 'context'::text", o.data) in subquery(deletable_context))
     else
-      if Keyword.get(options, :keep_non_public) do
-        Pleroma.Object
+      deletable =
+        if Keyword.get(options, :keep_non_public) do
+          Pleroma.Object
+          |> where(
+            [o],
+            fragment(
+              "?->'to' \\? ? OR ?->'cc' \\? ?",
+              o.data,
+              ^Pleroma.Constants.as_public(),
+              o.data,
+              ^Pleroma.Constants.as_public()
+            )
+          )
+        else
+          Pleroma.Object
+        end
+        |> where([o], o.updated_at < ^time_deadline)
         |> where(
           [o],
-          fragment(
-            "?->'to' \\? ? OR ?->'cc' \\? ?",
-            o.data,
-            ^Pleroma.Constants.as_public(),
-            o.data,
-            ^Pleroma.Constants.as_public()
-          )
+          fragment("split_part(?->>'actor', '/', 3) != ?", o.data, ^Pleroma.Web.Endpoint.host())
         )
-      else
-        Pleroma.Object
-      end
-      |> where([o], o.updated_at < ^time_deadline)
-      |> where(
-        [o],
-        fragment("split_part(?->>'actor', '/', 3) != ?", o.data, ^Pleroma.Web.Endpoint.host())
-      )
+        |> maybe_limit(limit_cnt)
+        |> select([o], o.id)
+
+      Pleroma.Object
+      |> where([o], o.id in subquery(deletable))
     end
     |> Repo.delete_all(timeout: :infinity)
 

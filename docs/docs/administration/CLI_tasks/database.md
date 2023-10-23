@@ -50,6 +50,7 @@ This will prune remote posts older than 90 days (configurable with [`config :ple
 
 - `--keep-threads` - Don't prune posts when they are part of a thread where at least one post has seen local interaction (e.g. one of the posts is a local post, or is favourited by a local user, or has been repeated by a local user...). It also wont delete posts when at least one of the posts in that thread is kept (e.g. because one of the posts has seen recent activity).
 - `--keep-non-public` - Keep non-public posts like DM's and followers-only, even if they are remote.
+- `--limit` - limits how many remote posts get pruned. This limit does **not** apply to any of the follow up jobs. If wanting to keep the database load in check it is thus advisable to run the standalone `prune_orphaned_activities` task with a limit afterwards instead of passing `--prune-orphaned-activities` to this task.
 - `--prune-orphaned-activities` - Also prune orphaned activities afterwards. Activities are things like Like, Create, Announce, Flag (aka reports)... They can significantly help reduce the database size.
 - `--vacuum` - Run `VACUUM FULL` after the objects are pruned. This should not be used on a regular basis, but is useful if your instance has been running for a long time before pruning.
 
