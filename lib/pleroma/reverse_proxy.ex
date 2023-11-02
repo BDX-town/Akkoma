@@ -61,11 +61,14 @@ defmodule Pleroma.ReverseProxy do
 
   """
   @inline_content_types [
+    "image/avif",
     "image/gif",
     "image/jpeg",
     "image/jpg",
+    "image/jxl",
     "image/png",
     "image/svg+xml",
+    "image/webp",
     "audio/mpeg",
     "audio/mp3",
     "video/webm",
