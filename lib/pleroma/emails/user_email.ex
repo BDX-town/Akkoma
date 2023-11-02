@@ -74,7 +74,7 @@ defmodule Pleroma.Emails.UserEmail do
 
   def password_reset_email(user, token) when is_binary(token) do
     Gettext.with_locale_or_default user.language do
-      password_reset_url = ~p[/api/v1/pleroma/password_reset/#{token}]
+      password_reset_url = url(~p[/api/v1/pleroma/password_reset/#{token}])
 
       html_body =
         Gettext.dpgettext(
@@ -107,7 +107,7 @@ defmodule Pleroma.Emails.UserEmail do
         to_name \\ nil
       ) do
     Gettext.with_locale_or_default user.language do
-      registration_url = ~p[/registration/#{user_invite_token.token}]
+      registration_url = url(~p[/registration/#{user_invite_token.token}])
 
       html_body =
         Gettext.dpgettext(
@@ -140,7 +140,7 @@ defmodule Pleroma.Emails.UserEmail do
 
   def account_confirmation_email(user) do
     Gettext.with_locale_or_default user.language do
-      confirmation_url = ~p[/api/account/confirm_email/#{user.id}/#{user.confirmation_token}]
+      confirmation_url = url(~p[/api/account/confirm_email/#{user.id}/#{user.confirmation_token}])
 
       html_body =
         Gettext.dpgettext(
@@ -330,7 +330,7 @@ defmodule Pleroma.Emails.UserEmail do
       |> Pleroma.JWT.generate_and_sign!()
       |> Base.encode64()
 
-    ~p[/mailer/unsubscribe/#{token}]
+    url(~p[/mailer/unsubscribe/#{token}])
   end
 
   def backup_is_ready_email(backup, admin_user_id \\ nil) do

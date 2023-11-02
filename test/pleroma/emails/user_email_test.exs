@@ -16,7 +16,7 @@ defmodule Pleroma.Emails.UserEmailTest do
     assert email.from == {config[:name], config[:notify_email]}
     assert email.to == [{user.name, user.email}]
     assert email.subject == "Password reset"
-    assert email.html_body =~ ~p"/api/v1/pleroma/password_reset/test_token"
+    assert email.html_body =~ url(~p"/api/v1/pleroma/password_reset/test_token")
   end
 
   test "build user invitation email" do
@@ -28,7 +28,7 @@ defmodule Pleroma.Emails.UserEmailTest do
     assert email.subject == "Invitation to Akkoma"
     assert email.to == [{"Jonh", "test@test.com"}]
 
-    assert email.html_body =~ ~p[/registration/#{token.token}]
+    assert email.html_body =~ url(~p[/registration/#{token.token}])
   end
 
   test "build account confirmation email" do
@@ -39,7 +39,7 @@ defmodule Pleroma.Emails.UserEmailTest do
     assert email.to == [{user.name, user.email}]
     assert email.subject == "#{config[:name]} account confirmation"
 
-    assert email.html_body =~ ~p[/account/confirm_email/#{user.id}/conf-token]
+    assert email.html_body =~ url(~p[/api/account/confirm_email/#{user.id}/conf-token])
   end
 
   test "build approval pending email" do
