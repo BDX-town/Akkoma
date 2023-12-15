@@ -179,7 +179,8 @@ defmodule Pleroma.Application do
       build_cachex("translations", default_ttl: :timer.hours(24 * 30), limit: 2500),
       build_cachex("instances", default_ttl: :timer.hours(24), ttl_interval: 1000, limit: 2500),
       build_cachex("request_signatures", default_ttl: :timer.hours(24 * 30), limit: 3000),
-      build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300)
+      build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300),
+      build_cachex("http_backoff", default_ttl: :timer.hours(24 * 30), limit: 10000)
     ]
   end
 

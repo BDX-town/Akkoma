@@ -354,7 +354,7 @@ defmodule Pleroma.Object.Fetcher do
 
     with {:ok, %{body: body, status: code, headers: headers, url: final_url}}
          when code in 200..299 <-
-           HTTP.get(id, headers),
+           HTTP.Backoff.get(id, headers),
          remote_host <-
            URI.parse(final_url).host,
          {:cross_domain_redirect, false} <-
