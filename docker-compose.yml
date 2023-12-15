@@ -4,6 +4,7 @@ services:
   db:
     image: akkoma-db:latest
     build: ./docker-resources/database
+    shm_size: 4gb
     restart: unless-stopped
     user: ${DOCKER_USER}
     environment: {
