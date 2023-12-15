@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Changed
 - OTP builds are now built on erlang OTP26
 - The base Phoenix framework is now updated to 1.7
+- An `outbox` field has been added to actor profiles to comply with AP spec
 
 ## Fixed
 - Documentation issue in which a non-existing nginx file was referenced
