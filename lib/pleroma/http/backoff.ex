@@ -28,8 +28,7 @@ defmodule Pleroma.HTTP.Backoff do
     # this ensures that we don't hammer the server with requests, and instead wait for the backoff to expire
     # this is a very simple implementation, and can be improved upon!
     %{host: host} = URI.parse(url)
-
-    case @cachex.get(@backoff_cache, host) do
+    case @cachex.get(@backoff_cache, host)  do
       {:ok, nil} ->
         case HTTP.get(url, headers, options) do
           {:ok, env} ->
