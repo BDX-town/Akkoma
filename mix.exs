@@ -148,7 +148,7 @@ defmodule Pleroma.Mixfile do
       {:argon2_elixir, "~> 3.1"},
       {:cors_plug, "~> 3.0"},
       {:web_push_encryption, "~> 0.3.1"},
-      {:swoosh, "~> 1.11"},
+      {:swoosh, "~> 1.14.2"},
       # for gmail adapter in swoosh
       {:mail, ">= 0.0.0"},
       {:phoenix_swoosh, "~> 1.2"},
