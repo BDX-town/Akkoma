@@ -443,13 +443,10 @@ defmodule Pleroma.Web.OAuth.OAuthController do
       |> Map.put("scope", scope)
       |> Jason.encode!()
 
-    params =
-      auth_attrs
-      |> Map.drop(~w(scope scopes client_id redirect_uri))
-      |> Map.put("state", state)
-
     # Handing the request to Ueberauth
-    redirect(conn, to: ~p"/oauth/#{provider}?#{params}")
+    conn
+    |> put_resp_cookie("akkoma_oauth_state", state)
+    |> redirect(to: ~p"/oauth/#{provider}")
   end
 
   def request(%Plug.Conn{} = conn, params) do
@@ -468,7 +465,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
   end
 
   def callback(%Plug.Conn{assigns: %{ueberauth_failure: failure}} = conn, params) do
-    params = callback_params(params)
+    params = callback_params(conn, params)
     messages = for e <- Map.get(failure, :errors, []), do: e.message
     message = Enum.join(messages, "; ")
 
@@ -481,7 +478,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
   end
 
   def callback(%Plug.Conn{} = conn, params) do
-    params = callback_params(params)
+    params = callback_params(conn, params)
 
     with {:ok, registration} <- Authenticator.get_registration(conn) do
       auth_attrs = Map.take(params, ~w(client_id redirect_uri scope scopes state))
@@ -511,8 +508,9 @@ defmodule Pleroma.Web.OAuth.OAuthController do
     end
   end
 
-  defp callback_params(%{"state" => state} = params) do
-    Map.merge(params, Jason.decode!(state))
+  defp callback_params(%Plug.Conn{} = conn, params) do
+    fetch_cookies(conn)
+    Map.merge(params, Jason.decode!(Map.get(conn.req_cookies, "akkoma_oauth_state", "{}")))
   end
 
   def registration_details(%Plug.Conn{} = conn, %{"authorization" => auth_attrs}) do
