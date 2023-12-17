@@ -81,9 +81,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       assert html_response(conn, 302)
 
-      redirect_query = URI.parse(redirected_to(conn)).query
-      assert %{"state" => state_param} = URI.decode_query(redirect_query)
-      assert {:ok, state_components} = Jason.decode(state_param)
+      assert {:ok, state_components} = Jason.decode(conn.resp_cookies["akkoma_oauth_state"].value)
 
       expected_client_id = app.client_id
       expected_redirect_uri = app.redirect_uris
@@ -97,7 +95,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
     end
 
     test "with user-bound registration, GET /oauth/<provider>/callback redirects to `redirect_uri` with `code`",
-         %{app: app, conn: conn} do
+         %{app: app, conn: _} do
       registration = insert(:registration)
       redirect_uri = OAuthController.default_redirect_uri(app)
 
@@ -109,15 +107,17 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       }
 
       conn =
-        conn
+        build_conn()
+        |> put_req_cookie("akkoma_oauth_state", Jason.encode!(state_params))
+        |> Plug.Session.call(Plug.Session.init(@session_opts))
+        |> fetch_session()
         |> assign(:ueberauth_auth, %{provider: registration.provider, uid: registration.uid})
         |> get(
           "/oauth/twitter/callback",
           %{
             "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
             "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
-            "provider" => "twitter",
-            "state" => Jason.encode!(state_params)
+            "provider" => "twitter"
           }
         )
 
@@ -162,15 +162,42 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
     test "on authentication error, GET /oauth/<provider>/callback redirects to `redirect_uri`", %{
       app: app,
-      conn: conn
+      conn: _
     } do
       state_params = %{
         "scope" => Enum.join(app.scopes, " "),
         "client_id" => app.client_id,
-        "redirect_uri" => OAuthController.default_redirect_uri(app),
-        "state" => ""
+        "redirect_uri" => OAuthController.default_redirect_uri(app)
       }
 
+      conn =
+        build_conn()
+        |> put_req_cookie("akkoma_oauth_state", Jason.encode!(state_params))
+        |> Plug.Session.call(Plug.Session.init(@session_opts))
+        |> fetch_session()
+        |> assign(:ueberauth_failure, %{errors: [%{message: "(error description)"}]})
+        |> get(
+          "/oauth/twitter/callback",
+          %{
+            "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
+            "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
+            "provider" => "twitter",
+            "state" => ""
+          }
+        )
+
+      assert html_response(conn, 302)
+      assert redirected_to(conn) == app.redirect_uris
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Failed to authenticate: (error description)."
+    end
+
+    test "on authentication error with no prior state, GET /oauth/<provider>/callback returns 400",
+         %{
+           app: _,
+           conn: conn
+         } do
       conn =
         conn
         |> assign(:ueberauth_failure, %{errors: [%{message: "(error description)"}]})
@@ -180,15 +207,11 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
             "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
             "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
             "provider" => "twitter",
-            "state" => Jason.encode!(state_params)
+            "state" => ""
           }
         )
 
-      assert html_response(conn, 302)
-      assert redirected_to(conn) == app.redirect_uris
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-               "Failed to authenticate: (error description)."
+      assert response(conn, 400)
     end
 
     test "GET /oauth/registration_details renders registration details form", %{

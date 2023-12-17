@@ -39,6 +39,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
   action_fallback(Pleroma.Web.OAuth.FallbackController)
 
   @oob_token_redirect_uri "urn:ietf:wg:oauth:2.0:oob"
+  @state_cookie_name "akkoma_oauth_state"
 
   # Note: this definition is only called from error-handling methods with `conn.params` as 2nd arg
   def authorize(%Plug.Conn{} = conn, %{"authorization" => _} = params) do
@@ -445,7 +446,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
 
     # Handing the request to Ueberauth
     conn
-    |> put_resp_cookie("akkoma_oauth_state", state)
+    |> put_resp_cookie(@state_cookie_name, state)
     |> redirect(to: ~p"/oauth/#{provider}")
   end
 
@@ -469,12 +470,18 @@ defmodule Pleroma.Web.OAuth.OAuthController do
     messages = for e <- Map.get(failure, :errors, []), do: e.message
     message = Enum.join(messages, "; ")
 
-    conn
-    |> put_flash(
-      :error,
-      dgettext("errors", "Failed to authenticate: %{message}.", message: message)
-    )
-    |> redirect(external: redirect_uri(conn, params["redirect_uri"]))
+    error_message = dgettext("errors", "Failed to authenticate: %{message}.", message: message)
+
+    if params["redirect_uri"] do
+      conn
+      |> put_flash(
+        :error,
+        error_message
+      )
+      |> redirect(external: redirect_uri(conn, params["redirect_uri"]))
+    else
+      send_resp(conn, :bad_request, error_message)
+    end
   end
 
   def callback(%Plug.Conn{} = conn, params) do
@@ -510,7 +517,7 @@ defmodule Pleroma.Web.OAuth.OAuthController do
 
   defp callback_params(%Plug.Conn{} = conn, params) do
     fetch_cookies(conn)
-    Map.merge(params, Jason.decode!(Map.get(conn.req_cookies, "akkoma_oauth_state", "{}")))
+    Map.merge(params, Jason.decode!(Map.get(conn.req_cookies, @state_cookie_name, "{}")))
   end
 
   def registration_details(%Plug.Conn{} = conn, %{"authorization" => auth_attrs}) do
