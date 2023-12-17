@@ -958,6 +958,15 @@ config :ueberauth, Ueberauth,
   ]
 ```
 
+You may also need to set up your frontend to use oauth logins. For example, for `akkoma-fe`:
+
+```elixir
+config :pleroma, :frontend_configurations,
+  pleroma_fe: %{
+    loginMethod: "token"
+  }
+```
+
 ## Link parsing
 
 ### :uri_schemes
