@@ -9,6 +9,7 @@ defmodule Pleroma.HTTP.BackoffTest do
         %Tesla.Env{url: "https://akkoma.dev/api/v1/instance"} ->
           {:ok, %Tesla.Env{status: 200, body: "ok"}}
       end)
+
       assert {:ok, env} = Backoff.get("https://akkoma.dev/api/v1/instance")
       assert env.status == 200
     end
@@ -29,6 +30,25 @@ defmodule Pleroma.HTTP.BackoffTest do
       assert {:error, env} = Backoff.get("https://ratelimited.dev/api/v1/instance")
       assert env.status == 429
       assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
-  end
+    end
+
+    test "should parse the value of x-ratelimit-reset, if present" do
+      ten_minutes_from_now =
+        DateTime.utc_now() |> Timex.shift(minutes: 10) |> DateTime.to_iso8601()
+
+      Tesla.Mock.mock_global(fn
+        %Tesla.Env{url: "https://ratelimited.dev/api/v1/instance"} ->
+          {:ok,
+           %Tesla.Env{
+             status: 429,
+             body: "Rate limited",
+             headers: [{"x-ratelimit-reset", ten_minutes_from_now}]
+           }}
+      end)
+
+      assert {:error, env} = Backoff.get("https://ratelimited.dev/api/v1/instance")
+      assert env.status == 429
+      assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
+    end
   end
 end
