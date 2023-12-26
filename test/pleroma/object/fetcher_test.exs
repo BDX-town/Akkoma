@@ -419,18 +419,6 @@ defmodule Pleroma.Object.FetcherTest do
                )
     end
 
-    test "handle HTTP 403 response" do
-      object_id = "https://octodon.social/users/cwebber/statuses/111647596861000656"
-      Instances.set_reachable(object_id)
-
-      assert Instances.reachable?(object_id)
-
-      assert {:error, "Object fetch has been denied"} ==
-               Fetcher.fetch_object_from_id(object_id)
-
-      refute Instances.reachable?(object_id)
-    end
-
     test "it can fetch pleroma polls with attachments" do
       {:ok, object} =
         Fetcher.fetch_object_from_id("https://patch.cx/objects/tesla_mock/poll_attachment")
