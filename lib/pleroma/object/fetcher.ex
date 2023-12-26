@@ -158,9 +158,11 @@ defmodule Pleroma.Object.Fetcher do
         {:error, "URI Scheme Invalid"}
 
       {:transmogrifier, {:error, {:reject, e}}} ->
+        Logger.info("Rejected #{id} while fetching: #{inspect(e)}")
         {:reject, e}
 
       {:transmogrifier, {:reject, e}} ->
+        Logger.info("Rejected #{id} while fetching: #{inspect(e)}")
         {:reject, e}
 
       {:transmogrifier, _} = e ->
@@ -176,13 +178,15 @@ defmodule Pleroma.Object.Fetcher do
         {:ok, object}
 
       {:fetch, {:error, error}} ->
+        Logger.error("Error while fetching #{id}: #{inspect(error)}")
         {:error, error}
 
       {:reject, reason} ->
         {:reject, reason}
 
       e ->
-        e
+        Logger.error("Error while fetching #{id}: #{inspect(e)}")
+        {:error, e}
     end
   end
 
@@ -197,27 +201,6 @@ defmodule Pleroma.Object.Fetcher do
     |> Maps.put_if_present("cc", data["cc"])
     |> Maps.put_if_present("bto", data["bto"])
     |> Maps.put_if_present("bcc", data["bcc"])
-  end
-
-  @doc "Identical to `fetch_object_from_id/2` but just directly returns the object or on error `nil`"
-  def fetch_object_from_id!(id, options \\ []) do
-    with {:ok, object} <- fetch_object_from_id(id, options) do
-      object
-    else
-      {:error, %Tesla.Mock.Error{}} ->
-        nil
-
-      {:error, {"Object has been deleted", _id, _code}} ->
-        nil
-
-      {:reject, reason} ->
-        Logger.debug("Rejected #{id} while fetching: #{inspect(reason)}")
-        nil
-
-      e ->
-        Logger.error("Error while fetching #{id}: #{inspect(e)}")
-        nil
-    end
   end
 
   defp make_signature(id, date) do
