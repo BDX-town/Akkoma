@@ -157,6 +157,10 @@ defmodule Pleroma.Object.Fetcher do
       {:scheme, false} ->
         {:error, "URI Scheme Invalid"}
 
+      {:containment, e} ->
+        Logger.info("Error while fetching #{id}: Object containment failed. #{inspect(e)}")
+        {:error, e}
+
       {:transmogrifier, {:error, {:reject, e}}} ->
         Logger.info("Rejected #{id} while fetching: #{inspect(e)}")
         {:reject, e}
