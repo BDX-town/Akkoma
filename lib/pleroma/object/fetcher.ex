@@ -151,26 +151,28 @@ defmodule Pleroma.Object.Fetcher do
            {:object, data, Object.normalize(activity, fetch: false)} do
       {:ok, object}
     else
-      {:allowed_depth, false} ->
+      {:allowed_depth, false} = e ->
+        log_fetch_error(id, e)
         {:error, "Max thread distance exceeded."}
 
       {:scheme, false} ->
         {:error, "URI Scheme Invalid"}
 
-      {:containment, e} ->
-        Logger.error("Error while fetching #{id}: Object containment failed. #{inspect(e)}")
-        {:error, e}
+      {:containment, reason} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
 
-      {:transmogrifier, {:error, {:reject, e}}} ->
-        Logger.error("Rejected #{id} while fetching: #{inspect(e)}")
-        {:reject, e}
+      {:transmogrifier, {:error, {:reject, reason}}} = e ->
+        log_fetch_error(id, e)
+        {:reject, reason}
 
-      {:transmogrifier, {:reject, e}} ->
-        Logger.error("Rejected #{id} while fetching: #{inspect(e)}")
-        {:reject, e}
+      {:transmogrifier, {:reject, reason}} = e ->
+        log_fetch_error(id, e)
+        {:reject, reason}
 
-      {:transmogrifier, _} = e ->
-        {:error, e}
+      {:transmogrifier, reason} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
 
       {:object, data, nil} ->
         reinject_object(%Object{}, data)
@@ -181,17 +183,22 @@ defmodule Pleroma.Object.Fetcher do
       {:fetch_object, %Object{} = object} ->
         {:ok, object}
 
-      {:fetch, {:error, error}} ->
-        Logger.error("Error while fetching #{id}: #{inspect(error)}")
-        {:error, error}
+      {:fetch, {:error, reason}} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
 
       {:reject, reason} ->
         {:reject, reason}
 
       e ->
-        Logger.error("Error while fetching #{id}: #{inspect(e)}")
+        log_fetch_error(id, e)
         {:error, e}
     end
+  end
+
+  defp log_fetch_error(id, error) do
+    Logger.metadata([object: id])
+    Logger.error("Object rejected while fetching #{id} #{inspect(error)}")
   end
 
   defp prepare_activity_params(data) do
