@@ -113,6 +113,11 @@ Has these additional fields under the `pleroma` object:
 - `notification_settings`: object, can be absent. See `/api/v1/pleroma/notification_settings` for the parameters/keys returned.
 - `favicon`: nullable URL string, Favicon image of the user's instance
 
+Has these additional fields under the `akkoma` object:
+
+- `instance`: nullable object with metadata about the user’s instance
+- `status_ttl_days`: nullable int, default time after which statuses are deleted
+
 ### Source
 
 Has these additional fields under the `pleroma` object:
