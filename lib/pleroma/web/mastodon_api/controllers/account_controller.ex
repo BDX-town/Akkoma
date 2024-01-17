@@ -222,6 +222,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       |> Maps.put_if_present(:language, Pleroma.Web.Gettext.normalize_locale(params[:language]))
       |> Maps.put_if_present(:status_ttl_days, params[:status_ttl_days], status_ttl_days_value)
       |> Maps.put_if_present(:accepts_direct_messages_from, params[:accepts_direct_messages_from])
+      |> Maps.put_if_present(:permit_followback, params[:permit_followback])
 
     # What happens here:
     #

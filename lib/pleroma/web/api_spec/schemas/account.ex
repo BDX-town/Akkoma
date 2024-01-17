@@ -122,7 +122,8 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Account do
               nodeinfo: %Schema{type: :object, nullable: true}
             }
           },
-          status_ttl_days: %Schema{type: :integer, nullable: true}
+          status_ttl_days: %Schema{type: :integer, nullable: true},
+          permit_followback: %Schema{type: :boolean}
         }
       },
       source: %Schema{
@@ -224,7 +225,8 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Account do
               # XXX: nodeinfo schema
             }
         },
-        "status_ttl_days" => nil
+        "status_ttl_days" => nil,
+        "permit_followback" => true
       },
       "source" => %{
         "fields" => [],

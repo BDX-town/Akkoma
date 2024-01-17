@@ -292,7 +292,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
       last_status_at: user.last_status_at,
       akkoma: %{
         instance: render("instance.json", %{instance: instance}),
-        status_ttl_days: user.status_ttl_days
+        status_ttl_days: user.status_ttl_days,
+        permit_followback: user.permit_followback
       },
       # Pleroma extensions
       # Note: it's insecure to output :email but fully-qualified nickname may serve as safe stub
