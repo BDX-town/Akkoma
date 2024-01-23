@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Fixed
 - Issue preventing fetching anything from IPv6-only instances
 - Issue allowing post content to leak via opengraph tags despite :estrict\_unauthenticated being set
+- Scope misdetection of remote posts resulting from not recognising
+  JSON-LD-compacted forms of public scope; affected e.g. federation with bovine
 
 ## 2024.03
 
