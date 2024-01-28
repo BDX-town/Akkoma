@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Documentation issue in which a non-existing nginx file was referenced
 - Issue where a bad inbox URL could break federation
 - Issue where hashtag rel values would be scrubbed
+- Issue where short domains listed in `transparency_obfuscate_domains` were not actually obfuscated
 
 ## 2023.08
 

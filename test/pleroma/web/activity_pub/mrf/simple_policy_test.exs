@@ -283,7 +283,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicyTest do
 
       assert {:ok,
               %{
-                mrf_simple: %{reject: ["rem***.*****nce", "a.b"]},
+                mrf_simple: %{reject: ["rem***.*****nce", "*.b"]},
                 mrf_simple_info: %{reject: %{"rem***.*****nce" => %{}}}
               }} = SimplePolicy.describe()
     end

@@ -314,6 +314,20 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicy do
   def filter(object), do: {:ok, object}
 
   defp obfuscate(string) when is_binary(string) do
+    # Want to strip at least two neighbouring chars
+    # to ensure at least one non-dot char is in the obfuscation area
+    stripped = String.length(string) - 6
+
+    {keepstart, keepend} =
+      if stripped > 1 do
+        {3, 3}
+      else
+        {
+          2 - div(1 - stripped, 2),
+          2 + div(stripped, 2)
+        }
+      end
+
     string
     |> to_charlist()
     |> Enum.with_index()
@@ -322,7 +336,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicy do
         ?.
 
       {char, index} ->
-        if 3 <= index && index < String.length(string) - 3, do: ?*, else: char
+        if keepstart <= index && index < String.length(string) - keepend, do: ?*, else: char
     end)
     |> to_string()
   end
