@@ -126,6 +126,89 @@ defmodule Pleroma.Web.Telemetry do
     ]
   end
 
+  defp sum_counter_pair(basename, opts) do
+    [
+      sum(basename <> ".psum", opts),
+      counter(basename <> ".pcount", opts)
+    ]
+  end
+
+  # Prometheus exporter doesn't support summaries, so provide fallbacks
+  defp summary_fallback_metrics(byte_unit \\ :byte) do
+    # Summary metrics are not supported by the Prometheus exporter
+    #   https://github.com/beam-telemetry/telemetry_metrics_prometheus_core/issues/11
+    # and sum metrics currently only work with integers
+    #   https://github.com/beam-telemetry/telemetry_metrics_prometheus_core/issues/35
+    #
+    # For VM metrics this is kindof ok as they appear to always be integers
+    # and we can use sum + counter to get the average between polls from their change
+    # But for repo query times we need to use a full distribution
+
+    simple_buckets = [0, 1, 2, 4, 8, 16]
+    simple_buckets_quick = for t <- simple_buckets, do: t / 100.0
+
+    # Already included in distribution metrics anyway:
+    #   phoenix.router_dispatch.stop.duration
+    #   pleroma.repo.query.total_time
+    #   pleroma.repo.query.queue_time
+    dist_metrics =
+      [
+        distribution("phoenix.endpoint.stop.duration.fdist",
+          event_name: [:phoenix, :endpoint, :stop],
+          measurement: :duration,
+          unit: {:native, :millisecond},
+          reporter_options: [
+            buckets: simple_buckets
+          ]
+        ),
+        distribution("pleroma.repo.query.decode_time.fdist",
+          event_name: [:pleroma, :repo, :query],
+          measurement: :decode_time,
+          unit: {:native, :millisecond},
+          reporter_options: [
+            buckets: simple_buckets_quick
+          ]
+        ),
+        distribution("pleroma.repo.query.query_time.fdist",
+          event_name: [:pleroma, :repo, :query],
+          measurement: :query_time,
+          unit: {:native, :millisecond},
+          reporter_options: [
+            buckets: simple_buckets
+          ]
+        ),
+        distribution("pleroma.repo.query.idle_time.fdist",
+          event_name: [:pleroma, :repo, :query],
+          measurement: :idle_time,
+          unit: {:native, :millisecond},
+          reporter_options: [
+            buckets: simple_buckets
+          ]
+        )
+      ]
+
+    vm_metrics =
+      sum_counter_pair("vm.memory.total",
+        event_name: [:vm, :memory],
+        measurement: :total,
+        unit: {:byte, byte_unit}
+      ) ++
+        sum_counter_pair("vm.total_run_queue_lengths.total",
+          event_name: [:vm, :total_run_queue_lengths],
+          measurement: :total
+        ) ++
+        sum_counter_pair("vm.total_run_queue_lengths.cpu",
+          event_name: [:vm, :total_run_queue_lengths],
+          measurement: :cpu
+        ) ++
+        sum_counter_pair("vm.total_run_queue_lengths.io.fsum",
+          event_name: [:vm, :total_run_queue_lengths],
+          measurement: :io
+        )
+
+    dist_metrics ++ vm_metrics
+  end
+
   defp common_metrics do
     [
       last_value("pleroma.local_users.total"),
@@ -135,7 +218,9 @@ defmodule Pleroma.Web.Telemetry do
     ]
   end
 
-  def prometheus_metrics, do: common_metrics() ++ distribution_metrics()
+  def prometheus_metrics,
+    do: common_metrics() ++ distribution_metrics() ++ summary_fallback_metrics()
+
   def live_dashboard_metrics, do: common_metrics() ++ summary_metrics(:megabyte)
 
   defp periodic_measurements do
