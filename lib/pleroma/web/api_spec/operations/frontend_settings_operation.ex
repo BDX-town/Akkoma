@@ -111,9 +111,9 @@ defmodule Pleroma.Web.ApiSpec.FrontendSettingsOperation do
   def update_preferred_frontend_operation() do
     %Operation{
       tags: ["Frontends"],
-      summary: "Frontend Settings Profiles",
-      description: "List frontend setting profiles",
-      operationId: "AkkomaAPI.FrontendSettingsController.available_frontends",
+      summary: "Update preferred frontend setting",
+      description: "Store preferred frontend in cookies",
+      operationId: "AkkomaAPI.FrontendSettingsController.update_preferred_frontend",
       requestBody:
         request_body(
           "Frontend",
@@ -132,9 +132,11 @@ defmodule Pleroma.Web.ApiSpec.FrontendSettingsOperation do
       responses: %{
         200 =>
           Operation.response("Frontends", "application/json", %Schema{
-            type: :array,
-            items: %Schema{
-              type: :string
+            type: :object,
+            properties: %{
+              frontend_name: %Schema{
+                type: :string
+              }
             }
           })
       }
