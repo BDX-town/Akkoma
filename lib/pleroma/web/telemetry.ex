@@ -102,7 +102,7 @@ defmodule Pleroma.Web.Telemetry do
   end
 
   # Summary metrics are currently not (yet) supported by the prometheus exporter
-  defp summary_metrics do
+  defp summary_metrics(byte_unit) do
     [
       # Phoenix Metrics
       summary("phoenix.endpoint.stop.duration",
@@ -119,7 +119,7 @@ defmodule Pleroma.Web.Telemetry do
       summary("pleroma.repo.query.idle_time", unit: {:native, :millisecond}),
 
       # VM Metrics
-      summary("vm.memory.total", unit: {:byte, :kilobyte}),
+      summary("vm.memory.total", unit: {:byte, byte_unit}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
       summary("vm.total_run_queue_lengths.io")
@@ -136,7 +136,7 @@ defmodule Pleroma.Web.Telemetry do
   end
 
   def prometheus_metrics, do: common_metrics() ++ distribution_metrics()
-  def live_dashboard_metrics, do: common_metrics() ++ summary_metrics()
+  def live_dashboard_metrics, do: common_metrics() ++ summary_metrics(:megabyte)
 
   defp periodic_measurements do
     [
