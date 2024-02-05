@@ -261,6 +261,9 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
         |> MediaProxy.url()
       end
 
+    last_status_at =
+      if is_nil(user.last_status_at), do: nil, else: NaiveDateTime.to_date(user.last_status_at)
+
     %{
       id: to_string(user.id),
       username: username_from_nickname(user.nickname),
@@ -289,7 +292,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
           actor_type: user.actor_type
         }
       },
-      last_status_at: user.last_status_at,
+      last_status_at: last_status_at,
       akkoma: %{
         instance: render("instance.json", %{instance: instance}),
         status_ttl_days: user.status_ttl_days
