@@ -61,6 +61,32 @@ config :pleroma, :mrf_simple,
 
 The effects of MRF policies can be very drastic. It is important to use this functionality carefully. Always try to talk to an admin before writing an MRF policy concerning their instance.
 
+## Hiding or Obfuscating Policies
+
+You can opt out of publicly displaying all MRF policies or only hide or obfuscate selected domains.
+
+To just hide everything set:
+
+```elixir
+config :pleroma, :mrf,
+  ...
+  transparency: false,
+```
+
+To hide or obfuscate only select entries, use:
+
+```elixir
+config :pleroma, :mrf,
+  ...
+  transparency_obfuscate_domains: ["handholdi.ng", "badword.com"],
+  transparency_exclusions: [{"ghost.club", "even a fragment is too spoopy for humans"}]
+```
+
+## More MRF Policies
+
+See the [documentation cheatsheet](cheatsheet.md)
+for all available MRF policies and their options.
+
 ## Writing your own MRF Policy
 
 As discussed above, the MRF system is a modular system that supports pluggable policies. This means that an admin may write a custom MRF policy in Elixir or any other language that runs on the Erlang VM, by specifying the module name in the `policies` config setting.
