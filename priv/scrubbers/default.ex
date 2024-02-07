@@ -128,6 +128,4 @@ defmodule Pleroma.HTML.Scrubber.Default do
   Meta.allow_tag_with_these_attributes(:small, [])
 
   Meta.strip_everything_not_covered()
-
-  defp scrub_css(value), do: value
 end
