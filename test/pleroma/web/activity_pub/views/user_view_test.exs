@@ -58,16 +58,19 @@ defmodule Pleroma.Web.ActivityPub.UserViewTest do
     result = UserView.render("user.json", %{user: user})
     refute result["icon"]
     refute result["image"]
+    refute result["backgroundUrl"]
 
     user =
       insert(:user,
         avatar: %{"url" => [%{"href" => "https://someurl"}]},
-        banner: %{"url" => [%{"href" => "https://somebanner"}]}
+        banner: %{"url" => [%{"href" => "https://somebanner"}]},
+        background: %{"url" => [%{"href" => "https://somebackground"}]}
       )
 
     result = UserView.render("user.json", %{user: user})
     assert result["icon"]["url"] == "https://someurl"
     assert result["image"]["url"] == "https://somebanner"
+    assert result["backgroundUrl"]["url"] == "https://somebackground"
   end
 
   test "renders an invisible user with the invisible property set to true" do

@@ -382,6 +382,10 @@ defmodule Pleroma.User do
     do_optional_url(user.banner, "#{Endpoint.url()}/images/banner.png", options)
   end
 
+  def background_url(user) do
+    do_optional_url(user.background, nil, no_default: true)
+  end
+
   defp do_optional_url(field, default, options) do
     case field do
       %{"url" => [%{"href" => href} | _]} when is_binary(href) ->
@@ -466,6 +470,7 @@ defmodule Pleroma.User do
         :avatar,
         :ap_enabled,
         :banner,
+        :background,
         :is_locked,
         :last_refreshed_at,
         :uri,
