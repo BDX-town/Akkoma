@@ -470,7 +470,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(activities) == 4
     end
 
-    test "it prunes orphaned activities with the --prune-orphaned-activities when the objects are referenced from an array" do
+    test "it prunes orphaned activities with prune_orphaned_activities when the objects are referenced from an array" do
       %Object{} |> Map.merge(%{data: %{"id" => "existing_object"}}) |> Repo.insert()
       %User{} |> Map.merge(%{ap_id: "existing_actor"}) |> Repo.insert()
 
@@ -517,7 +517,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       assert length(Repo.all(Activity)) == 4
       Mix.Tasks.Pleroma.Database.run(["prune_objects"])
       assert length(Repo.all(Activity)) == 4
-      Mix.Tasks.Pleroma.Database.run(["prune_objects", "--prune-orphaned-activities"])
+      Mix.Tasks.Pleroma.Database.run(["prune_orphaned_activities"])
       activities = Repo.all(Activity)
       assert length(activities) == 3
 
