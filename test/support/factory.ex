@@ -307,7 +307,7 @@ defmodule Pleroma.Factory do
     featured_collection_activity(attrs, "Add")
   end
 
-  def remove_activity_factor(attrs \\ %{}) do
+  def remove_activity_factory(attrs \\ %{}) do
     featured_collection_activity(attrs, "Remove")
   end
 
@@ -328,7 +328,7 @@ defmodule Pleroma.Factory do
         "target" => user.featured_address,
         "object" => note.data["object"],
         "actor" => note.data["actor"],
-        "type" => "Add",
+        "type" => type,
         "to" => [Pleroma.Constants.as_public()],
         "cc" => [user.follower_address]
       }
