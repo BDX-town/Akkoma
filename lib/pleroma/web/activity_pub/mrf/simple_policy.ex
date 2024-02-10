@@ -178,6 +178,23 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicy do
 
   defp check_banner_removal(_actor_info, object), do: {:ok, object}
 
+  defp check_background_removal(
+         %{host: actor_host} = _actor_info,
+         %{"backgroundUrl" => _bg} = object
+       ) do
+    background_removal =
+      instance_list(:background_removal)
+      |> MRF.subdomains_regex()
+
+    if MRF.subdomain_match?(background_removal, actor_host) do
+      {:ok, Map.delete(object, "backgroundUrl")}
+    else
+      {:ok, object}
+    end
+  end
+
+  defp check_background_removal(_actor_info, object), do: {:ok, object}
+
   defp extract_context_uri(%{"conversation" => "tag:" <> rest}) do
     rest
     |> String.split(",", parts: 2, trim: true)
@@ -283,7 +300,8 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicy do
     with {:ok, _} <- check_accept(actor_info),
          {:ok, _} <- check_reject(actor_info),
          {:ok, object} <- check_avatar_removal(actor_info, object),
-         {:ok, object} <- check_banner_removal(actor_info, object) do
+         {:ok, object} <- check_banner_removal(actor_info, object),
+         {:ok, object} <- check_background_removal(actor_info, object) do
       {:ok, object}
     else
       {:reject, nil} -> {:reject, "[SimplePolicy]"}
@@ -446,6 +464,11 @@ defmodule Pleroma.Web.ActivityPub.MRF.SimplePolicy do
            %{
              key: :banner_removal,
              description: "List of instances to strip banners from and the reason for doing so"
+           },
+           %{
+             key: :background_removal,
+             description:
+               "List of instances to strip user backgrounds from and the reason for doing so"
            },
            %{
              key: :reject_deletes,

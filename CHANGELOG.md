@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - handling of GET /api/v1/preferences
 - Akkoma API is now documented
 - ability to auto-approve follow requests from users you are already following
+- The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
 
 ## Changed
 - OTP builds are now built on erlang OTP26
