@@ -440,8 +440,9 @@ config :pleroma, :rich_media,
     Pleroma.Web.RichMedia.Parsers.TwitterCard,
     Pleroma.Web.RichMedia.Parsers.OEmbed
   ],
-  failure_backoff: :timer.minutes(20),
-  ttl_setters: [Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl]
+  ttl_setters: [Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl],
+  failure_backoff: 60_000,
+  max_body: 5_000_000
 
 config :pleroma, :media_proxy,
   enabled: false,
