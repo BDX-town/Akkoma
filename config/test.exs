@@ -141,6 +141,8 @@ config :phoenix, :plug_init_mode, :runtime
 config :pleroma, :instances_favicons, enabled: false
 config :pleroma, :instances_nodeinfo, enabled: false
 
+config :pleroma, Pleroma.Web.RichMedia.Backfill, provider: Pleroma.Web.RichMedia.Backfill
+
 if File.exists?("./config/test.secret.exs") do
   import_config "test.secret.exs"
 else
