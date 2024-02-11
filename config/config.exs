@@ -290,7 +290,6 @@ config :pleroma, :frontend_configurations,
     alwaysShowSubjectInput: true,
     background: "/images/city.jpg",
     collapseMessageWithSubject: false,
-    disableChat: false,
     greentext: false,
     hideFilteredStatuses: false,
     hideMutedPosts: false,
@@ -452,10 +451,6 @@ config :pleroma, :media_preview_proxy,
   thumbnail_max_height: 600,
   image_quality: 85,
   min_content_length: 100 * 1024
-
-config :pleroma, :shout,
-  enabled: true,
-  limit: 5_000
 
 config :phoenix, :format_encoders, json: Jason, "activity+json": Jason
 
