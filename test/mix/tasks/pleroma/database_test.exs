@@ -371,8 +371,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
                ["apps"],
                ["backups"],
                ["bookmarks"],
-               ["chat_message_references"],
-               ["chats"],
                ["config"],
                ["conversation_participation_recipient_ships"],
                ["conversation_participations"],
