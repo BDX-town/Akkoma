@@ -1,6 +1,6 @@
 # Differences in Mastodon API responses from vanilla Mastodon
 
-A Akkoma instance can be identified by "<Mastodon version> (compatible; Pleroma <version>)" present in `version` field in response from `/api/v1/instance`
+A Akkoma instance can be identified by "<Mastodon version> (compatible; Akkoma <version>)" present in `version` field in response from `/api/v1/instance`
 
 ## Flake IDs
 
