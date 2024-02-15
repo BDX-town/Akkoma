@@ -138,3 +138,9 @@ pleroma_local_users_total 3
 ```json
 {"deleted":"ok"}
 ```
+
+
+## `/api/v1/timelines/bubble`
+### Returns a timeline for the local and closely related instances
+Works like all other Mastodon-API timeline queries with the documented
+[Akkoma-specific additions and tweaks](./differences_in_mastoapi_responses.md#timelines).
