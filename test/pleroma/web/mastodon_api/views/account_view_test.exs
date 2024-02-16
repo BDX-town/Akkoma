@@ -65,7 +65,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
           },
           favicon: nil
         },
-        status_ttl_days: 5
+        status_ttl_days: 5,
+        permit_followback: false
       },
       avatar: "http://localhost:4001/images/avi.png",
       avatar_static: "http://localhost:4001/images/avi.png",
@@ -248,7 +249,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
           favicon: "http://localhost:4001/favicon.png",
           nodeinfo: %{version: "2.0"}
         },
-        status_ttl_days: nil
+        status_ttl_days: nil,
+        permit_followback: false
       },
       pleroma: %{
         ap_id: user.ap_id,

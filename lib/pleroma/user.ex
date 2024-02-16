@@ -160,6 +160,7 @@ defmodule Pleroma.User do
     field(:last_status_at, :naive_datetime)
     field(:language, :string)
     field(:status_ttl_days, :integer, default: nil)
+    field(:permit_followback, :boolean, default: false)
 
     field(:accepts_direct_messages_from, Ecto.Enum,
       values: [:everybody, :people_i_follow, :nobody],
@@ -544,6 +545,7 @@ defmodule Pleroma.User do
         :actor_type,
         :disclose_client,
         :status_ttl_days,
+        :permit_followback,
         :accepts_direct_messages_from
       ]
     )
@@ -972,16 +974,21 @@ defmodule Pleroma.User do
 
   def needs_update?(_), do: true
 
+  # "Locked" (self-locked) users demand explicit authorization of follow requests
+  @spec can_direct_follow_local(User.t(), User.t()) :: true | false
+  def can_direct_follow_local(%User{} = follower, %User{local: true} = followed) do
+    !followed.is_locked || (followed.permit_followback and is_friend_of(follower, followed))
+  end
+
   @spec maybe_direct_follow(User.t(), User.t()) ::
           {:ok, User.t(), User.t()} | {:error, String.t()}
 
-  # "Locked" (self-locked) users demand explicit authorization of follow requests
-  def maybe_direct_follow(%User{} = follower, %User{local: true, is_locked: true} = followed) do
-    follow(follower, followed, :follow_pending)
-  end
-
   def maybe_direct_follow(%User{} = follower, %User{local: true} = followed) do
-    follow(follower, followed)
+    if can_direct_follow_local(follower, followed) do
+      follow(follower, followed)
+    else
+      follow(follower, followed, :follow_pending)
+    end
   end
 
   def maybe_direct_follow(%User{} = follower, %User{} = followed) do
@@ -1329,6 +1336,13 @@ defmodule Pleroma.User do
     |> get_friends_query(page)
     |> select([u], u.id)
     |> Repo.all()
+  end
+
+  def is_friend_of(%User{} = potential_friend, %User{local: true} = user) do
+    user
+    |> get_friends_query()
+    |> where(id: ^potential_friend.id)
+    |> Repo.exists?()
   end
 
   def increase_note_count(%User{} = user) do
