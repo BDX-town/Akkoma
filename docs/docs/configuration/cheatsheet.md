@@ -144,6 +144,7 @@ To add configuration to your config file, you can copy it from the base config. 
 * `report_removal`: List of instances to reject reports from and the reason for doing so.
 * `avatar_removal`: List of instances to strip avatars from and the reason for doing so.
 * `banner_removal`: List of instances to strip banners from and the reason for doing so.
+* `background_removal`: List of instances to strip user backgrounds from and the reason for doing so.
 * `reject_deletes`: List of instances to reject deletions from and the reason for doing so.
 
 #### :mrf_subchain

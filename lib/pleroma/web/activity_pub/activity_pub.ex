@@ -1603,6 +1603,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       uri: get_actor_url(data["url"]),
       ap_enabled: true,
       banner: normalize_image(data["image"]),
+      background: normalize_image(data["backgroundUrl"]),
       fields: fields,
       emoji: emojis,
       is_locked: is_locked,

@@ -112,6 +112,8 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     }
     |> Map.merge(maybe_make_image(&User.avatar_url/2, "icon", user))
     |> Map.merge(maybe_make_image(&User.banner_url/2, "image", user))
+    # Yes, the key is named ...Url eventhough it is a whole 'Image' object
+    |> Map.merge(maybe_insert_image("backgroundUrl", User.background_url(user)))
     |> Map.merge(Utils.make_json_ld_header())
   end
 
@@ -287,7 +289,12 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   end
 
   defp maybe_make_image(func, key, user) do
-    if image = func.(user, no_default: true) do
+    image = func.(user, no_default: true)
+    maybe_insert_image(key, image)
+  end
+
+  defp maybe_insert_image(key, image) do
+    if image do
       %{
         key => %{
           "type" => "Image",
