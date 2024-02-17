@@ -40,7 +40,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
         emoji: %{"karjalanpiirakka" => "/file.png"},
         raw_bio: "valid html. a\nb\nc\nd\nf '&<>\"",
         also_known_as: ["https://shitposter.zone/users/shp"],
-        status_ttl_days: 5
+        status_ttl_days: 5,
+        last_status_at: ~N[2023-12-31T15:06:17]
       })
 
     insert(:instance, %{host: "example.com", nodeinfo: %{version: "2.1"}})
@@ -92,7 +93,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountViewTest do
         fields: []
       },
       fqn: "shp@shitposter.club",
-      last_status_at: nil,
+      last_status_at: ~D[2023-12-31],
       pleroma: %{
         ap_id: user.ap_id,
         also_known_as: ["https://shitposter.zone/users/shp"],
