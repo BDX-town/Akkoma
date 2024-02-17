@@ -377,6 +377,7 @@ config :pleroma, :mrf_simple,
   accept: [],
   avatar_removal: [],
   banner_removal: [],
+  background_removal: [],
   reject_deletes: [],
   handle_threads: true
 
