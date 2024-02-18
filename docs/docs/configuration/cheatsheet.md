@@ -116,19 +116,32 @@ To add configuration to your config file, you can copy it from the base config. 
     * `Pleroma.Web.ActivityPub.MRF.AntiLinkSpamPolicy`: Rejects posts from likely spambots by rejecting posts from new users that contain links.
     * `Pleroma.Web.ActivityPub.MRF.EnsureRePrepended`: Rewrites posts to ensure that replies to posts with subjects do not have an identical subject and instead begin with re:.
     * `Pleroma.Web.ActivityPub.MRF.ForceBotUnlistedPolicy`: Makes all bot posts to disappear from public timelines.
+    * `Pleroma.Web.ActivityPub.MRF.HellthreadPolicy`: Blocks messages with too many mentions.
+      (See [`mrf_hellthread`](#mrf_hellthread))
     * `Pleroma.Web.ActivityPub.MRF.KeywordPolicy`: Rejects or removes from the federated timeline or replaces keywords. (See [`:mrf_keyword`](#mrf_keyword)).
     * `Pleroma.Web.ActivityPub.MRF.MediaProxyWarmingPolicy`: Crawls attachments using their MediaProxy URLs so that the MediaProxy cache is primed.
     * `Pleroma.Web.ActivityPub.MRF.MentionPolicy`: Drops posts mentioning configurable users. (See [`:mrf_mention`](#mrf_mention)).
+    * `Pleroma.Web.ActivityPub.MRF.NoEmptyPolicy`: Drops local activities which have no actual content.
+       (e.g. no attachments and only consists of mentions)
+    * `Pleroma.Web.ActivityPub.MRF.NoPlaceholderTextPolicy`: Strips content placeholders from posts
+      (such as the dot from mastodon)
     * `Pleroma.Web.ActivityPub.MRF.ObjectAgePolicy`: Rejects or delists posts based on their age when received. (See [`:mrf_object_age`](#mrf_object_age)).
     * `Pleroma.Web.ActivityPub.MRF.RejectNewlyCreatedAccountNotesPolicy`: Rejects posts of users the server only recently learned about for a while. Great to block spam accounts. (See [`:mrf_reject_newly_created_account_notes`](#mrf_reject_newly_created_account_notes))
     * `Pleroma.Web.ActivityPub.MRF.RejectNonPublic`: Drops posts with non-public visibility settings (See [`:mrf_rejectnonpublic`](#mrf_rejectnonpublic)).
     * `Pleroma.Web.ActivityPub.MRF.SimplePolicy`: Restrict the visibility of activities from certains instances (See [`:mrf_simple`](#mrf_simple)).
+    * `Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy`: Steals all eligible emoji encountered in posts from remote instances
+      (See [`:mrf_steal_emoji`](#mrf_steal_emoji))
     * `Pleroma.Web.ActivityPub.MRF.SubchainPolicy`: Selectively runs other MRF policies when messages match (See [`:mrf_subchain`](#mrf_subchain)).
     * `Pleroma.Web.ActivityPub.MRF.TagPolicy`: Applies policies to individual users based on tags, which can be set using pleroma-fe/admin-fe/any other app that supports Pleroma Admin API. For example it allows marking posts from individual users nsfw (sensitive).
+    * `Pleroma.Web.ActivityPub.MRF.UserAllowListPolicy`: Drops all posts except from users specified in a list.
+      (See [`:mrf_user_allowlist`](#mrf_user_allowlist))
     * `Pleroma.Web.ActivityPub.MRF.VocabularyPolicy`: Restricts activities to a configured set of vocabulary. (See [`:mrf_vocabulary`](#mrf_vocabulary)).
 
 Additionally the following MRFs will *always* be aplied and cannot be disabled:
 
+* `Pleroma.Web.ActivityPub.MRF.DirectMessageDisabledPolicy`: Strips users limiting who can send them DMs from the recipients of non-eligible DMs
+* `Pleroma.Web.ActivityPub.MRF.HashtagPolicy`: Depending on a post’s hashtags it can be rejected, get its sensitive flags force-enabled or removed from the global timeline
+    (See [`:mrf_hashtag`](#mrf_hashtag))
 * `Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy`: Append a link to a post that quotes another post with the link to the quoted post, to ensure that software that does not understand quotes can have full context.
     (See [`:mrf_inline_quote`](#mrf_inline_quote))
 * `Pleroma.Web.ActivityPub.MRF.NormalizeMarkup`: Pass inbound HTML through a scrubber to make sure it doesn't have anything unusual in it.
