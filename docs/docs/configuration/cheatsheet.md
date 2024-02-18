@@ -129,8 +129,10 @@ To add configuration to your config file, you can copy it from the base config. 
 
 Additionally the following MRFs will *always* be aplied and cannot be disabled:
 
-* `Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy`: Append a link to a post that quotes another post with the link to the quoted post, to ensure that software that does not understand quotes can have full context. On by default, cannot be turned off.
-* `Pleroma.Web.ActivityPub.MRF.NormalizeMarkup`: Pass inbound HTML through a scrubber to make sure it doesn't have anything unusual in it. On by default, cannot be turned off.
+* `Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy`: Append a link to a post that quotes another post with the link to the quoted post, to ensure that software that does not understand quotes can have full context.
+    (See [`:mrf_inline_quote`](#mrf_inline_quote))
+* `Pleroma.Web.ActivityPub.MRF.NormalizeMarkup`: Pass inbound HTML through a scrubber to make sure it doesn't have anything unusual in it.
+    (See [`:mrf_normalize_markup`](#mrf_normalize_markup))
 
 
 ## Federation
@@ -249,6 +251,12 @@ An example: (86400 seconds = 24 hours)
 ```elixir
 config :pleroma, :mrf_reject_newly_created_account_notes, age: 86400
 ```
+
+#### :mrf_inline_quote
+* `prefix`: what prefix to prepend to quoted URLs
+
+#### :mrf_normalize_markup
+* `scrub_policy`: the scrubbing module to use (by default a built-in HTML sanitiser)
 
 ## Pleroma.User
 
