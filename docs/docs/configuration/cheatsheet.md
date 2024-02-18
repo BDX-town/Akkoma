@@ -104,6 +104,9 @@ To add configuration to your config file, you can copy it from the base config. 
 ## Message rewrite facility
 
 ### :mrf
+* `transparency`: Make the content of your Message Rewrite Facility settings public (via nodeinfo).
+* `transparency_exclusions`: Exclude specific instance names from MRF transparency.  The use of the exclusions feature will be disclosed in nodeinfo as a boolean value.
+* `transparency_obfuscate_domains`: Show domains with `*` in the middle, to censor them if needed. For example, `ridingho.me` will show as `rid*****.me`
 * `policies`: Message Rewrite Policy, either one or a list. Here are the ones available by default:
     * `Pleroma.Web.ActivityPub.MRF.NoOpPolicy`: Doesn’t modify activities (default).
     * `Pleroma.Web.ActivityPub.MRF.DropPolicy`: Drops all activities. It generally doesn’t makes sense to use in production.
@@ -124,9 +127,6 @@ To add configuration to your config file, you can copy it from the base config. 
     * `Pleroma.Web.ActivityPub.MRF.NormalizeMarkup`: Pass inbound HTML through a scrubber to make sure it doesn't have anything unusual in it. On by default, cannot be turned off.
     * `Pleroma.Web.ActivityPub.MRF.InlineQuotePolicy`: Append a link to a post that quotes another post with the link to the quoted post, to ensure that software that does not understand quotes can have full context. On by default, cannot be turned off.
     * `Pleroma.Web.ActivityPub.MRF.RejectNewlyCreatedAccountNotesPolicy`: Rejects posts of users the server only recently learned about for a while. Great to block spam accounts. (See [`:mrf_reject_newly_created_account_notes`](#mrf_reject_newly_created_account_notes))
-* `transparency`: Make the content of your Message Rewrite Facility settings public (via nodeinfo).
-* `transparency_exclusions`: Exclude specific instance names from MRF transparency.  The use of the exclusions feature will be disclosed in nodeinfo as a boolean value.
-* `transparency_obfuscate_domains`: Show domains with `*` in the middle, to censor them if needed. For example, `ridingho.me` will show as `rid*****.me`
 
 ## Federation
 ### :activitypub
