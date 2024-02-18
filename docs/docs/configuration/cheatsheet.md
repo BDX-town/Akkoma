@@ -129,6 +129,15 @@ To add configuration to your config file, you can copy it from the base config. 
 * `transparency_obfuscate_domains`: Show domains with `*` in the middle, to censor them if needed. For example, `ridingho.me` will show as `rid*****.me`
 
 ## Federation
+### :activitypub
+* `unfollow_blocked`: Whether blocks result in people getting unfollowed
+* `outgoing_blocks`: Whether to federate blocks to other instances
+* `blockers_visible`: Whether a user can see the posts of users who blocked them
+* `deny_follow_blocked`: Whether to disallow following an account that has blocked the user in question
+* `sign_object_fetches`: Sign object fetches with HTTP signatures
+* `authorized_fetch_mode`: Require HTTP signatures for AP fetches
+* `max_collection_objects`: The maximum number of objects to fetch from a remote AP collection.
+
 ### MRF policies
 
 !!! note
@@ -235,15 +244,6 @@ An example: (86400 seconds = 24 hours)
 ```elixir
 config :pleroma, :mrf_reject_newly_created_account_notes, age: 86400
 ```
-
-### :activitypub
-* `unfollow_blocked`: Whether blocks result in people getting unfollowed
-* `outgoing_blocks`: Whether to federate blocks to other instances
-* `blockers_visible`: Whether a user can see the posts of users who blocked them
-* `deny_follow_blocked`: Whether to disallow following an account that has blocked the user in question
-* `sign_object_fetches`: Sign object fetches with HTTP signatures
-* `authorized_fetch_mode`: Require HTTP signatures for AP fetches
-* `max_collection_objects`: The maximum number of objects to fetch from a remote AP collection.
 
 ## Pleroma.User
 
