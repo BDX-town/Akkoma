@@ -61,16 +61,7 @@ git pull -r
 # to run "git merge stable" instead (or develop if you want)
 ```
 
-### WARNING - Migrating from Pleroma Develop
-If you are on pleroma develop, and have updated since 2022-08, you may have issues with database migrations.
-
-Please roll back the given migrations:
-
-```bash
-MIX_ENV=prod mix ecto.rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n5
-```
-
-Then compile, migrate and restart as usual.
+And compile as usual.
 
 ## From OTP
 
@@ -80,14 +71,43 @@ This will just be setting the update URL - find your flavour from the [mapping o
 export FLAVOUR=[the flavour you found above]
 
 ./bin/pleroma_ctl update --zip-url https://akkoma-updates.s3-website.fr-par.scw.cloud/stable/akkoma-$FLAVOUR.zip
-./bin/pleroma_ctl migrate
 ```
 
-Then restart. When updating in the future, you canjust use
+When updating in the future, you can just use
 
 ```bash
 ./bin/pleroma_ctl update --branch stable
 ```
+
+
+## Database Migrations
+### WARNING - Migrating from Pleroma past 2022-08
+If you are on Pleroma stable >= 2.5.0 or Pleroma develop, and
+have updated since 2022-08, you may have issues with database migrations.
+
+Please first roll back the given migrations:
+
+=== "OTP"
+    ```bash
+    ./bin/pleroma_ctl rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n5
+    ```
+=== "From Source"
+    ```bash
+    MIX_ENV=prod mix ecto.rollback --migrations-path priv/repo/optional_migrations/pleroma_develop_rollbacks -n5
+    ```
+
+### Applying Akkoma Database Migrations
+
+Just run
+
+=== "OTP"
+    ```bash
+    ./bin/pleroma_ctl migrate
+    ```
+=== "From Source"
+    ```bash
+    MIX_ENV=prod mix ecto.migrate
+    ```
 
 ## Frontend changes
 
