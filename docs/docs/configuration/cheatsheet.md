@@ -255,7 +255,7 @@ Notes:
 #### :mrf_reject_newly_created_account_notes
 After initially encountering an user, all their posts
 will be rejected for the configured time (in seconds).
-Only drops posts. Follows, reposts, etc. are not effected.
+Only drops posts. Follows, reposts, etc. are not affected.
 
 * `age`: Time below which to reject (in seconds)
 
