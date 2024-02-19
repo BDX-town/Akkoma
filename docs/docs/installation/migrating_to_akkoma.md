@@ -21,6 +21,33 @@ fork of Akkoma - luckily this isn't very hard.
 You'll need to update the backend, then possibly the frontend, depending
 on your setup.
 
+## Backup diverging features
+
+As time goes on Akkoma and Pleroma added or removed different features
+and reorganised the database in a different way. If you want to be able to
+migrate back to Pleroma without losing any affected data, you’ll want to
+make a backup before starting the migration.  
+If you're not interested in migrating back, skip this section
+*(although it might be a good idea to temporarily keep a full DB backup
+just in case something unexpected happens during migration)*
+
+As of 2024-02 you will want to keep a backup of:
+
+- the entire `chats` and `chat_message_references` tables
+
+The following columns are not deleted by a migration to Akkoma, but a migration
+back to Pleroma or future Akkoma upgrades might affect them, so perhaps back them up as well:
+
+- the `birthday` of users and their `show_birthday` setting
+- the `expires_at` key of in the `user_relationships` table
+    *(used by temporary mutes)*
+
+The way cached instance metadata is stored differs, but since those
+will be refetched and updated anyway, there’s no need for a backup.
+
+Best check all newer migrations unique to Akkoma/Pleroma
+to get an up-to-date picture of what needs to be kept.
+
 ## From Source
 
 If you're running the source Akkoma install, you'll need to set the
@@ -130,3 +157,4 @@ MIX_ENV=prod mix ecto.rollback --to 20210416051708
 ```
 
 Then switch back to Pleroma for updates (similar to how was done to migrate to Akkoma), and remove the front-ends. The front-ends are installed in the `frontends` folder in the [static directory](../configuration/static_dir.md). Once you are back to Pleroma, you will need to run the database migrations again. See the Pleroma documentation for this.
+After this use your previous backups to restore data from diverging features.
