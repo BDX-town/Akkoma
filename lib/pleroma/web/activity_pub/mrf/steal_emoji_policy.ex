@@ -77,7 +77,9 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
       new_emojis =
         foreign_emojis
         |> Enum.reject(fn {shortcode, _url} -> shortcode in installed_emoji end)
-        |> Enum.reject(fn {shortcode, _url} -> String.contains?(shortcode, ["/", "\\", ".", ":"]) end)
+        |> Enum.reject(fn {shortcode, _url} ->
+          String.contains?(shortcode, ["/", "\\", ".", ":"])
+        end)
         |> Enum.filter(fn {shortcode, _url} ->
           reject_emoji? =
             [:mrf_steal_emoji, :rejected_shortcodes]
