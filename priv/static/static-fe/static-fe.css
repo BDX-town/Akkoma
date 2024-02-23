@@ -441,6 +441,7 @@ summary {
 .avatar img {
     border-radius: 3px;
     box-shadow: var(--avatarShadow);
+    object-fit: cover;
 }
 
 .user-summary {
