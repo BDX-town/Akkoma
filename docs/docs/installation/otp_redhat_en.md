@@ -178,7 +178,7 @@ certbot certonly --standalone --preferred-challenges http -d yourinstance.tld
 #### Copy Akkoma nginx configuration to the nginx folder
 
 ```shell
-cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
+cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
 ```
 
 #### Edit the nginx config

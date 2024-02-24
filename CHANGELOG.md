@@ -4,10 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## 2024.02
+
+## Added
+- Full compatibility with Erlang OTP26
+- handling of GET /api/v1/preferences
+- Akkoma API is now documented
+- ability to auto-approve follow requests from users you are already following
+- The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
+
+## Changed
+- OTP builds are now built on erlang OTP26
+- The base Phoenix framework is now updated to 1.7
+- An `outbox` field has been added to actor profiles to comply with AP spec
+- User profile backgrounds do now federate with other Akkoma instances and Sharkey
 
 ## Fixed
+- Documentation issue in which a non-existing nginx file was referenced
 - Issue where a bad inbox URL could break federation
+- Issue where hashtag rel values would be scrubbed
+- Issue where short domains listed in `transparency_obfuscate_domains` were not actually obfuscated
 
 ## 2023.08
 

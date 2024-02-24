@@ -50,7 +50,7 @@ defmodule Pleroma.Web.Feed.TagControllerTest do
     response =
       conn
       |> put_req_header("accept", "application/atom+xml")
-      |> get(tag_feed_path(conn, :feed, "pleromaart.atom"))
+      |> get(~p"/tags/pleromaart.atom")
       |> response(200)
 
     xml = parse(response)
@@ -117,7 +117,7 @@ defmodule Pleroma.Web.Feed.TagControllerTest do
     response =
       conn
       |> put_req_header("accept", "application/rss+xml")
-      |> get(tag_feed_path(conn, :feed, "pleromaart.rss"))
+      |> get(~p"/tags/pleromaart.rss")
       |> response(200)
 
     xml = parse(response)
@@ -157,7 +157,7 @@ defmodule Pleroma.Web.Feed.TagControllerTest do
     response =
       conn
       |> put_req_header("accept", "application/rss+xml")
-      |> get(tag_feed_path(conn, :feed, "pleromaart.rss"))
+      |> get(~p"/tags/pleromaart.rss")
       |> response(200)
 
     xml = parse(response)
@@ -188,7 +188,7 @@ defmodule Pleroma.Web.Feed.TagControllerTest do
     test "returns 404 for tags feed", %{conn: conn} do
       conn
       |> put_req_header("accept", "application/rss+xml")
-      |> get(tag_feed_path(conn, :feed, "pleromaart.rss"))
+      |> get(~p"/tags/pleromaart.rss")
       |> response(404)
     end
   end

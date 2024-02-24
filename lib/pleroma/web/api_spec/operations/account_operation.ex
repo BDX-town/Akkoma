@@ -451,6 +451,20 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
     }
   end
 
+  def preferences_operation do
+    %Operation{
+      tags: ["Account Preferences"],
+      description: "Preferences defined by the user in their account settings.",
+      summary: "Preferred common behaviors to be shared across clients.",
+      operationId: "AccountController.preferences",
+      security: [%{"oAuth" => ["read:accounts"]}],
+      responses: %{
+        200 => Operation.response("Preferences", "application/json", Account),
+        401 => Operation.response("Error", "application/json", ApiError)
+      }
+    }
+  end
+
   def identity_proofs_operation do
     %Operation{
       tags: ["Retrieve account information"],
@@ -709,6 +723,12 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
           description:
             "Number of days after which statuses will be deleted. Set to -1 to disable."
         },
+        permit_followback: %Schema{
+          allOf: [BooleanLike],
+          nullable: true,
+          description:
+            "Whether follow requests from accounts the user is already following are auto-approved (when locked)."
+        },
         accepts_direct_messages_from: %Schema{
           type: :string,
           enum: [
@@ -740,6 +760,7 @@ defmodule Pleroma.Web.ApiSpec.AccountOperation do
         discoverable: false,
         actor_type: "Person",
         status_ttl_days: 30,
+        permit_followback: true,
         accepts_direct_messages_from: "everybody"
       }
     }

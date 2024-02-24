@@ -5,7 +5,7 @@
 This guide covers a installation using an OTP release. To install Akkoma from source, please check out the corresponding guide for your distro.
 
 ## Pre-requisites
-* A machine running Linux with GNU (e.g. Debian, Ubuntu) or musl (e.g. Alpine) libc and an `x86_64` CPU you have root access to. If you are not sure if it's compatible see [Detecting flavour section](#detecting-flavour) below
+* A machine running Linux with GNU (e.g. Debian, Ubuntu) or musl (e.g. Alpine) libc and an `x86_64` or `arm64` CPU you have root access to. If you are not sure if it's compatible see [Detecting flavour section](#detecting-flavour) below
 * For installing OTP releases on RedHat-based distros like Fedora and Centos Stream, please follow [this guide](./otp_redhat_en.md) instead.
 * A (sub)domain pointed to the machine
 
@@ -187,18 +187,18 @@ The location of nginx configs is dependent on the distro
 
 === "Alpine"
     ```
-    cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
+    cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
     ```
 
 === "Debian/Ubuntu"
     ```
-    cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/sites-available/akkoma.conf
+    cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/sites-available/akkoma.conf
     ln -s /etc/nginx/sites-available/akkoma.conf /etc/nginx/sites-enabled/akkoma.conf
     ```
 
 If your distro does not have either of those you can append `include /etc/nginx/akkoma.conf` to the end of the http section in /etc/nginx/nginx.conf and
 ```sh
-cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/akkoma.conf
+cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/akkoma.conf
 ```
 
 #### Edit the nginx config

@@ -10,6 +10,8 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCard do
   alias Pleroma.Web.Metadata.Providers.Provider
   alias Pleroma.Web.Metadata.Utils
 
+  use Pleroma.Web, :verified_routes
+
   @behaviour Provider
   @media_types ["image", "audio", "video"]
 
@@ -112,7 +114,7 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCard do
   defp build_attachments(_id, _object), do: []
 
   defp player_url(id) do
-    Pleroma.Web.Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :notice_player, id)
+    url(~p[/notice/#{id}/embed_player])
   end
 
   # Videos have problems without dimensions, but we used to not provide WxH for images.

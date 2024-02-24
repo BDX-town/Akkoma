@@ -37,7 +37,7 @@ variables:
 pipeline:
   # Canonical arm64
   debian-bookworm:
-    image: hexpm/elixir:1.15.4-erlang-25.3.2.5-debian-bookworm-20230612
+    image: hexpm/elixir:1.15.4-erlang-26.0.2-debian-bookworm-20230612
     <<: *on-release
     environment:
       MIX_ENV: prod
@@ -65,7 +65,7 @@ pipeline:
 
   # Canonical arm64-musl
   musl:
-    image: hexpm/elixir:1.15.4-erlang-25.3.2.5-alpine-3.18.2
+    image: hexpm/elixir:1.15.4-erlang-26.0.2-alpine-3.18.2
     <<: *on-stable
     environment:
       MIX_ENV: prod

@@ -10,7 +10,7 @@ defmodule Pleroma.Web.UploaderControllerTest do
     test "it returns 400 response when process callback isn't alive", %{conn: conn} do
       res =
         conn
-        |> post(uploader_path(conn, :callback, "test-path"))
+        |> post(~p"/api/v1/pleroma/uploader_callback/test-path")
 
       assert res.status == 400
       assert res.resp_body == "{\"error\":\"bad request\"}"
@@ -34,7 +34,7 @@ defmodule Pleroma.Web.UploaderControllerTest do
 
       res =
         conn
-        |> post(uploader_path(conn, :callback, "test-path"))
+        |> post(~p"/api/v1/pleroma/uploader_callback/test-path")
         |> json_response(200)
 
       assert res == %{"upload_path" => "test-path"}

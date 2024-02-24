@@ -39,7 +39,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "with the relay active, it returns the relay user", %{conn: conn} do
       res =
         conn
-        |> get(activity_pub_path(conn, :relay))
+        |> get(~p"/relay")
         |> json_response(200)
 
       assert res["id"] =~ "/relay"
@@ -49,7 +49,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       clear_config([:instance, :allow_relay], false)
 
       conn
-      |> get(activity_pub_path(conn, :relay))
+      |> get(~p"/relay")
       |> json_response(404)
     end
 
@@ -59,7 +59,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:user, user)
-      |> get(activity_pub_path(conn, :relay))
+      |> get(~p"/relay")
       |> json_response(404)
     end
   end
@@ -68,7 +68,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "it returns the internal fetch user", %{conn: conn} do
       res =
         conn
-        |> get(activity_pub_path(conn, :internal_fetch))
+        |> get(~p"/internal/fetch")
         |> json_response(200)
 
       assert res["id"] =~ "/fetch"
@@ -80,7 +80,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:user, user)
-      |> get(activity_pub_path(conn, :internal_fetch))
+      |> get(~p"/internal/fetch")
       |> json_response(404)
     end
   end

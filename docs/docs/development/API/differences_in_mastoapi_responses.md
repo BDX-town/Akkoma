@@ -1,6 +1,6 @@
 # Differences in Mastodon API responses from vanilla Mastodon
 
-A Akkoma instance can be identified by "<Mastodon version> (compatible; Pleroma <version>)" present in `version` field in response from `/api/v1/instance`
+A Akkoma instance can be identified by "<Mastodon version> (compatible; Akkoma <version>)" present in `version` field in response from `/api/v1/instance`
 
 ## Flake IDs
 
@@ -8,19 +8,27 @@ Akkoma uses 128-bit ids as opposed to Mastodon's 64 bits. However, just like Mas
 
 ## Timelines
 
+In addition to Mastodon’s timelines, there is also a “bubble timeline” showing
+posts from the local instance and a set of closely related instances as chosen
+by the administrator. It is available under `/api/v1/timelines/bubble`.
+
 Adding the parameter `with_muted=true` to the timeline queries will also return activities by muted (not by blocked!) users.
 
 Adding the parameter `exclude_visibilities` to the timeline queries will exclude the statuses with the given visibilities. The parameter accepts an array of visibility types (`public`, `unlisted`, `private`, `direct`), e.g., `exclude_visibilities[]=direct&exclude_visibilities[]=private`.
 
-Adding the parameter `reply_visibility` to the public and home timelines queries will filter replies. Possible values: without parameter (default) shows all replies, `following` - replies directed to you or users you follow, `self` - replies directed to you.
+Adding the parameter `reply_visibility` to the public, bubble or home timelines queries will filter replies. Possible values: without parameter (default) shows all replies, `following` - replies directed to you or users you follow, `self` - replies directed to you.
 
 Adding the parameter `instance=lain.com` to the public timeline will show only statuses originating from `lain.com` (or any remote instance).
 
-Home, public, hashtag & list timelines accept these parameters:
+All but the direct timeline accept these parameters:
 
 - `only_media`: show only statuses with media attached
-- `local`: show only local statuses
 - `remote`: show only remote statuses
+
+Home, public, hashtag & list timelines further accept:
+
+- `local`: show only local statuses
+
 
 ## Statuses
 
@@ -112,6 +120,12 @@ Has these additional fields under the `pleroma` object:
 - `unread_notifications_count`: The count of unread notifications. Only returned to the account owner.
 - `notification_settings`: object, can be absent. See `/api/v1/pleroma/notification_settings` for the parameters/keys returned.
 - `favicon`: nullable URL string, Favicon image of the user's instance
+
+Has these additional fields under the `akkoma` object:
+
+- `instance`: nullable object with metadata about the user’s instance
+- `status_ttl_days`: nullable int, default time after which statuses are deleted
+- `permit_followback`: boolean, whether follows from followed accounts are auto-approved
 
 ### Source
 

@@ -2,7 +2,7 @@
 
 * PostgreSQL 9.6+
 * Elixir 1.14+
-* Erlang OTP 24+
+* Erlang OTP 25+
 * git
 * file / libmagic
 * gcc (clang might also work)

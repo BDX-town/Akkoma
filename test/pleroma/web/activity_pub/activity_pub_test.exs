@@ -2629,6 +2629,14 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
     assert user.name == " "
   end
 
+  test "pin_data_from_featured_collection will ignore unsupported values" do
+    assert %{} ==
+             ActivityPub.pin_data_from_featured_collection(%{
+               "type" => "CollectionThatIsNotRealAndCannotHurtMe",
+               "first" => "https://social.example/users/alice/collections/featured?page=true"
+             })
+  end
+
   describe "persist/1" do
     test "should not persist remote delete activities" do
       poster = insert(:user, local: false)

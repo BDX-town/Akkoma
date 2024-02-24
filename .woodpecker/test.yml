@@ -1,5 +1,8 @@
 platform: linux/amd64
 
+depends_on:
+  - lint
+
 matrix:
   ELIXIR_VERSION:
     - 1.14
@@ -12,9 +15,8 @@ matrix:
       OTP_VERSION: 25
     - ELIXIR_VERSION: 1.15
       OTP_VERSION: 25
-    # Soon
-    #- ELIXIR_VERSION: 1.15
-    #  OTP_VERSION: 26
+    - ELIXIR_VERSION: 1.15
+      OTP_VERSION: 26
 
 variables:
   - &scw-secrets
@@ -69,15 +71,7 @@ services:
       POSTGRES_PASSWORD: postgres
 
 pipeline:
-  lint:
-    <<: *on-pr-open
-    image: akkoma/ci-base:1.15
-    commands:
-    - mix local.hex --force
-    - mix local.rebar --force
-    - mix format --check-formatted
-
-  build:
+  test:
     image: akkoma/ci-base:${ELIXIR_VERSION}-otp${OTP_VERSION}
     <<: *on-pr-open
     environment:
@@ -91,24 +85,9 @@ pipeline:
       - mix local.rebar --force
       - mix deps.get
       - mix compile
-
-  test:
-    image: akkoma/ci-base:${ELIXIR_VERSION}-otp${OTP_VERSION}
-    <<: *on-pr-open
-    environment:
-      MIX_ENV: test
-      POSTGRES_DB: pleroma_test_${ELIXIR_VERSION}_${OTP_VERSION}
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      DB_HOST: postgres
-    commands:
-    - mix local.hex --force
-    - mix local.rebar --force
-    - mix deps.get
-    - mix compile
-    - mix ecto.drop -f -q
-    - mix ecto.create
-    - mix ecto.migrate
-    - mkdir -p test/tmp
-    - mix test --preload-modules --exclude erratic --exclude federated --exclude mocked
-    - mix test --preload-modules --only mocked
+      - mix ecto.drop -f -q
+      - mix ecto.create
+      - mix ecto.migrate
+      - mkdir -p test/tmp
+      - mix test --preload-modules --exclude erratic --exclude federated --exclude mocked
+      - mix test --preload-modules --only mocked

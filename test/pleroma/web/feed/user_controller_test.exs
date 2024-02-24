@@ -66,7 +66,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
       resp =
         conn
         |> put_req_header("accept", "application/atom+xml")
-        |> get(user_feed_path(conn, :feed, user.nickname))
+        |> get(~p[/users/#{user.nickname}/feed])
         |> response(200)
 
       activity_titles =
@@ -128,7 +128,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
       conn =
         conn
         |> put_req_header("accept", "application/atom+xml")
-        |> get(user_feed_path(conn, :feed, "nonexisting"))
+        |> get(~p"/users/nonexisting/feed")
 
       assert response(conn, 404)
     end
@@ -144,7 +144,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
       resp =
         conn
         |> put_req_header("accept", "application/atom+xml")
-        |> get(user_feed_path(conn, :feed, user.nickname))
+        |> get(~p[/users/#{user.nickname}/feed])
         |> response(200)
 
       activity_titles =
@@ -163,7 +163,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
 
       assert conn
              |> put_req_header("accept", "application/atom+xml")
-             |> get(user_feed_path(conn, :feed, user.nickname))
+             |> get(~p[/users/#{user.nickname}/feed])
              |> response(404)
     end
 
@@ -240,7 +240,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
       response =
         conn
         |> put_req_header("accept", "application/xml")
-        |> get(user_feed_path(conn, :feed, "jimm"))
+        |> get(~p"/users/jimm/feed")
         |> response(404)
 
       assert response == ~S({"error":"Not found"})
@@ -258,7 +258,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
 
       assert conn
              |> put_req_header("accept", "application/atom+xml")
-             |> get(user_feed_path(conn, :feed, user.nickname))
+             |> get(~p[/users/#{user.nickname}/feed])
              |> response(404)
     end
   end

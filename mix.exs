@@ -4,10 +4,10 @@ defmodule Pleroma.Mixfile do
   def project do
     [
       app: :pleroma,
-      version: version("3.10.4"),
+      version: version("3.11.0"),
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix] ++ Mix.compilers(),
+      compilers: Mix.compilers(),
       elixirc_options: [warnings_as_errors: warnings_as_errors()],
       xref: [exclude: [:eldap]],
       start_permanent: Mix.env() == :prod,
@@ -114,7 +114,9 @@ defmodule Pleroma.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.6.15"},
+      {:phoenix, "~> 1.7.0"},
+      {:phoenix_view, "~> 2.0"},
+      {:phoenix_live_dashboard, "~> 0.7.2"},
       {:tzdata, "~> 1.1.1"},
       {:plug_cowboy, "~> 2.6"},
       {:phoenix_pubsub, "~> 2.1"},
@@ -146,7 +148,7 @@ defmodule Pleroma.Mixfile do
       {:argon2_elixir, "~> 3.1"},
       {:cors_plug, "~> 3.0"},
       {:web_push_encryption, "~> 0.3.1"},
-      {:swoosh, "~> 1.11"},
+      {:swoosh, "~> 1.14.2"},
       # for gmail adapter in swoosh
       {:mail, ">= 0.0.0"},
       {:phoenix_swoosh, "~> 1.2"},
@@ -154,9 +156,11 @@ defmodule Pleroma.Mixfile do
       {:ex_syslogger, "~> 2.0.0"},
       {:floki, "~> 0.34"},
       {:timex, "~> 3.7"},
-      {:ueberauth, "~> 0.10"},
+      {:ueberauth, "== 0.10.5"},
       {:linkify, git: "https://akkoma.dev/AkkomaGang/linkify.git"},
-      {:http_signatures, "~> 0.1.1"},
+      {:http_signatures,
+       git: "https://akkoma.dev/AkkomaGang/http_signatures.git",
+       ref: "6640ce7d24c783ac2ef56e27d00d12e8dc85f396"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},
@@ -175,22 +179,23 @@ defmodule Pleroma.Mixfile do
       {:remote_ip, "~> 1.1.0"},
       {:captcha,
        git: "https://git.pleroma.social/pleroma/elixir-libraries/elixir-captcha.git",
-       ref: "3bbfa8b5ea13accc1b1c40579a380d8e5cfd6ad2"},
+       ref: "90f6ce7672f70f56708792a98d98bd05176c9176"},
       {:restarter, path: "./restarter"},
-      {:majic, "~> 1.0"},
+      {:majic,
+       git: "https://akkoma.dev/AkkomaGang/majic.git",
+       ref: "80540b36939ec83f48e76c61e5000e0fd67706f0"},
       {:eblurhash, "~> 1.2.2"},
       {:open_api_spex, "~> 3.17"},
       {:search_parser,
        git: "https://github.com/FloatingGhost/pleroma-contrib-search-parser.git",
        ref: "08971a81e68686f9ac465cfb6661d51c5e4e1e7f"},
       {:nimble_parsec, "~> 1.3", override: true},
-      {:phoenix_live_dashboard, "~> 0.7.2"},
       {:ecto_psql_extras, "~> 0.7"},
       {:elasticsearch,
        git: "https://akkoma.dev/AkkomaGang/elasticsearch-elixir.git", ref: "main"},
       {:mfm_parser,
        git: "https://akkoma.dev/AkkomaGang/mfm-parser.git",
-       ref: "912fba81152d4d572e457fd5427f9875b2bc3dbe"},
+       ref: "b21ab7754024af096f2d14247574f55f0063295b"},
 
       ## dev & test
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
@@ -201,7 +206,9 @@ defmodule Pleroma.Mixfile do
       {:mox, "~> 1.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
-      {:mint, "~> 1.5.1", override: true}
+      {:elixir_xml_to_map, "~> 3.0", only: :test},
+      {:mint, "~> 1.5.1", override: true},
+      {:nimble_pool, "~> 1.0", override: true}
     ] ++ oauth_deps()
   end
 

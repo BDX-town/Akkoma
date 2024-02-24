@@ -1603,6 +1603,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       uri: get_actor_url(data["url"]),
       ap_enabled: true,
       banner: normalize_image(data["image"]),
+      background: normalize_image(data["backgroundUrl"]),
       fields: fields,
       emoji: emojis,
       is_locked: is_locked,
@@ -1790,6 +1791,11 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       ap_id when is_binary(ap_id) -> {ap_id, NaiveDateTime.utc_now()}
       %{"id" => object_ap_id} -> {object_ap_id, NaiveDateTime.utc_now()}
     end)
+  end
+
+  def pin_data_from_featured_collection(obj) do
+    Logger.error("Could not parse featured collection #{inspect(obj)}")
+    %{}
   end
 
   def fetch_and_prepare_featured_from_ap_id(nil) do

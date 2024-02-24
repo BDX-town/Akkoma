@@ -51,7 +51,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
   plug(
     OAuthScopesPlug,
     %{scopes: ["read:accounts"]}
-    when action in [:verify_credentials, :endorsements, :identity_proofs]
+    when action in [:verify_credentials, :endorsements, :identity_proofs, :preferences]
   )
 
   plug(
@@ -222,6 +222,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       |> Maps.put_if_present(:language, Pleroma.Web.Gettext.normalize_locale(params[:language]))
       |> Maps.put_if_present(:status_ttl_days, params[:status_ttl_days], status_ttl_days_value)
       |> Maps.put_if_present(:accepts_direct_messages_from, params[:accepts_direct_messages_from])
+      |> Maps.put_if_present(:permit_followback, params[:permit_followback])
 
     # What happens here:
     #
@@ -544,4 +545,9 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
 
   @doc "GET /api/v1/identity_proofs"
   def identity_proofs(conn, params), do: MastodonAPIController.empty_array(conn, params)
+
+  @doc "GET /api/v1/preferences"
+  def preferences(%{assigns: %{user: user}} = conn, _params) do
+    render(conn, "preferences.json", user: user)
+  end
 end

@@ -685,7 +685,7 @@ defmodule Pleroma.Web.AdminAPI.UserControllerTest do
 
       response =
         conn
-        |> get(user_path(conn, :index), %{actor_types: ["Person"]})
+        |> get(~p"/api/v1/pleroma/admin/users", %{actor_types: ["Person"]})
         |> json_response_and_validate_schema(200)
 
       users = [
@@ -706,7 +706,7 @@ defmodule Pleroma.Web.AdminAPI.UserControllerTest do
 
       response =
         conn
-        |> get(user_path(conn, :index), %{actor_types: ["Person", "Service"]})
+        |> get(~p"/api/v1/pleroma/admin/users", %{actor_types: ["Person", "Service"]})
         |> json_response_and_validate_schema(200)
 
       users = [
@@ -727,7 +727,7 @@ defmodule Pleroma.Web.AdminAPI.UserControllerTest do
 
       response =
         conn
-        |> get(user_path(conn, :index), %{actor_types: ["Service"]})
+        |> get(~p"/api/v1/pleroma/admin/users", %{actor_types: ["Service"]})
         |> json_response_and_validate_schema(200)
 
       users = [user_response(user_service, %{"actor_type" => "Service"})]

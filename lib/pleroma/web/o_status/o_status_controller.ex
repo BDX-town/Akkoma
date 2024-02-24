@@ -14,7 +14,6 @@ defmodule Pleroma.Web.OStatus.OStatusController do
   alias Pleroma.Web.Fallback.RedirectController
   alias Pleroma.Web.Metadata.PlayerView
   alias Pleroma.Web.Plugs.RateLimiter
-  alias Pleroma.Web.Router
 
   plug(
     RateLimiter,
@@ -87,7 +86,7 @@ defmodule Pleroma.Web.OStatus.OStatusController do
             %{
               activity_id: activity.id,
               object: object,
-              url: Router.Helpers.o_status_url(Endpoint, :notice, activity.id),
+              url: url(~p[/notice/#{activity.id}]),
               user: user
             }
           )

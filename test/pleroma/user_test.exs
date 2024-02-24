@@ -1004,23 +1004,13 @@ defmodule Pleroma.UserTest do
   test "returns an ap_id for a user" do
     user = insert(:user)
 
-    assert User.ap_id(user) ==
-             Pleroma.Web.Router.Helpers.user_feed_url(
-               Pleroma.Web.Endpoint,
-               :feed_redirect,
-               user.nickname
-             )
+    assert User.ap_id(user) == url(@endpoint, ~p[/users/#{user.nickname}])
   end
 
   test "returns an ap_followers link for a user" do
     user = insert(:user)
 
-    assert User.ap_followers(user) ==
-             Pleroma.Web.Router.Helpers.user_feed_url(
-               Pleroma.Web.Endpoint,
-               :feed_redirect,
-               user.nickname
-             ) <> "/followers"
+    assert User.ap_followers(user) == url(@endpoint, ~p[/users/#{user.nickname}/followers])
   end
 
   describe "remote user changeset" do
@@ -1363,25 +1353,27 @@ defmodule Pleroma.UserTest do
       refute User.blocks?(user, collateral_user)
     end
 
-    test "blocks domain with wildcard for subdomain" do
-      user = insert(:user)
-
-      user_from_subdomain =
-        insert(:user, %{ap_id: "https://subdomain.awful-and-rude-instance.com/user/bully"})
-
-      user_with_two_subdomains =
-        insert(:user, %{
-          ap_id: "https://subdomain.second_subdomain.awful-and-rude-instance.com/user/bully"
-        })
-
-      user_domain = insert(:user, %{ap_id: "https://awful-and-rude-instance.com/user/bully"})
-
-      {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
-
-      assert User.blocks?(user, user_from_subdomain)
-      assert User.blocks?(user, user_with_two_subdomains)
-      assert User.blocks?(user, user_domain)
-    end
+    # This behaviour is not honoured by the timeline query
+    # re-add at a later date when UX is established
+    # test "blocks domain with wildcard for subdomain" do
+    #  user = insert(:user)
+    #
+    #  user_from_subdomain =
+    #    insert(:user, %{ap_id: "https://subdomain.awful-and-rude-instance.com/user/bully"})
+    #
+    #  user_with_two_subdomains =
+    #    insert(:user, %{
+    #      ap_id: "https://subdomain.second_subdomain.awful-and-rude-instance.com/user/bully"
+    #    })
+    #
+    #  user_domain = insert(:user, %{ap_id: "https://awful-and-rude-instance.com/user/bully"})
+    #
+    #  {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
+    #
+    #  assert User.blocks?(user, user_from_subdomain)
+    #  assert User.blocks?(user, user_with_two_subdomains)
+    #  assert User.blocks?(user, user_domain)
+    # end
 
     test "unblocks domains" do
       user = insert(:user)
