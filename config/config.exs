@@ -406,8 +406,6 @@ config :pleroma, :mrf_object_age,
   threshold: 604_800,
   actions: [:delist, :strip_followers]
 
-config :pleroma, :mrf_follow_bot, follower_nickname: nil
-
 config :pleroma, :mrf_reject_newly_created_account_notes, age: 86_400
 
 config :pleroma, :rich_media,
