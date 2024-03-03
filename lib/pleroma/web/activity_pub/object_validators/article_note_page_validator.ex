@@ -53,6 +53,14 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
 
   defp fix_url(%{"url" => url} = data) when is_bitstring(url), do: data
   defp fix_url(%{"url" => url} = data) when is_map(url), do: Map.put(data, "url", url["href"])
+  defp fix_url(%{"url" => url} = data) when is_list(url) do
+    if is_map(List.first(url)) do
+      Map.put(data, "url", List.first(url)["href"])
+    else
+      Map.put(data, "url", List.first(url))
+    end
+  end
+
   defp fix_url(data), do: data
 
   defp fix_tag(%{"tag" => tag} = data) when is_list(tag) do
