@@ -20,6 +20,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           output: :string,
           output_psql: :string,
           domain: :string,
+          media_url: :string,
           instance_name: :string,
           admin_email: :string,
           notify_email: :string,
@@ -63,6 +64,14 @@ defmodule Mix.Tasks.Pleroma.Instance do
           ),
           ":"
         ) ++ [443]
+
+      media_url =
+        get_option(
+          options,
+          :media_url,
+          "What base url will uploads use? (e.g https://media.example.com/media)\n" <>
+            "  Generally this should NOT use the same domain as the instance       "
+        )
 
       name =
         get_option(
@@ -207,6 +216,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
         EEx.eval_file(
           template_dir <> "/sample_config.eex",
           domain: domain,
+          media_url: media_url,
           port: port,
           email: email,
           notify_email: notify_email,
