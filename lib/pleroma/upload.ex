@@ -66,7 +66,7 @@ defmodule Pleroma.Upload do
           path: String.t()
         }
 
-  @always_enabled_filters [Pleroma.Upload.Filter.AnonymizeFilename]
+  @always_enabled_filters [Pleroma.Upload.Filter.Dedupe]
 
   defstruct [:id, :name, :tempfile, :content_type, :width, :height, :blurhash, :path]
 

@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Changed
 - `Pleroma.Upload, :base_url` now MUST be configured explicitly;
   use of the same domain as the instance is **strongly** discouraged
+- The `Dedupe` upload filter is now always active;
+  `AnonymizeFilenames` is again opt-in
 
 ## Fixed
 - Critical security issue allowing Akkoma to be used as a vector for

@@ -597,7 +597,7 @@ the source code is here: [kocaptcha](https://github.com/koto-bank/kocaptcha). Th
 
 * `uploader`: Which one of the [uploaders](#uploaders) to use.
 * `filters`: List of [upload filters](#upload-filters) to use.
-* `link_name`: When enabled Akkoma will add a `name` parameter to the url of the upload, for example `https://instance.tld/media/corndog.png?name=corndog.png`. This is needed to provide the correct filename in Content-Disposition headers when using filters like `Pleroma.Upload.Filter.Dedupe`
+* `link_name`: When enabled Akkoma will add a `name` parameter to the url of the upload, for example `https://instance.tld/media/corndog.png?name=corndog.png`. This is needed to provide the correct filename in Content-Disposition headers
 * `base_url`: The base URL to access a user-uploaded file; MUST be configured explicitly.
   Using a (sub)domain distinct from the instance endpoint is **strongly** recommended.
 * `proxy_remote`: If you're using a remote uploader, Akkoma will proxy media requests instead of redirecting to it.
@@ -639,16 +639,17 @@ config :ex_aws, :s3,
 
 ### Upload filters
 
-#### Pleroma.Upload.Filter.AnonymizeFilename
-
-This filter replaces the filename (not the path) of an upload. For complete obfuscation, add
-`Pleroma.Upload.Filter.Dedupe` before AnonymizeFilename.
-
-* `text`: Text to replace filenames in links. If empty, `{random}.extension` will be used. You can get the original filename extension by using `{extension}`, for example `custom-file-name.{extension}`.
-
 #### Pleroma.Upload.Filter.Dedupe
 
+**Always** active; cannot be turned off.
+Renames files to their hash and prevents duplicate files filling up the disk.
 No specific configuration.
+
+#### Pleroma.Upload.Filter.AnonymizeFilename
+
+This filter replaces the declared filename (not the path) of an upload.
+
+* `text`: Text to replace filenames in links. If empty, `{random}.extension` will be used. You can get the original filename extension by using `{extension}`, for example `custom-file-name.{extension}`.
 
 #### Pleroma.Upload.Filter.Exiftool
 

@@ -71,8 +71,6 @@ defmodule Mix.Tasks.Pleroma.InstanceTest do
         "./test/../test/instance/static/",
         "--strip-uploads",
         "y",
-        "--dedupe-uploads",
-        "n",
         "--anonymize-uploads",
         "n"
       ])

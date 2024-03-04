@@ -16,7 +16,6 @@ defmodule Mix.Tasks.Pleroma.UploadsTest do
       Mix.shell(Mix.Shell.IO)
     end)
 
-    File.mkdir_p!("test/uploads")
     :ok
   end
 
