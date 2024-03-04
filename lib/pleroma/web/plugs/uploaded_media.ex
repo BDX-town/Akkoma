@@ -28,7 +28,9 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
       |> Keyword.put(:at, "/__unconfigured_media_plug")
       |> Plug.Static.init()
 
-    %{static_plug_opts: static_plug_opts}
+    allowed_mime_types = Pleroma.Config.get([Pleroma.Upload, :allowed_mime_types])
+
+    %{static_plug_opts: static_plug_opts, allowed_mime_types: allowed_mime_types}
   end
 
   def call(%{request_path: <<"/", @path, "/", file::binary>>} = conn, opts) do
@@ -68,13 +70,28 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
 
   defp media_is_banned(_, _), do: false
 
+  defp get_safe_mime_type(%{allowed_mime_types: allowed_mime_types} = _opts, mime) do
+    [maintype | _] = String.split(mime, "/", parts: 2)
+    if maintype in allowed_mime_types, do: mime, else: "application/octet-stream"
+  end
+
+  defp set_content_type(conn, opts, filepath) do
+    real_mime = MIME.from_path(filepath)
+    clean_mime = get_safe_mime_type(opts, real_mime)
+    put_resp_header(conn, "content-type", clean_mime)
+  end
+
   defp get_media(conn, {:static_dir, directory}, opts) do
     static_opts =
       Map.get(opts, :static_plug_opts)
       |> Map.put(:at, [@path])
       |> Map.put(:from, directory)
+      |> Map.put(:set_content_type, false)
 
-    conn = Plug.Static.call(conn, static_opts)
+    conn =
+      conn
+      |> set_content_type(opts, conn.request_path)
+      |> Pleroma.Web.Plugs.StaticNoCT.call(static_opts)
 
     if conn.halted do
       conn
