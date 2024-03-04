@@ -4,6 +4,7 @@
 # The differences are:
 #  - this leading comment
 #  - renaming of the module from 'Plug.Static' to 'Pleroma.Web.Plugs.StaticNoCT'
+#  - additon of set_content_type option
 
 defmodule Pleroma.Web.Plugs.StaticNoCT do
   @moduledoc """
@@ -111,6 +112,13 @@ defmodule Pleroma.Web.Plugs.StaticNoCT do
       and content type as value. For example:
       `content_types: %{"apple-app-site-association" => "application/json"}`.
 
+    * `:set_content_type` - by default Plug.Static (re)sets the content type header
+      using auto-detection and the `:content_types` map. But when set to `false`
+      no content-type header will be inserted instead retaining the original
+      value or lack thereof. This can be useful when custom logic for appropiate
+      content types is needed which cannot be reasonably expressed as a static
+      filename map.
+
   ## Examples
 
   This plug can be mounted in a `Plug.Builder` pipeline as follows:
@@ -175,6 +183,7 @@ defmodule Pleroma.Web.Plugs.StaticNoCT do
       et_generation: Keyword.get(opts, :etag_generation, nil),
       headers: Keyword.get(opts, :headers, %{}),
       content_types: Keyword.get(opts, :content_types, %{}),
+      set_content_type: Keyword.get(opts, :set_content_type, true),
       from: from,
       at: opts |> Keyword.fetch!(:at) |> Plug.Router.Utils.split()
     }
@@ -225,22 +234,31 @@ defmodule Pleroma.Web.Plugs.StaticNoCT do
     h in full or (prefix != [] and match?({0, _}, :binary.match(h, prefix)))
   end
 
+  defp maybe_put_content_type(conn, false, _, _), do: conn
+
+  defp maybe_put_content_type(conn, _, types, filename) do
+    content_type = Map.get(types, filename) || MIME.from_path(filename)
+
+    conn
+    |> put_resp_header("content-type", content_type)
+  end
+
   defp serve_static({content_encoding, file_info, path}, conn, segments, range, options) do
     %{
       qs_cache: qs_cache,
       et_cache: et_cache,
       et_generation: et_generation,
       headers: headers,
-      content_types: types
+      content_types: types,
+      set_content_type: set_content_type
     } = options
 
     case put_cache_header(conn, qs_cache, et_cache, et_generation, file_info, path) do
       {:stale, conn} ->
         filename = List.last(segments)
-        content_type = Map.get(types, filename) || MIME.from_path(filename)
 
         conn
-        |> put_resp_header("content-type", content_type)
+        |> maybe_put_content_type(set_content_type, types, filename)
         |> put_resp_header("accept-ranges", "bytes")
         |> maybe_add_encoding(content_encoding)
         |> merge_headers(headers)
