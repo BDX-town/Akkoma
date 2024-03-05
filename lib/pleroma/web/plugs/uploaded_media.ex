@@ -28,12 +28,21 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
       |> Keyword.put(:at, "/__unconfigured_media_plug")
       |> Plug.Static.init()
 
-    allowed_mime_types = Pleroma.Config.get([Pleroma.Upload, :allowed_mime_types])
+    config = Pleroma.Config.get(Pleroma.Upload)
+    allowed_mime_types = Keyword.fetch!(config, :allowed_mime_types)
+    uploader = Keyword.fetch!(config, :uploader)
 
-    %{static_plug_opts: static_plug_opts, allowed_mime_types: allowed_mime_types}
+    %{
+      static_plug_opts: static_plug_opts,
+      allowed_mime_types: allowed_mime_types,
+      uploader: uploader
+    }
   end
 
-  def call(%{request_path: <<"/", @path, "/", file::binary>>} = conn, opts) do
+  def call(
+        %{request_path: <<"/", @path, "/", file::binary>>} = conn,
+        %{uploader: uploader} = opts
+      ) do
     conn =
       case fetch_query_params(conn) do
         %{query_params: %{"name" => name}} = conn ->
@@ -46,10 +55,7 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
       end
       |> merge_resp_headers([{"content-security-policy", "sandbox"}])
 
-    config = Pleroma.Config.get(Pleroma.Upload)
-
-    with uploader <- Keyword.fetch!(config, :uploader),
-         {:ok, get_method} <- uploader.get_file(file),
+    with {:ok, get_method} <- uploader.get_file(file),
          false <- media_is_banned(conn, get_method) do
       get_media(conn, get_method, opts)
     else
