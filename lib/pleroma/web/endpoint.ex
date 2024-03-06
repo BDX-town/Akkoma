@@ -98,6 +98,10 @@ defmodule Pleroma.Web.Endpoint do
     at: "/",
     from: :pleroma,
     only: Pleroma.Web.static_paths(),
+    # JSON-LD is accepted by some servers for AP objects and activities,
+    # thus only enable it here instead of a global extension mapping
+    # (it's our only *.jsonld file anyway)
+    content_types: %{"litepub-0.1.jsonld" => "application/ld+json"},
     # credo:disable-for-previous-line Credo.Check.Readability.MaxLineLength
     gzip: true,
     cache_control_for_etags: @static_cache_control,
