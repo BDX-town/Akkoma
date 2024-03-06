@@ -11,6 +11,7 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
   require Logger
 
   alias Pleroma.Web.MediaProxy
+  alias Pleroma.Web.Plugs.Utils
 
   @behaviour Plug
   # no slashes
@@ -76,14 +77,9 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
 
   defp media_is_banned(_, _), do: false
 
-  defp get_safe_mime_type(%{allowed_mime_types: allowed_mime_types} = _opts, mime) do
-    [maintype | _] = String.split(mime, "/", parts: 2)
-    if maintype in allowed_mime_types, do: mime, else: "application/octet-stream"
-  end
-
   defp set_content_type(conn, opts, filepath) do
     real_mime = MIME.from_path(filepath)
-    clean_mime = get_safe_mime_type(opts, real_mime)
+    clean_mime = Utils.get_safe_mime_type(opts, real_mime)
     put_resp_header(conn, "content-type", clean_mime)
   end
 
