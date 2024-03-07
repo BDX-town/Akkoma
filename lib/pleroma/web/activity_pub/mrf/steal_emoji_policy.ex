@@ -33,16 +33,9 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
     !valid_shortcode? or rejected_shortcode? or emoji_installed?
   end
 
-  defp steal_emoji(%{} = response, {shortcode, url}, emoji_dir_path) do
-    extension =
-      url
-      |> URI.parse()
-      |> Map.get(:path)
-      |> Path.basename()
-      |> Path.extname()
-
+  defp steal_emoji(%{} = response, {shortcode, extension}, emoji_dir_path) do
     shortcode = Path.basename(shortcode)
-    file_path = Path.join(emoji_dir_path, shortcode <> (extension || ".png"))
+    file_path = Path.join(emoji_dir_path, shortcode <> "." <> extension)
 
     case File.write(file_path, response.body) do
       :ok ->
@@ -54,14 +47,25 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
     end
   end
 
+  defp get_extension_if_safe(response) do
+    content_type =
+      :proplists.get_value("content-type", response.headers, MIME.from_path(response.url))
+
+    case content_type do
+      "image/" <> _ -> List.first(MIME.extensions(content_type))
+      _ -> nil
+    end
+  end
+
   defp maybe_steal_emoji({shortcode, url}, emoji_dir_path) do
     url = Pleroma.Web.MediaProxy.url(url)
 
     with {:ok, %{status: status} = response} when status in 200..299 <- Pleroma.HTTP.get(url) do
       size_limit = Config.get([:mrf_steal_emoji, :size_limit], 50_000)
+      extension = get_extension_if_safe(response)
 
-      if byte_size(response.body) <= size_limit do
-        steal_emoji(response, {shortcode, url}, emoji_dir_path)
+      if byte_size(response.body) <= size_limit and extension do
+        steal_emoji(response, {shortcode, extension}, emoji_dir_path)
       else
         Logger.debug(
           "MRF.StealEmojiPolicy: :#{shortcode}: at #{url} (#{byte_size(response.body)} B) over size limit (#{size_limit} B)"
