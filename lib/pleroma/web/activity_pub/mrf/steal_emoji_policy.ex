@@ -34,7 +34,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
   end
 
   defp steal_emoji(%{} = response, {shortcode, extension}, emoji_dir_path) do
-    shortcode = Path.basename(shortcode)
     file_path = Path.join(emoji_dir_path, shortcode <> "." <> extension)
 
     case File.write(file_path, response.body) do
