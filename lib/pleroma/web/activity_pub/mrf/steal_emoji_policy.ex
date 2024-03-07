@@ -33,31 +33,35 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
     !valid_shortcode? or rejected_shortcode? or emoji_installed?
   end
 
-  defp steal_emoji({shortcode, url}, emoji_dir_path) do
+  defp steal_emoji(%{} = response, {shortcode, url}, emoji_dir_path) do
+    extension =
+      url
+      |> URI.parse()
+      |> Map.get(:path)
+      |> Path.basename()
+      |> Path.extname()
+
+    shortcode = Path.basename(shortcode)
+    file_path = Path.join(emoji_dir_path, shortcode <> (extension || ".png"))
+
+    case File.write(file_path, response.body) do
+      :ok ->
+        shortcode
+
+      e ->
+        Logger.warning("MRF.StealEmojiPolicy: Failed to write to #{file_path}: #{inspect(e)}")
+        nil
+    end
+  end
+
+  defp maybe_steal_emoji({shortcode, url}, emoji_dir_path) do
     url = Pleroma.Web.MediaProxy.url(url)
 
     with {:ok, %{status: status} = response} when status in 200..299 <- Pleroma.HTTP.get(url) do
       size_limit = Config.get([:mrf_steal_emoji, :size_limit], 50_000)
 
       if byte_size(response.body) <= size_limit do
-        extension =
-          url
-          |> URI.parse()
-          |> Map.get(:path)
-          |> Path.basename()
-          |> Path.extname()
-
-        shortcode = Path.basename(shortcode)
-        file_path = Path.join(emoji_dir_path, shortcode <> (extension || ".png"))
-
-        case File.write(file_path, response.body) do
-          :ok ->
-            shortcode
-
-          e ->
-            Logger.warning("MRF.StealEmojiPolicy: Failed to write to #{file_path}: #{inspect(e)}")
-            nil
-        end
+        steal_emoji(response, {shortcode, url}, emoji_dir_path)
       else
         Logger.debug(
           "MRF.StealEmojiPolicy: :#{shortcode}: at #{url} (#{byte_size(response.body)} B) over size limit (#{size_limit} B)"
@@ -90,7 +94,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
       new_emojis =
         foreign_emojis
         |> Enum.reject(&reject_emoji?(&1, installed_emoji))
-        |> Enum.map(&steal_emoji(&1, emoji_dir_path))
+        |> Enum.map(&maybe_steal_emoji(&1, emoji_dir_path))
         |> Enum.filter(& &1)
 
       if !Enum.empty?(new_emojis) do
