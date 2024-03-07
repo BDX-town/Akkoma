@@ -149,6 +149,19 @@ config :logger, :ex_syslogger,
   format: "$metadata[$level] $message",
   metadata: [:request_id]
 
+# ———————————————————————————————————————————————————————————————
+#                       W  A  R  N  I  N  G
+# ———————————————————————————————————————————————————————————————
+#
+#  Whenever adding a privileged new custom type for e.g.
+#  ActivityPub objects, ALWAYS map their extension back
+#  to "application/octet-stream".
+#  Else files served by us can automatically end up with
+#  those privileged types causing severe security hazards.
+#  (We need those mappings so Phoenix can assoiate its format
+#   (the "extension") to incoming requests of those MIME types)
+#
+# ———————————————————————————————————————————————————————————————
 config :mime, :types, %{
   "application/xml" => ["xml"],
   "application/xrd+xml" => ["xrd+xml"],
@@ -158,8 +171,12 @@ config :mime, :types, %{
 }
 
 config :mime, :extensions, %{
-  "activity+json" => "application/activity+json"
+  "xrd+xml" => "text/plain",
+  "jrd+json" => "text/plain",
+  "activity+json" => "text/plain"
 }
+
+# ———————————————————————————————————————————————————————————————
 
 config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 
