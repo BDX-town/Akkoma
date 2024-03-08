@@ -92,7 +92,7 @@ defmodule Pleroma.Emoji.Pack do
     end)
   end
 
-  @spec add_file(t(), String.t(), Path.t(), Plug.Upload.t()) ::
+  @spec add_file(t(), String.t(), Path.t(), Plug.Upload.t() | binary()) ::
           {:ok, t()}
           | {:error, File.posix() | atom()}
   def add_file(%Pack{} = pack, _, _, %Plug.Upload{content_type: "application/zip"} = file) do
@@ -140,6 +140,14 @@ defmodule Pleroma.Emoji.Pack do
   end
 
   def add_file(%Pack{} = pack, shortcode, filename, %Plug.Upload{} = file) do
+    try_add_file(pack, shortcode, filename, file)
+  end
+
+  def add_file(%Pack{} = pack, shortcode, filename, filedata) when is_binary(filedata) do
+    try_add_file(pack, shortcode, filename, filedata)
+  end
+
+  defp try_add_file(%Pack{} = pack, shortcode, filename, file) do
     with :ok <- validate_not_empty([shortcode, filename]),
          :ok <- validate_emoji_not_exists(shortcode),
          {:ok, updated_pack} <- do_add_file(pack, shortcode, filename, file) do
@@ -483,6 +491,12 @@ defmodule Pleroma.Emoji.Pack do
     with {:ok, _} <- File.copy(upload_path, file_path) do
       :ok
     end
+  end
+
+  defp save_file(file_data, pack, filename) when is_binary(file_data) do
+    file_path = Path.join(pack.path, filename)
+    create_subdirs(file_path)
+    File.write(file_path, file_data, [:binary])
   end
 
   defp put_emoji(pack, shortcode, filename) do
