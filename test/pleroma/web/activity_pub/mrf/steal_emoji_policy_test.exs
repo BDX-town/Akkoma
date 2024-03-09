@@ -24,6 +24,25 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     end
   end
 
+  defmacro mock_tesla(
+             url \\ "https://example.org/emoji/firedfox.png",
+             status \\ 200,
+             headers \\ [],
+             get_body \\ File.read!("test/fixtures/image.jpg")
+           ) do
+    quote do
+      Tesla.Mock.mock(fn
+        %{method: :get, url: unquote(url)} ->
+          %Tesla.Env{
+            status: unquote(status),
+            body: unquote(get_body),
+            url: unquote(url),
+            headers: unquote(headers)
+          }
+      end)
+    end
+  end
+
   setup do
     emoji_path = [:instance, :static_dir] |> Config.get() |> Path.join("emoji/stolen")
 
@@ -58,13 +77,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     refute "firedfox" in installed()
     refute has_pack?()
 
-    Tesla.Mock.mock(fn %{method: :get, url: "https://example.org/emoji/firedfox.png"} ->
-      %Tesla.Env{
-        status: 200,
-        body: File.read!("test/fixtures/image.jpg"),
-        url: "https://example.org/emoji/firedfox.png"
-      }
-    end)
+    mock_tesla()
 
     clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
@@ -85,13 +98,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
       }
     }
 
-    Tesla.Mock.mock(fn %{method: :get, url: "https://example.org/emoji/firedfox"} ->
-      %Tesla.Env{
-        status: 200,
-        body: File.read!("test/fixtures/image.jpg"),
-        url: "https://example.org/emoji/firedfox.png"
-      }
-    end)
+    mock_tesla()
 
     clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
@@ -113,14 +120,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
       }
     }
 
-    Tesla.Mock.mock(fn %{method: :get, url: "https://example.org/emoji/firedfox.fud"} ->
-      %Tesla.Env{
-        status: 200,
-        body: File.read!("test/fixtures/image.jpg"),
-        url: "https://example.org/emoji/firedfox.wevp",
-        headers: [{"content-type", "image/gif"}]
-      }
-    end)
+    mock_tesla("https://example.org/emoji/firedfox.fud", 200, [{"content-type", "image/gif"}])
 
     clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
@@ -161,13 +161,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   test "reject if size is above the limit", %{message: message} do
     refute "firedfox" in installed()
 
-    Tesla.Mock.mock(fn %{method: :get, url: "https://example.org/emoji/firedfox.png"} ->
-      %Tesla.Env{
-        status: 200,
-        body: File.read!("test/fixtures/image.jpg"),
-        url: "https://example.org/emoji/firedfox.png"
-      }
-    end)
+    mock_tesla()
 
     clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 50_000)
 
@@ -179,10 +173,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   test "reject if host returns error", %{message: message} do
     refute "firedfox" in installed()
 
-    Tesla.Mock.mock(fn %{method: :get, url: "https://example.org/emoji/firedfox.png"} ->
-      {:ok,
-       %Tesla.Env{status: 404, body: "Not found", url: "https://example.org/emoji/firedfox.png"}}
-    end)
+    mock_tesla("https://example.org/emoji/firedfox.png", 404, [], "Not found")
 
     clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
