@@ -37,7 +37,16 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
 
   defp add_emoji(shortcode, extension, filedata) do
     {:ok, pack} = load_or_create_pack()
-    filename = shortcode <> "." <> extension
+    # Make final path infeasible to predict to thwart certain kinds of attacks
+    # (48 bits is slighty more than 8 base62 chars, thus 9 chars)
+    salt =
+      :crypto.strong_rand_bytes(6)
+      |> :crypto.bytes_to_integer()
+      |> Base62.encode()
+      |> String.pad_leading(9, "0")
+
+    filename = shortcode <> "-" <> salt <> "." <> extension
+
     Pack.add_file(pack, shortcode, filename, filedata)
   end
 
@@ -71,7 +80,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
 
       e ->
         Logger.warning(
-          "MRF.StealEmojiPolicy: Failed to add #{shortcode}.#{extension}: #{inspect(e)}"
+          "MRF.StealEmojiPolicy: Failed to add #{shortcode} as #{extension}: #{inspect(e)}"
         )
 
         nil
