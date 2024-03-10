@@ -44,6 +44,11 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   end
 
   setup do
+    clear_config(:mrf_steal_emoji,
+      hosts: ["example.org"],
+      size_limit: 284_468
+    )
+
     emoji_path = [:instance, :static_dir] |> Config.get() |> Path.join("emoji/stolen")
 
     Emoji.reload()
@@ -66,6 +71,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   test "does nothing by default", %{message: message} do
     refute "firedfox" in installed()
 
+    clear_config(:mrf_steal_emoji, [])
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
     refute "firedfox" in installed()
@@ -78,8 +84,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     refute has_pack?()
 
     mock_tesla()
-
-    clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
@@ -99,8 +103,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     }
 
     mock_tesla()
-
-    clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
     refute "firedfox" in installed()
     refute has_pack?()
@@ -122,8 +124,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
 
     mock_tesla("https://example.org/emoji/firedfox.fud", 200, [{"content-type", "image/gif"}])
 
-    clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
-
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
     assert "firedfox" in installed()
@@ -133,11 +133,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   test "reject regex shortcode", %{message: message} do
     refute "firedfox" in installed()
 
-    clear_config(:mrf_steal_emoji,
-      hosts: ["example.org"],
-      size_limit: 284_468,
-      rejected_shortcodes: [~r/firedfox/]
-    )
+    clear_config([:mrf_steal_emoji, :rejected_shortcodes], [~r/firedfox/])
 
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
@@ -147,11 +143,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   test "reject string shortcode", %{message: message} do
     refute "firedfox" in installed()
 
-    clear_config(:mrf_steal_emoji,
-      hosts: ["example.org"],
-      size_limit: 284_468,
-      rejected_shortcodes: ["firedfox"]
-    )
+    clear_config([:mrf_steal_emoji, :rejected_shortcodes], ["firedfox"])
 
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
@@ -163,7 +155,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
 
     mock_tesla()
 
-    clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 50_000)
+    clear_config([:mrf_steal_emoji, :size_limit], 50_000)
 
     assert {:ok, _message} = StealEmojiPolicy.filter(message)
 
@@ -174,8 +166,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     refute "firedfox" in installed()
 
     mock_tesla("https://example.org/emoji/firedfox.png", 404, [], "Not found")
-
-    clear_config(:mrf_steal_emoji, hosts: ["example.org"], size_limit: 284_468)
 
     ExUnit.CaptureLog.capture_log(fn ->
       assert {:ok, _message} = StealEmojiPolicy.filter(message)
