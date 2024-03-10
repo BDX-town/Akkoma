@@ -32,6 +32,14 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
            ) do
     quote do
       Tesla.Mock.mock(fn
+        %{method: :head, url: unquote(url)} ->
+          %Tesla.Env{
+            status: unquote(status),
+            body: nil,
+            url: unquote(url),
+            headers: unquote(headers)
+          }
+
         %{method: :get, url: unquote(url)} ->
           %Tesla.Env{
             status: unquote(status),
@@ -46,7 +54,8 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
   setup do
     clear_config(:mrf_steal_emoji,
       hosts: ["example.org"],
-      size_limit: 284_468
+      size_limit: 284_468,
+      download_unknown_size: true
     )
 
     emoji_path = [:instance, :static_dir] |> Config.get() |> Path.join("emoji/stolen")
@@ -172,6 +181,45 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     end) =~ "MRF.StealEmojiPolicy: Failed to fetch https://example.org/emoji/firedfox.png"
 
     refute "firedfox" in installed()
+  end
+
+  test "reject unknown size", %{message: message} do
+    clear_config([:mrf_steal_emoji, :download_unknown_size], false)
+    mock_tesla()
+
+    refute "firedfox" in installed()
+
+    ExUnit.CaptureLog.capture_log(fn ->
+      assert {:ok, _message} = StealEmojiPolicy.filter(message)
+    end) =~
+      "MRF.StealEmojiPolicy: Failed to fetch https://example.org/emoji/firedfox.png: {:remote_size, false}"
+
+    refute "firedfox" in installed()
+  end
+
+  test "reject too large content-size before download", %{message: message} do
+    clear_config([:mrf_steal_emoji, :download_unknown_size], false)
+    mock_tesla("https://example.org/emoji/firedfox.png", 200, [{"content-length", 2 ** 30}])
+
+    refute "firedfox" in installed()
+
+    ExUnit.CaptureLog.capture_log(fn ->
+      assert {:ok, _message} = StealEmojiPolicy.filter(message)
+    end) =~
+      "MRF.StealEmojiPolicy: Failed to fetch https://example.org/emoji/firedfox.png: {:remote_size, false}"
+
+    refute "firedfox" in installed()
+  end
+
+  test "accepts content-size below limit", %{message: message} do
+    clear_config([:mrf_steal_emoji, :download_unknown_size], false)
+    mock_tesla("https://example.org/emoji/firedfox.png", 200, [{"content-length", 2}])
+
+    refute "firedfox" in installed()
+
+    assert {:ok, _message} = StealEmojiPolicy.filter(message)
+
+    assert "firedfox" in installed()
   end
 
   defp installed, do: Emoji.get_all() |> Enum.map(fn {k, _} -> k end)

@@ -13,6 +13,10 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
 
   @pack_name "stolen"
 
+  # Config defaults
+  @size_limit 50_000
+  @download_unknown_size false
+
   defp create_pack() do
     with {:ok, pack} = Pack.create(@pack_name) do
       Pack.save_metadata(
@@ -97,11 +101,28 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
     end
   end
 
+  defp is_remote_size_within_limit?(url) do
+    with {:ok, %{status: status, headers: headers} = _response} when status in 200..299 <-
+           Pleroma.HTTP.request(:head, url, nil, [], []) do
+      content_length = :proplists.get_value("content-length", headers, nil)
+      size_limit = Config.get([:mrf_steal_emoji, :size_limit], @size_limit)
+
+      accept_unknown =
+        Config.get([:mrf_steal_emoji, :download_unknown_size], @download_unknown_size)
+
+      content_length <= size_limit or
+        (content_length == nil and accept_unknown)
+    else
+      _ -> false
+    end
+  end
+
   defp maybe_steal_emoji({shortcode, url}) do
     url = Pleroma.Web.MediaProxy.url(url)
 
-    with {:ok, %{status: status} = response} when status in 200..299 <- Pleroma.HTTP.get(url) do
-      size_limit = Config.get([:mrf_steal_emoji, :size_limit], 50_000)
+    with {:remote_size, true} <- {:remote_size, is_remote_size_within_limit?(url)},
+         {:ok, %{status: status} = response} when status in 200..299 <- Pleroma.HTTP.get(url) do
+      size_limit = Config.get([:mrf_steal_emoji, :size_limit], @size_limit)
       extension = get_extension_if_safe(response)
 
       if byte_size(response.body) <= size_limit and extension do

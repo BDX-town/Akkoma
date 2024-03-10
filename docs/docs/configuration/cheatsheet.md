@@ -236,7 +236,9 @@ config :pleroma, :mrf_user_allowlist, %{
 #### :mrf_steal_emoji
 * `hosts`: List of hosts to steal emojis from
 * `rejected_shortcodes`: Regex-list of shortcodes to reject
-* `size_limit`: File size limit (in bytes), checked before an emoji is saved to the disk
+* `size_limit`: File size limit (in bytes), checked before download if possible (and remote server honest),
+   otherwise or again checked before saving emoji to the disk
+* `download_unknown_size`: whether to download an emoji when the remote server doesn’t report its size in advance
 
 #### :mrf_activity_expiration
 
