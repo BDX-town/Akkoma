@@ -396,7 +396,8 @@ This section describe PWA manifest instance-specific values. Currently this opti
 ## :media_proxy
 
 * `enabled`: Enables proxying of remote media to the instance’s proxy
-* `base_url`: The base URL to access a user-uploaded file. Useful when you want to proxy the media files via another host/CDN fronts.
+* `base_url`: The base URL to access a user-uploaded file.
+  Using a (sub)domain distinct from the instance endpoint is **strongly** recommended.
 * `proxy_opts`: All options defined in `Pleroma.ReverseProxy` documentation, defaults to `[max_body_length: (25*1_048_576)]`.
 * `whitelist`: List of hosts with scheme to bypass the mediaproxy (e.g. `https://example.com`)
 * `invalidation`: options for remove media from cache after delete object:
