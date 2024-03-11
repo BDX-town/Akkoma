@@ -275,36 +275,38 @@ defmodule Pleroma.Object.Fetcher do
       |> maybe_date_fetch(date)
       |> sign_fetch(id, date)
 
-    case HTTP.get(id, headers) do
-      {:ok, %{body: body, status: code, headers: headers}} when code in 200..299 ->
-        case List.keyfind(headers, "content-type", 0) do
-          {_, content_type} ->
-            case Plug.Conn.Utils.media_type(content_type) do
-              {:ok, "application", "activity+json", _} ->
-                {:ok, body}
+    with {:ok, %{body: body, status: code, headers: headers}} when code in 200..299 <-
+           HTTP.get(id, headers),
+         {:has_content_type, {_, content_type}} <-
+           {:has_content_type, List.keyfind(headers, "content-type", 0)},
+         {:parse_content_type, {:ok, "application", subtype, type_params}} <-
+           {:parse_content_type, Plug.Conn.Utils.media_type(content_type)} do
+      case {subtype, type_params} do
+        {"activity+json", _} ->
+          {:ok, body}
 
-              {:ok, "application", "ld+json",
-               %{"profile" => "https://www.w3.org/ns/activitystreams"}} ->
-                {:ok, body}
+        {"ld+json", %{"profile" => "https://www.w3.org/ns/activitystreams"}} ->
+          {:ok, body}
 
-              # pixelfed sometimes (and only sometimes) responds with http instead of https
-              {:ok, "application", "ld+json",
-               %{"profile" => "http://www.w3.org/ns/activitystreams"}} ->
-                {:ok, body}
+        # pixelfed sometimes (and only sometimes) responds with http instead of https
+        {"ld+json", %{"profile" => "http://www.w3.org/ns/activitystreams"}} ->
+          {:ok, body}
 
-              _ ->
-                {:error, {:content_type, content_type}}
-            end
-
-          _ ->
-            {:error, {:content_type, nil}}
-        end
-
+        _ ->
+          {:error, {:content_type, content_type}}
+      end
+    else
       {:ok, %{status: code}} when code in [404, 410] ->
         {:error, {"Object has been deleted", id, code}}
 
       {:error, e} ->
         {:error, e}
+
+      {:has_content_type, _} ->
+        {:error, {:content_type, nil}}
+
+      {:parse_content_type, e} ->
+        {:error, {:content_type, e}}
 
       e ->
         {:error, e}
