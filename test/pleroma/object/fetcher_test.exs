@@ -84,6 +84,19 @@ defmodule Pleroma.Object.FetcherTest do
           body: spoofed_object_with_ids("https://patch.cx/objects/spoof_redirect")
         }
 
+      # Spoof: Actor from another domain
+      %{method: :get, url: "https://patch.cx/objects/spoof_foreign_actor"} ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://patch.cx/objects/spoof_foreign_actor",
+          headers: [{"content-type", "application/activity+json"}],
+          body:
+            spoofed_object_with_ids(
+              "https://patch.cx/objects/spoof_foreign_actor",
+              "https://not.patch.cx/users/rin"
+            )
+        }
+
       env ->
         apply(HttpRequestMock, :request, [env])
     end)
@@ -216,6 +229,13 @@ defmodule Pleroma.Object.FetcherTest do
                )
 
       assert id == "https://patch.cx/objects/spoof_redirect"
+    end
+
+    test "it does not fetch a spoofed object with a foreign actor" do
+      assert {:error, "Object containment failed."} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_foreign_actor"
+               )
     end
   end
 

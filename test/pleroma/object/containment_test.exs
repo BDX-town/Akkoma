@@ -17,13 +17,55 @@ defmodule Pleroma.Object.ContainmentTest do
   end
 
   describe "general origin containment" do
-    test "works for completely actorless posts" do
-      assert :error ==
-               Containment.contain_origin("https://glaceon.social/users/monorail", %{
+    test "handles completly actorless objects gracefully" do
+      assert :ok ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
                  "deleted" => "2019-10-30T05:48:50.249606Z",
                  "formerType" => "Note",
-                 "id" => "https://glaceon.social/users/monorail/statuses/103049757364029187",
+                 "id" => "https://glaceon.social/statuses/123",
                  "type" => "Tombstone"
+               })
+    end
+
+    test "errors for spoofed actors" do
+      assert :error ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
+                 "actor" => "https://otp.akkoma.dev/users/you",
+                 "id" => "https://glaceon.social/statuses/123",
+                 "type" => "Note"
+               })
+    end
+
+    test "errors for spoofed attributedTo" do
+      assert :error ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
+                 "attributedTo" => "https://otp.akkoma.dev/users/you",
+                 "id" => "https://glaceon.social/statuses/123",
+                 "type" => "Note"
+               })
+    end
+
+    test "accepts valid actors" do
+      assert :ok ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
+                 "actor" => "https://glaceon.social/users/monorail",
+                 "attributedTo" => "https://glaceon.social/users/monorail",
+                 "id" => "https://glaceon.social/statuses/123",
+                 "type" => "Note"
+               })
+
+      assert :ok ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
+                 "actor" => "https://glaceon.social/users/monorail",
+                 "id" => "https://glaceon.social/statuses/123",
+                 "type" => "Note"
+               })
+
+      assert :ok ==
+               Containment.contain_origin("https://glaceon.social/statuses/123", %{
+                 "attributedTo" => "https://glaceon.social/users/monorail",
+                 "id" => "https://glaceon.social/statuses/123",
+                 "type" => "Note"
                })
     end
 

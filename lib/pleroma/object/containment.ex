@@ -62,7 +62,7 @@ defmodule Pleroma.Object.Containment do
   def contain_origin(id, %{"attributedTo" => actor} = params),
     do: contain_origin(id, Map.put(params, "actor", actor))
 
-  def contain_origin(_id, _data), do: :error
+  def contain_origin(_id, _data), do: :ok
 
   @doc """
   Check whether the object id is from the same host as another id

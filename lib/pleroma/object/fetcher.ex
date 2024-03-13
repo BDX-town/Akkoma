@@ -143,7 +143,6 @@ defmodule Pleroma.Object.Fetcher do
          {_, {:ok, data}} <- {:fetch, fetch_and_contain_remote_object_from_id(id)},
          {_, nil} <- {:normalize, Object.normalize(data, fetch: false)},
          params <- prepare_activity_params(data),
-         {_, :ok} <- {:containment, Containment.contain_origin(id, params)},
          {_, {:ok, activity}} <-
            {:transmogrifier, Transmogrifier.handle_incoming(params, options)},
          {_, _data, %Object{} = object} <-
@@ -155,9 +154,6 @@ defmodule Pleroma.Object.Fetcher do
 
       {:scheme, false} ->
         {:error, "URI Scheme Invalid"}
-
-      {:containment, _} ->
-        {:error, "Object containment failed."}
 
       {:transmogrifier, {:error, {:reject, e}}} ->
         {:reject, e}
@@ -264,7 +260,8 @@ defmodule Pleroma.Object.Fetcher do
     with {:scheme, true} <- {:scheme, String.starts_with?(id, "http")},
          {:ok, body} <- get_object(id),
          {:ok, data} <- safe_json_decode(body),
-         :ok <- Containment.contain_origin_from_id(id, data) do
+         {_, :ok} <- {:containment, Containment.contain_origin_from_id(id, data)},
+         {_, :ok} <- {:containment, Containment.contain_origin(id, data)} do
       unless Instances.reachable?(id) do
         Instances.set_reachable(id)
       end
@@ -273,6 +270,9 @@ defmodule Pleroma.Object.Fetcher do
     else
       {:scheme, _} ->
         {:error, "Unsupported URI scheme"}
+
+      {:containment, _} ->
+        {:error, "Object containment failed."}
 
       {:error, e} ->
         {:error, e}
