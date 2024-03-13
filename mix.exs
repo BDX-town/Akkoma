@@ -21,13 +21,13 @@ defmodule Pleroma.Mixfile do
       source_url: "https://akkoma.dev/AkkomaGang/akkoma",
       docs: [
         source_url_pattern: "https://akkoma.dev/AkkomaGang/akkoma/blob/develop/%{path}#L%{line}",
-        logo: "priv/static/images/logo.png",
-        extras: ["README.md", "CHANGELOG.md"] ++ Path.wildcard("docs/**/*.md"),
+        logo: "priv/static/logo-512.png",
+        extras: ["README.md", "CHANGELOG.md"] ++ Path.wildcard("docs/docs/**/*.md"),
         groups_for_extras: [
-          "Installation manuals": Path.wildcard("docs/installation/*.md"),
-          Configuration: Path.wildcard("docs/config/*.md"),
-          Administration: Path.wildcard("docs/admin/*.md"),
-          "Pleroma's APIs and Mastodon API extensions": Path.wildcard("docs/api/*.md")
+          "Installation manuals": Path.wildcard("docs/docs/installation/*.md"),
+          Configuration: Path.wildcard("docs/docs/config/*.md"),
+          Administration: Path.wildcard("docs/docs/admin/*.md"),
+          "Pleroma's APIs and Mastodon API extensions": Path.wildcard("docs/docs/api/*.md")
         ],
         main: "readme",
         output: "priv/static/doc"
