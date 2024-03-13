@@ -237,6 +237,13 @@ defmodule Pleroma.Object.FetcherTest do
                  "https://patch.cx/objects/spoof_foreign_actor"
                )
     end
+
+    test "it does not fetch from localhost" do
+      assert {:error, "Trying to fetch local resource"} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 Pleroma.Web.Endpoint.url() <> "/spoof_local"
+               )
+    end
   end
 
   describe "fetching an object" do

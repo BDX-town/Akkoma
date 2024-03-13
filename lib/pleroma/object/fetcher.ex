@@ -258,6 +258,7 @@ defmodule Pleroma.Object.Fetcher do
     Logger.debug("Fetching object #{id} via AP")
 
     with {:scheme, true} <- {:scheme, String.starts_with?(id, "http")},
+         {_, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
          {:ok, body} <- get_object(id),
          {:ok, data} <- safe_json_decode(body),
          {_, :ok} <- {:containment, Containment.contain_origin_from_id(id, data)},
@@ -270,6 +271,9 @@ defmodule Pleroma.Object.Fetcher do
     else
       {:scheme, _} ->
         {:error, "Unsupported URI scheme"}
+
+      {:local_fetch, _} ->
+        {:error, "Trying to fetch local resource"}
 
       {:containment, _} ->
         {:error, "Object containment failed."}

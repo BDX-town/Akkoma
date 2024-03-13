@@ -326,9 +326,9 @@ defmodule Pleroma.UserTest do
         insert(:user, %{
           local: false,
           nickname: "fuser2",
-          ap_id: "http://localhost:4001/users/fuser2",
-          follower_address: "http://localhost:4001/users/fuser2/followers",
-          following_address: "http://localhost:4001/users/fuser2/following"
+          ap_id: "http://remote.org/users/fuser2",
+          follower_address: "http://remote.org/users/fuser2/followers",
+          following_address: "http://remote.org/users/fuser2/following"
         })
 
       {:ok, user, followed} = User.follow(user, followed, :follow_accept)
@@ -2177,8 +2177,8 @@ defmodule Pleroma.UserTest do
 
   describe "sync followers count" do
     setup do
-      user1 = insert(:user, local: false, ap_id: "http://localhost:4001/users/masto_closed")
-      user2 = insert(:user, local: false, ap_id: "http://localhost:4001/users/fuser2")
+      user1 = insert(:user, local: false, ap_id: "http://remote.org/users/masto_closed")
+      user2 = insert(:user, local: false, ap_id: "http://remote.org/users/fuser2")
       insert(:user, local: true)
       insert(:user, local: false, is_active: false)
       {:ok, user1: user1, user2: user2}
@@ -2272,8 +2272,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
@@ -2294,8 +2294,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
@@ -2316,8 +2316,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
