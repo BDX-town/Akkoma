@@ -14,6 +14,17 @@ defmodule Pleroma.Object.FetcherTest do
   import Mock
   import Tesla.Mock
 
+  defp spoofed_object_with_ids(
+         id \\ "https://patch.cx/objects/spoof",
+         actor_id \\ "https://patch.cx/users/rin"
+       ) do
+    File.read!("test/fixtures/spoofed-object.json")
+    |> Jason.decode!()
+    |> Map.put("id", id)
+    |> Map.put("actor", actor_id)
+    |> Jason.encode!()
+  end
+
   setup do
     mock(fn
       %{method: :get, url: "https://mastodon.example.org/users/userisgone"} ->
@@ -22,15 +33,28 @@ defmodule Pleroma.Object.FetcherTest do
       %{method: :get, url: "https://mastodon.example.org/users/userisgone404"} ->
         %Tesla.Env{status: 404}
 
+      # Spoof: wrong Content-Type
       %{
         method: :get,
-        url:
-          "https://patch.cx/media/03ca3c8b4ac3ddd08bf0f84be7885f2f88de0f709112131a22d83650819e36c2.json"
+        url: "https://patch.cx/objects/spoof_content_type.json"
       } ->
         %Tesla.Env{
           status: 200,
+          url: "https://patch.cx/objects/spoof_content_type.json",
           headers: [{"content-type", "application/json"}],
-          body: File.read!("test/fixtures/spoofed-object.json")
+          body: spoofed_object_with_ids("https://patch.cx/objects/spoof_content_type.json")
+        }
+
+      # Spoof: no Content-Type
+      %{
+        method: :get,
+        url: "https://patch.cx/objects/spoof_content_type"
+      } ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://patch.cx/objects/spoof_content_type",
+          headers: [],
+          body: spoofed_object_with_ids("https://patch.cx/objects/spoof_content_type")
         }
 
       env ->
@@ -129,6 +153,22 @@ defmodule Pleroma.Object.FetcherTest do
     end
   end
 
+  describe "fetcher security and auth checks" do
+    test "it does not fetch a spoofed object without content type" do
+      assert {:error, {:content_type, nil}} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_content_type"
+               )
+    end
+
+    test "it does not fetch a spoofed object with wrong content type" do
+      assert {:error, {:content_type, _}} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_content_type.json"
+               )
+    end
+  end
+
   describe "fetching an object" do
     test "it fetches an object" do
       {:ok, object} =
@@ -152,13 +192,6 @@ defmodule Pleroma.Object.FetcherTest do
       assert {:reject, "[KeywordPolicy] Matches with rejected keyword"} ==
                Fetcher.fetch_object_from_id(
                  "http://mastodon.example.org/@admin/99541947525187367"
-               )
-    end
-
-    test "it does not fetch a spoofed object uploaded on an instance as an attachment" do
-      assert {:error, _} =
-               Fetcher.fetch_object_from_id(
-                 "https://patch.cx/media/03ca3c8b4ac3ddd08bf0f84be7885f2f88de0f709112131a22d83650819e36c2.json"
                )
     end
 
