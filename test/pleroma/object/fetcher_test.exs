@@ -57,6 +57,33 @@ defmodule Pleroma.Object.FetcherTest do
           body: spoofed_object_with_ids("https://patch.cx/objects/spoof_content_type")
         }
 
+      # Spoof: cross-domain redirect with original domain id
+      %{method: :get, url: "https://patch.cx/objects/spoof_media_redirect1"} ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://media.patch.cx/objects/spoof",
+          headers: [{"content-type", "application/activity+json"}],
+          body: spoofed_object_with_ids("https://patch.cx/objects/spoof_media_redirect1")
+        }
+
+      # Spoof: cross-domain redirect with final domain id
+      %{method: :get, url: "https://patch.cx/objects/spoof_media_redirect2"} ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://media.patch.cx/objects/spoof_media_redirect2",
+          headers: [{"content-type", "application/activity+json"}],
+          body: spoofed_object_with_ids("https://media.patch.cx/objects/spoof_media_redirect2")
+        }
+
+      # No-Spoof: same domain redirect
+      %{method: :get, url: "https://patch.cx/objects/spoof_redirect"} ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://patch.cx/objects/spoof",
+          headers: [{"content-type", "application/activity+json"}],
+          body: spoofed_object_with_ids("https://patch.cx/objects/spoof_redirect")
+        }
+
       env ->
         apply(HttpRequestMock, :request, [env])
     end)
@@ -166,6 +193,29 @@ defmodule Pleroma.Object.FetcherTest do
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/objects/spoof_content_type.json"
                )
+    end
+
+    test "it does not fetch an object via cross-domain redirects (initial id)" do
+      assert {:error, {:cross_domain_redirect, true}} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_media_redirect1"
+               )
+    end
+
+    test "it does not fetch an object via cross-domain redirects (final id)" do
+      assert {:error, {:cross_domain_redirect, true}} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_media_redirect2"
+               )
+    end
+
+    test "it accepts same-domain redirects" do
+      assert {:ok, %{"id" => id} = _object} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_redirect"
+               )
+
+      assert id == "https://patch.cx/objects/spoof_redirect"
     end
   end
 
