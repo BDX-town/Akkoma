@@ -64,6 +64,9 @@ defmodule Pleroma.Object.Containment do
 
   def contain_origin(_id, _data), do: :error
 
+  @doc """
+  Check whether the object id is from the same host as another id
+  """
   def contain_origin_from_id(id, %{"id" => other_id} = _params) when is_binary(other_id) do
     id_uri = URI.parse(id)
     other_uri = URI.parse(other_id)
