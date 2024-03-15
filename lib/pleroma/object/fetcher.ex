@@ -259,12 +259,12 @@ defmodule Pleroma.Object.Fetcher do
 
     with {:scheme, true} <- {:scheme, String.starts_with?(id, "http")},
          {_, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
-         {:ok, body} <- get_object(id),
+         {:ok, final_id, body} <- get_object(id),
          {:ok, data} <- safe_json_decode(body),
-         {_, :ok} <- {:containment, Containment.contain_origin_from_id(id, data)},
-         {_, :ok} <- {:containment, Containment.contain_origin(id, data)} do
-      unless Instances.reachable?(id) do
-        Instances.set_reachable(id)
+         {_, :ok} <- {:containment, Containment.contain_origin_from_id(final_id, data)},
+         {_, :ok} <- {:containment, Containment.contain_origin(final_id, data)} do
+      unless Instances.reachable?(final_id) do
+        Instances.set_reachable(final_id)
       end
 
       {:ok, data}
@@ -305,6 +305,15 @@ defmodule Pleroma.Object.Fetcher do
     {:cross_domain_redirect, final_host != URI.parse(original_url).host}
   end
 
+  if @mix_env == :test do
+    defp get_final_id(nil, initial_url), do: initial_url
+    defp get_final_id("", initial_url), do: initial_url
+  end
+
+  defp get_final_id(final_url, _intial_url) do
+    final_url
+  end
+
   @doc "Do NOT use; only public for use in tests"
   def get_object(id) do
     date = Pleroma.Signature.signed_date()
@@ -325,16 +334,18 @@ defmodule Pleroma.Object.Fetcher do
            {:has_content_type, List.keyfind(headers, "content-type", 0)},
          {:parse_content_type, {:ok, "application", subtype, type_params}} <-
            {:parse_content_type, Plug.Conn.Utils.media_type(content_type)} do
+      final_id = get_final_id(final_url, id)
+
       case {subtype, type_params} do
         {"activity+json", _} ->
-          {:ok, body}
+          {:ok, final_id, body}
 
         {"ld+json", %{"profile" => "https://www.w3.org/ns/activitystreams"}} ->
-          {:ok, body}
+          {:ok, final_id, body}
 
         # pixelfed sometimes (and only sometimes) responds with http instead of https
         {"ld+json", %{"profile" => "http://www.w3.org/ns/activitystreams"}} ->
-          {:ok, body}
+          {:ok, final_id, body}
 
         _ ->
           {:error, {:content_type, content_type}}
