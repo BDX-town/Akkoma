@@ -101,4 +101,12 @@ defmodule Pleroma.Object.Containment do
     do: contain_origin(id, object)
 
   def contain_child(_), do: :ok
+
+  @doc "Checks whether two URIs belong to the same domain"
+  def same_origin(id1, id2) do
+    uri1 = URI.parse(id1)
+    uri2 = URI.parse(id2)
+
+    compare_uris(uri1, uri2)
+  end
 end
