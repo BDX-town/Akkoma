@@ -263,7 +263,7 @@ defmodule Pleroma.Object.Fetcher do
          {_, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
          {:ok, final_id, body} <- get_object(id),
          {:ok, data} <- safe_json_decode(body),
-         {_, :ok} <- {:containment, Containment.contain_origin_from_id(final_id, data)},
+         {_, :ok} <- {:strict_id, Containment.contain_id_to_fetch(final_id, data)},
          {_, :ok} <- {:containment, Containment.contain_origin(final_id, data)} do
       unless Instances.reachable?(final_id) do
         Instances.set_reachable(final_id)
@@ -271,6 +271,9 @@ defmodule Pleroma.Object.Fetcher do
 
       {:ok, data}
     else
+      {:strict_id, _} ->
+        {:error, "Object's ActivityPub id/url does not match final fetch URL"}
+
       {:scheme, _} ->
         {:error, "Unsupported URI scheme"}
 

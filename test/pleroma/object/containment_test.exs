@@ -105,6 +105,56 @@ defmodule Pleroma.Object.ContainmentTest do
         )
     end
 
+    test "contain_id_to_fetch() refuses alternate IDs within the same origin domain" do
+      data = %{
+        "id" => "http://example.com/~alyssa/activities/1234.json",
+        "url" => "http://example.com/@alyssa/status/1234"
+      }
+
+      :error =
+        Containment.contain_id_to_fetch(
+          "http://example.com/~alyssa/activities/1234",
+          data
+        )
+    end
+
+    test "contain_id_to_fetch() allows matching IDs" do
+      data = %{
+        "id" => "http://example.com/~alyssa/activities/1234.json/"
+      }
+
+      :ok =
+        Containment.contain_id_to_fetch(
+          "http://example.com/~alyssa/activities/1234.json/",
+          data
+        )
+
+      :ok =
+        Containment.contain_id_to_fetch(
+          "http://example.com/~alyssa/activities/1234.json",
+          data
+        )
+    end
+
+    test "contain_id_to_fetch() allows display URLs" do
+      data = %{
+        "id" => "http://example.com/~alyssa/activities/1234.json",
+        "url" => "http://example.com/@alyssa/status/1234"
+      }
+
+      :ok =
+        Containment.contain_id_to_fetch(
+          "http://example.com/@alyssa/status/1234",
+          data
+        )
+
+      :ok =
+        Containment.contain_id_to_fetch(
+          "http://example.com/@alyssa/status/1234/",
+          data
+        )
+    end
+
     test "users cannot be collided through fake direction spoofing attempts" do
       _user =
         insert(:user, %{

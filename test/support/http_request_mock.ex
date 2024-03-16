@@ -572,6 +572,7 @@ defmodule HttpRequestMock do
      }}
   end
 
+  # Mastodon status via display URL
   def get(
         "http://mastodon.example.org/@admin/99541947525187367",
         _,
@@ -581,6 +582,23 @@ defmodule HttpRequestMock do
     {:ok,
      %Tesla.Env{
        status: 200,
+       url: "http://mastodon.example.org/@admin/99541947525187367",
+       body: File.read!("test/fixtures/mastodon-note-object.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  # same status via its canonical ActivityPub id
+  def get(
+        "http://mastodon.example.org/users/admin/statuses/99541947525187367",
+        _,
+        _,
+        _
+      ) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       url: "http://mastodon.example.org/users/admin/statuses/99541947525187367",
        body: File.read!("test/fixtures/mastodon-note-object.json"),
        headers: activitypub_object_headers()
      }}
