@@ -4,6 +4,7 @@
 
 defmodule Mix.Tasks.Pleroma.Security do
   use Mix.Task
+  import Ecto.Query
   import Mix.Pleroma
 
   alias Pleroma.Config
@@ -47,6 +48,23 @@ defmodule Mix.Tasks.Pleroma.Security do
     """)
 
     do_spoof_uploaded()
+  end
+
+  # Fuzzy search for potentially counterfeit activities in the database resulting from the same exploit
+  def run(["spoof-inserted"]) do
+    Logger.put_process_level(self(), :notice)
+    start_pleroma()
+
+    IO.puts("""
+    +----------------------+
+    |  SPOOF SEARCH NOTES  |
+    +----------------------+
+    Starting fuzzy search for counterfeit activities.
+    NOTE this can not guarantee detecting all counterfeits
+         and may yield a small percentage of false positives.
+    """)
+
+    do_spoof_inserted()
   end
 
   # +-----------------------------+
@@ -160,6 +178,109 @@ defmodule Mix.Tasks.Pleroma.Security do
     |> Pleroma.Repo.query!(patterns, timeout: :infinity)
     |> then(fn res -> Enum.map(res.rows, fn [id, url] -> {id, url} end) end)
     |> Enum.filter(fn {_, url} -> !(url in not_orphaned_urls) end)
+  end
+
+  # +-----------------------------+
+  # | S P O O F - I N S E R T E D |
+  # +-----------------------------+
+  defp do_spoof_inserted() do
+    IO.puts("""
+    Searching for local posts whose Create activity has no ActivityPub id...
+      This is a pretty good indicator, but only for spoofs of local actors
+      and only if the spoofing happened after around late 2021.
+    """)
+
+    idless_create =
+      search_local_notes_without_create_id()
+      |> Enum.sort()
+
+    IO.puts("Done.\n")
+
+    IO.puts("""
+    Now trying to weed out other poorly hidden spoofs.
+    This can't detect all and may have some false positives.
+    """)
+
+    likely_spoofed_posts_set = MapSet.new(idless_create)
+
+    sus_pattern_posts =
+      search_sus_notes_by_id_patterns()
+      |> Enum.filter(fn r -> !(r in likely_spoofed_posts_set) end)
+
+    IO.puts("Done.\n")
+
+    IO.puts("""
+    Finally, searching for spoofed, local user accounts.
+    (It's impossible to detect spoofed remote users)
+    """)
+
+    spoofed_users = search_bogus_local_users()
+
+    pretty_print_list_with_title(sus_pattern_posts, "Maybe Spoofed Posts")
+    pretty_print_list_with_title(idless_create, "Likely Spoofed Posts")
+    pretty_print_list_with_title(spoofed_users, "Spoofed local user accounts")
+
+    IO.puts("""
+    In total found:
+      #{length(spoofed_users)} bogus users
+      #{length(idless_create)} likely spoofed posts
+      #{length(sus_pattern_posts)} maybe spoofed posts
+    """)
+  end
+
+  defp search_local_notes_without_create_id() do
+    Pleroma.Object
+    |> where([o], fragment("?->>'id' LIKE ?", o.data, ^local_id_pattern()))
+    |> join(:inner, [o], a in Pleroma.Activity,
+      on: fragment("?->>'object' = ?->>'id'", a.data, o.data)
+    )
+    |> where([o, a], fragment("NOT (? \\? 'id') OR ?->>'id' IS NULL", a.data, a.data))
+    |> select([o, a], {a.id, fragment("?->>'id'", o.data)})
+    |> order_by([o, a], a.id)
+    |> Pleroma.Repo.all()
+  end
+
+  defp search_sus_notes_by_id_patterns() do
+    [ep1, ep2, ep3, ep4] = activity_ext_url_patterns()
+
+    Pleroma.Object
+    |> where(
+      [o],
+      # for local objects we know exactly how a genuine id looks like
+      # (though a thorough attacker can emulate this)
+      # for remote posts, use some best-effort patterns
+      fragment(
+        """
+         (?->>'id' LIKE ? AND ?->>'id' NOT SIMILAR TO
+          ? || 'objects/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}')
+        """,
+        o.data,
+        ^local_id_pattern(),
+        o.data,
+        ^local_id_prefix()
+      ) or
+        fragment("?->>'id' LIKE ?", o.data, "%/emoji/%") or
+        fragment("?->>'id' LIKE ?", o.data, "%/media/%") or
+        fragment("?->>'id' LIKE ?", o.data, "%/proxy/%") or
+        fragment("?->>'id' LIKE ?", o.data, ^ep1) or
+        fragment("?->>'id' LIKE ?", o.data, ^ep2) or
+        fragment("?->>'id' LIKE ?", o.data, ^ep3) or
+        fragment("?->>'id' LIKE ?", o.data, ^ep4)
+    )
+    |> join(:inner, [o], a in Pleroma.Activity,
+      on: fragment("?->>'object' = ?->>'id'", a.data, o.data)
+    )
+    |> select([o, a], {a.id, fragment("?->>'id'", o.data)})
+    |> order_by([o, a], a.id)
+    |> Pleroma.Repo.all()
+  end
+
+  defp search_bogus_local_users() do
+    Pleroma.User.Query.build(%{})
+    |> where([u], u.local == false and like(u.ap_id, ^local_id_pattern()))
+    |> order_by([u], u.ap_id)
+    |> select([u], u.ap_id)
+    |> Pleroma.Repo.all()
   end
 
   # +-----------------------------------+

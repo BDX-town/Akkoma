@@ -30,3 +30,27 @@ Attachments wil be scanned anyway in case local uploader was used in the past.
     ```sh
     mix pleroma.security spoof-uploaded
     ```
+
+### Search for counterfeit posts in database
+
+Scans all notes in the database for signs of being spoofed.
+
+!!! note
+    Spoofs targeting local accounts can be detected rather reliably
+    (with some restrictions documented in the task’s logs).
+    Counterfeit posts from remote users cannot. A best-effort attempt is made, but
+    a thorough attacker can avoid this and it may yield a small amount of false positives.
+
+    Should you find counterfeit posts of local users, let other admins know so they can delete the too.
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl security spoof-inserted
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.security spoof-inserted
+    ```
