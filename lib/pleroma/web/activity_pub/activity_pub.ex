@@ -1840,6 +1840,13 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       with {:ok, data} <- fetch_and_prepare_user_from_ap_id(ap_id, additional) do
         {:ok, _pid} = Task.start(fn -> pinned_fetch_task(data) end)
 
+        user =
+          if data.ap_id != ap_id do
+            User.get_cached_by_ap_id(data.ap_id)
+          else
+            user
+          end
+
         if user do
           user
           |> User.remote_user_changeset(data)
