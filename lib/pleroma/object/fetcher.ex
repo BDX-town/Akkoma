@@ -117,10 +117,12 @@ defmodule Pleroma.Object.Fetcher do
   def refetch_object(%Object{data: %{"id" => id}} = object) do
     with {:local, false} <- {:local, Object.local?(object)},
          {:ok, new_data} <- fetch_and_contain_remote_object_from_id(id),
+         {:id, true} <- {:id, new_data["id"] == id},
          {:ok, object} <- reinject_object(object, new_data) do
       {:ok, object}
     else
       {:local, true} -> {:ok, object}
+      {:id, false} -> {:error, "Object id changed on refetch"}
       e -> {:error, e}
     end
   end
