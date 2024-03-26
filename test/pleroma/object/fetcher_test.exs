@@ -773,23 +773,6 @@ defmodule Pleroma.Object.FetcherTest do
       end)
 
       assert {:ok, _, "{}"} = Fetcher.get_object("https://mastodon.social/2")
-
-      Tesla.Mock.mock(fn
-        %{
-          method: :get,
-          url: "https://mastodon.social/2"
-        } ->
-          %Tesla.Env{
-            status: 200,
-            headers: [
-              {"content-type",
-               "application/ld+json; profile=\"http://www.w3.org/ns/activitystreams\""}
-            ],
-            body: "{}"
-          }
-      end)
-
-      assert {:ok, _, "{}"} = Fetcher.get_object("https://mastodon.social/2")
     end
 
     test "should not return ok with other content types" do

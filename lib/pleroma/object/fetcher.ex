@@ -348,10 +348,6 @@ defmodule Pleroma.Object.Fetcher do
         {"ld+json", %{"profile" => "https://www.w3.org/ns/activitystreams"}} ->
           {:ok, final_id, body}
 
-        # pixelfed sometimes (and only sometimes) responds with http instead of https
-        {"ld+json", %{"profile" => "http://www.w3.org/ns/activitystreams"}} ->
-          {:ok, final_id, body}
-
         _ ->
           {:error, {:content_type, content_type}}
       end
