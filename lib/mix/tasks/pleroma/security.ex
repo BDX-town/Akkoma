@@ -237,7 +237,7 @@ defmodule Mix.Tasks.Pleroma.Security do
     |> where([o, a], fragment("NOT (? \\? 'id') OR ?->>'id' IS NULL", a.data, a.data))
     |> select([o, a], {a.id, fragment("?->>'id'", o.data)})
     |> order_by([o, a], a.id)
-    |> Pleroma.Repo.all()
+    |> Pleroma.Repo.all(timeout: :infinity)
   end
 
   defp search_sus_notes_by_id_patterns() do
@@ -272,7 +272,7 @@ defmodule Mix.Tasks.Pleroma.Security do
     )
     |> select([o, a], {a.id, fragment("?->>'id'", o.data)})
     |> order_by([o, a], a.id)
-    |> Pleroma.Repo.all()
+    |> Pleroma.Repo.all(timeout: :infinity)
   end
 
   defp search_bogus_local_users() do
@@ -280,7 +280,7 @@ defmodule Mix.Tasks.Pleroma.Security do
     |> where([u], u.local == false and like(u.ap_id, ^local_id_pattern()))
     |> order_by([u], u.ap_id)
     |> select([u], u.ap_id)
-    |> Pleroma.Repo.all()
+    |> Pleroma.Repo.all(timeout: :infinity)
   end
 
   # +-----------------------------------+
