@@ -236,7 +236,9 @@ config :pleroma, :mrf_user_allowlist, %{
 #### :mrf_steal_emoji
 * `hosts`: List of hosts to steal emojis from
 * `rejected_shortcodes`: Regex-list of shortcodes to reject
-* `size_limit`: File size limit (in bytes), checked before an emoji is saved to the disk
+* `size_limit`: File size limit (in bytes), checked before download if possible (and remote server honest),
+   otherwise or again checked before saving emoji to the disk
+* `download_unknown_size`: whether to download an emoji when the remote server doesn’t report its size in advance
 
 #### :mrf_activity_expiration
 
@@ -396,7 +398,8 @@ This section describe PWA manifest instance-specific values. Currently this opti
 ## :media_proxy
 
 * `enabled`: Enables proxying of remote media to the instance’s proxy
-* `base_url`: The base URL to access a user-uploaded file. Useful when you want to proxy the media files via another host/CDN fronts.
+* `base_url`: The base URL to access a user-uploaded file.
+  Using a (sub)domain distinct from the instance endpoint is **strongly** recommended.
 * `proxy_opts`: All options defined in `Pleroma.ReverseProxy` documentation, defaults to `[max_body_length: (25*1_048_576)]`.
 * `whitelist`: List of hosts with scheme to bypass the mediaproxy (e.g. `https://example.com`)
 * `invalidation`: options for remove media from cache after delete object:
@@ -597,8 +600,9 @@ the source code is here: [kocaptcha](https://github.com/koto-bank/kocaptcha). Th
 
 * `uploader`: Which one of the [uploaders](#uploaders) to use.
 * `filters`: List of [upload filters](#upload-filters) to use.
-* `link_name`: When enabled Akkoma will add a `name` parameter to the url of the upload, for example `https://instance.tld/media/corndog.png?name=corndog.png`. This is needed to provide the correct filename in Content-Disposition headers when using filters like `Pleroma.Upload.Filter.Dedupe`
-* `base_url`: The base URL to access a user-uploaded file. Useful when you want to host the media files via another domain or are using a 3rd party S3 provider.
+* `link_name`: When enabled Akkoma will add a `name` parameter to the url of the upload, for example `https://instance.tld/media/corndog.png?name=corndog.png`. This is needed to provide the correct filename in Content-Disposition headers
+* `base_url`: The base URL to access a user-uploaded file; MUST be configured explicitly.
+  Using a (sub)domain distinct from the instance endpoint is **strongly** recommended.
 * `proxy_remote`: If you're using a remote uploader, Akkoma will proxy media requests instead of redirecting to it.
 * `proxy_opts`: Proxy options, see `Pleroma.ReverseProxy` documentation.
 * `filename_display_max_length`: Set max length of a filename to display. 0 = no limit. Default: 30.
@@ -638,16 +642,17 @@ config :ex_aws, :s3,
 
 ### Upload filters
 
-#### Pleroma.Upload.Filter.AnonymizeFilename
-
-This filter replaces the filename (not the path) of an upload. For complete obfuscation, add
-`Pleroma.Upload.Filter.Dedupe` before AnonymizeFilename.
-
-* `text`: Text to replace filenames in links. If empty, `{random}.extension` will be used. You can get the original filename extension by using `{extension}`, for example `custom-file-name.{extension}`.
-
 #### Pleroma.Upload.Filter.Dedupe
 
+**Always** active; cannot be turned off.
+Renames files to their hash and prevents duplicate files filling up the disk.
 No specific configuration.
+
+#### Pleroma.Upload.Filter.AnonymizeFilename
+
+This filter replaces the declared filename (not the path) of an upload.
+
+* `text`: Text to replace filenames in links. If empty, `{random}.extension` will be used. You can get the original filename extension by using `{extension}`, for example `custom-file-name.{extension}`.
 
 #### Pleroma.Upload.Filter.Exiftool
 

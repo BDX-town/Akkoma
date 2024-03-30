@@ -75,9 +75,48 @@ server {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
+    location ~ ^/(media|proxy) {
+        return 404;
+    }
+
     location / {
         proxy_pass http://phoenix;
     }
+}
+
+# Upload and MediaProxy Subdomain
+# (see main domain setup for more details)
+server {
+    server_name    media.example.tld;
+
+    listen         80;
+    listen         [::]:80;
+
+    location / {
+      return         301 https://$server_name$request_uri;
+    }
+}
+
+server {
+    server_name media.example.tld;
+
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    ssl_trusted_certificate   /etc/letsencrypt/live/media.example.tld/chain.pem;
+    ssl_certificate           /etc/letsencrypt/live/media.example.tld/fullchain.pem;
+    ssl_certificate_key       /etc/letsencrypt/live/media.example.tld/privkey.pem;
+    # .. copy all other the ssl_* and gzip_* stuff from main domain
+
+    # the nginx default is 1m, not enough for large media uploads
+    client_max_body_size 16m;
+    ignore_invalid_headers off;
+
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
     location ~ ^/(media|proxy) {
         proxy_cache        akkoma_media_cache;
@@ -90,5 +129,9 @@ server {
         proxy_buffering    on;
         chunked_transfer_encoding on;
         proxy_pass         http://phoenix;
+    }
+
+    location / {
+        return 404;
     }
 }

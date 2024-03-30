@@ -22,6 +22,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   alias Pleroma.Upload
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.MRF
+  alias Pleroma.Web.ActivityPub.ObjectValidators.UserValidator
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.Streamer
   alias Pleroma.Web.WebFinger
@@ -1722,6 +1723,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
 
   def fetch_and_prepare_user_from_ap_id(ap_id, additional \\ []) do
     with {:ok, data} <- Fetcher.fetch_and_contain_remote_object_from_id(ap_id),
+         {:valid, {:ok, _, _}} <- {:valid, UserValidator.validate(data, [])},
          {:ok, data} <- user_data_from_user_object(data, additional) do
       {:ok, maybe_update_follow_information(data)}
     else
@@ -1733,6 +1735,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       {:error, {:reject, reason} = e} ->
         Logger.debug("Rejected user #{ap_id}: #{inspect(reason)}")
         {:error, e}
+
+      {:valid, reason} ->
+        Logger.debug("Data is not a valid user #{ap_id}: #{inspect(reason)}")
+        {:error, "Not a user"}
 
       {:error, e} ->
         Logger.error("Could not decode user at fetch #{ap_id}, #{inspect(e)}")
@@ -1833,6 +1839,13 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     else
       with {:ok, data} <- fetch_and_prepare_user_from_ap_id(ap_id, additional) do
         {:ok, _pid} = Task.start(fn -> pinned_fetch_task(data) end)
+
+        user =
+          if data.ap_id != ap_id do
+            User.get_cached_by_ap_id(data.ap_id)
+          else
+            user
+          end
 
         if user do
           user

@@ -20,6 +20,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           output: :string,
           output_psql: :string,
           domain: :string,
+          media_url: :string,
           instance_name: :string,
           admin_email: :string,
           notify_email: :string,
@@ -35,8 +36,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           listen_ip: :string,
           listen_port: :string,
           strip_uploads: :string,
-          anonymize_uploads: :string,
-          dedupe_uploads: :string
+          anonymize_uploads: :string
         ],
         aliases: [
           o: :output,
@@ -63,6 +63,14 @@ defmodule Mix.Tasks.Pleroma.Instance do
           ),
           ":"
         ) ++ [443]
+
+      media_url =
+        get_option(
+          options,
+          :media_url,
+          "What base url will uploads use? (e.g https://media.example.com/media)\n" <>
+            "  Generally this should NOT use the same domain as the instance       "
+        )
 
       name =
         get_option(
@@ -186,14 +194,6 @@ defmodule Mix.Tasks.Pleroma.Instance do
           "n"
         ) === "y"
 
-      dedupe_uploads =
-        get_option(
-          options,
-          :dedupe_uploads,
-          "Do you want to deduplicate uploaded files? (y/n)",
-          "n"
-        ) === "y"
-
       Config.put([:instance, :static_dir], static_dir)
 
       secret = :crypto.strong_rand_bytes(64) |> Base.encode64() |> binary_part(0, 64)
@@ -207,6 +207,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
         EEx.eval_file(
           template_dir <> "/sample_config.eex",
           domain: domain,
+          media_url: media_url,
           port: port,
           email: email,
           notify_email: notify_email,
@@ -230,8 +231,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           upload_filters:
             upload_filters(%{
               strip: strip_uploads,
-              anonymize: anonymize_uploads,
-              dedupe: dedupe_uploads
+              anonymize: anonymize_uploads
             })
         )
 
@@ -315,13 +315,6 @@ defmodule Mix.Tasks.Pleroma.Instance do
     enabled_filters =
       if filters.anonymize do
         enabled_filters ++ [Pleroma.Upload.Filter.AnonymizeFilename]
-      else
-        enabled_filters
-      end
-
-    enabled_filters =
-      if filters.dedupe do
-        enabled_filters ++ [Pleroma.Upload.Filter.Dedupe]
       else
         enabled_filters
       end

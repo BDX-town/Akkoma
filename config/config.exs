@@ -61,11 +61,12 @@ config :pleroma, Pleroma.Captcha.Kocaptcha, endpoint: "https://captcha.kotobank.
 # Upload configuration
 config :pleroma, Pleroma.Upload,
   uploader: Pleroma.Uploaders.Local,
-  filters: [Pleroma.Upload.Filter.Dedupe],
+  filters: [],
   link_name: false,
   proxy_remote: false,
   filename_display_max_length: 30,
-  base_url: nil
+  base_url: nil,
+  allowed_mime_types: ["image", "audio", "video"]
 
 config :pleroma, Pleroma.Uploaders.Local, uploads: "uploads"
 
@@ -148,17 +149,37 @@ config :logger, :ex_syslogger,
   format: "$metadata[$level] $message",
   metadata: [:request_id]
 
+# ———————————————————————————————————————————————————————————————
+#                       W  A  R  N  I  N  G
+# ———————————————————————————————————————————————————————————————
+#
+#  Whenever adding a privileged new custom type for e.g.
+#  ActivityPub objects, ALWAYS map their extension back
+#  to "application/octet-stream".
+#  Else files served by us can automatically end up with
+#  those privileged types causing severe security hazards.
+#  (We need those mappings so Phoenix can assoiate its format
+#   (the "extension") to incoming requests of those MIME types)
+#
+# ———————————————————————————————————————————————————————————————
 config :mime, :types, %{
   "application/xml" => ["xml"],
   "application/xrd+xml" => ["xrd+xml"],
   "application/jrd+json" => ["jrd+json"],
   "application/activity+json" => ["activity+json"],
-  "application/ld+json" => ["activity+json"]
+  "application/ld+json" => ["activity+json"],
+  # Can be removed when bumping MIME past 2.0.5
+  # see https://akkoma.dev/AkkomaGang/akkoma/issues/657
+  "image/apng" => ["apng"]
 }
 
 config :mime, :extensions, %{
-  "activity+json" => "application/activity+json"
+  "xrd+xml" => "text/plain",
+  "jrd+json" => "text/plain",
+  "activity+json" => "text/plain"
 }
+
+# ———————————————————————————————————————————————————————————————
 
 config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 

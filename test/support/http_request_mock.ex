@@ -572,6 +572,7 @@ defmodule HttpRequestMock do
      }}
   end
 
+  # Mastodon status via display URL
   def get(
         "http://mastodon.example.org/@admin/99541947525187367",
         _,
@@ -581,6 +582,23 @@ defmodule HttpRequestMock do
     {:ok,
      %Tesla.Env{
        status: 200,
+       url: "http://mastodon.example.org/@admin/99541947525187367",
+       body: File.read!("test/fixtures/mastodon-note-object.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  # same status via its canonical ActivityPub id
+  def get(
+        "http://mastodon.example.org/users/admin/statuses/99541947525187367",
+        _,
+        _,
+        _
+      ) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       url: "http://mastodon.example.org/users/admin/statuses/99541947525187367",
        body: File.read!("test/fixtures/mastodon-note-object.json"),
        headers: activitypub_object_headers()
      }}
@@ -964,7 +982,7 @@ defmodule HttpRequestMock do
     {:ok, %Tesla.Env{status: 200, body: File.read!("test/fixtures/rich_media/ogp.html")}}
   end
 
-  def get("http://localhost:4001/users/masto_closed/followers", _, _, _) do
+  def get("http://remote.org/users/masto_closed/followers", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -973,7 +991,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/followers?page=1", _, _, _) do
+  def get("http://remote.org/users/masto_closed/followers?page=1", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -982,7 +1000,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/following", _, _, _) do
+  def get("http://remote.org/users/masto_closed/following", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -991,7 +1009,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/following?page=1", _, _, _) do
+  def get("http://remote.org/users/masto_closed/following?page=1", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1000,7 +1018,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:8080/followers/fuser3", _, _, _) do
+  def get("http://remote.org/followers/fuser3", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1009,7 +1027,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:8080/following/fuser3", _, _, _) do
+  def get("http://remote.org/following/fuser3", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1018,7 +1036,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/fuser2/followers", _, _, _) do
+  def get("http://remote.org/users/fuser2/followers", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1027,7 +1045,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/fuser2/following", _, _, _) do
+  def get("http://remote.org/users/fuser2/following", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
