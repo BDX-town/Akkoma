@@ -46,7 +46,8 @@ USER akkoma
 COPY --from=build --chown=akkoma:0 /release ${HOME}
 
 COPY ./config/docker.exs /etc/akkoma/config.exs
-RUN chmod o= /etc/akkoma/config.exs
+RUN chown -R akkoma /etc/akkoma
+RUN chmod o-rwx /etc/akkoma/config.exs
 COPY ./docker-entrypoint.sh ${HOME}
 
 COPY ./config/frontends.exs $DATA/config.exs
