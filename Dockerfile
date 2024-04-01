@@ -38,16 +38,16 @@ RUN apk update &&\
 	mkdir -p ${DATA}/uploads &&\
 	mkdir -p ${DATA}/static &&\
 	chown -R akkoma ${DATA} &&\
-	mkdir -p /etc/akkoma &&\
-	chown -R akkoma /etc/akkoma
+	mkdir -p /etc/akkoma 
+ 
+COPY ./config/docker.exs /etc/akkoma/config.exs
+RUN chown -R akkoma /etc/akkoma &&\
+	chmod o-rwx /etc/akkoma/config.exs
 
 USER akkoma
 
 COPY --from=build --chown=akkoma:0 /release ${HOME}
 
-COPY ./config/docker.exs /etc/akkoma/config.exs
-RUN chown -R akkoma /etc/akkoma
-RUN chmod o-rwx /etc/akkoma/config.exs
 COPY ./docker-entrypoint.sh ${HOME}
 
 COPY ./config/frontends.exs $DATA/config.exs
