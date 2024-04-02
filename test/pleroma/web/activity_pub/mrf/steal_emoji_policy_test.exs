@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
 
   alias Pleroma.Config
   alias Pleroma.Emoji
@@ -59,6 +59,9 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicyTest do
     )
 
     emoji_path = [:instance, :static_dir] |> Config.get() |> Path.join("emoji/stolen")
+
+    emoji_base_path = [:instance, :static_dir] |> Config.get() |> Path.join("emoji/")
+    File.mkdir_p(emoji_base_path)
 
     Emoji.reload()
 
