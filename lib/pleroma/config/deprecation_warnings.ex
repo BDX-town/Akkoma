@@ -182,7 +182,9 @@ defmodule Pleroma.Config.DeprecationWarnings do
       check_quarantined_instances_tuples(),
       check_transparency_exclusions_tuples(),
       check_simple_policy_tuples(),
-      check_http_adapter()
+      check_http_adapter(),
+      check_uploader_base_url_set(),
+      check_uploader_base_url_is_not_base_domain()
     ]
     |> Enum.reduce(:ok, fn
       :ok, :ok -> :ok
@@ -330,6 +332,54 @@ defmodule Pleroma.Config.DeprecationWarnings do
       Please make the following change at your earliest convenience.\n
       \n* `config :pleroma, Pleroma.Uploaders.S3, public_endpoint` is now equal to:
       \n* `config :pleroma, Pleroma.Upload, base_url`
+      """)
+
+      :error
+    else
+      :ok
+    end
+  end
+
+  def check_uploader_base_url_set() do
+    base_url = Pleroma.Config.get([Pleroma.Upload, :base_url])
+
+    if base_url do
+      :ok
+    else
+      Logger.error("""
+      !!!WARNING!!!
+      Your config does not specify a base_url for uploads!
+      Please make the following change:\n
+      \n* `config :pleroma, Pleroma.Upload, base_url: "https://example.com/media/`
+      \n
+      \nPlease note that it is HEAVILY recommended to use a subdomain to host user-uploaded media! 
+      """)
+
+      :error
+    end
+  end
+
+  def check_uploader_base_url_is_not_base_domain() do
+    uploader_host =
+      [Pleroma.Upload, :base_url]
+      |> Pleroma.Config.get()
+      |> URI.parse()
+      |> Map.get(:host)
+
+    akkoma_host =
+      [Pleroma.Web.Endpoint, :url]
+      |> Pleroma.Config.get()
+      |> IO.inspect()
+      |> Keyword.get(:host)
+
+    if uploader_host == akkoma_host do
+      Logger.error("""
+      !!!WARNING!!!
+      Your Akkoma Host and your Upload base_url's host are the same!
+      This can potentially be insecure!
+
+      It is HIGHLY recommended that you migrate your media uploads
+      to a subdomain at your earliest convenience
       """)
 
       :error

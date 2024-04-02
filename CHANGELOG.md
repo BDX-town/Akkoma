@@ -39,6 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - our litepub JSON-LD schema is now served with the correct content type
 - remote APNG attachments are now recognised as images
 
+## Upgrade Notes
+
+- As mentioned in "Changed", `Pleroma.Upload, :base_url` **MUST** be configured. Uploads will fail without it.
+- Same with media proxy.
+
 ## 2024.02
 
 ## Added
