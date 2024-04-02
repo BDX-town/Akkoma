@@ -289,4 +289,64 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
 
     Application.put_env(:tesla, :adapter, Tesla.Mock)
   end
+
+  describe "check_uploader_base_url_set/0" do
+    test "should error if the base_url is not set" do
+      clear_config([Pleroma.Upload, :base_url], nil)
+
+      # we need to capture the error
+      assert_raise ArgumentError, fn ->
+        assert capture_log(fn ->
+                 DeprecationWarnings.check_uploader_base_url_set()
+               end) =~ "Your config does not specify a base_url for uploads!"
+      end
+    end
+
+    test "should not error if the base_url is set" do
+      clear_config([Pleroma.Upload, :base_url], "https://example.com")
+
+      refute capture_log(fn ->
+               DeprecationWarnings.check_uploader_base_url_set()
+             end) =~ "Your config does not specify a base_url for uploads!"
+    end
+
+    test "should not error if local uploader is not used" do
+      clear_config([Pleroma.Upload, :base_url], nil)
+      clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.S3)
+
+      refute capture_log(fn ->
+               DeprecationWarnings.check_uploader_base_url_set()
+             end) =~ "Your config does not specify a base_url for uploads!"
+    end
+  end
+
+  describe "check_uploader_base_url_is_not_base_domain/0" do
+    test "should error if the akkoma domain is the same as the upload domain" do
+      clear_config([Pleroma.Upload, :base_url], "http://localhost")
+
+      assert capture_log(fn ->
+               DeprecationWarnings.check_uploader_base_url_is_not_base_domain()
+             end) =~ "Your Akkoma Host and your Upload base_url's host are the same!"
+    end
+
+    test "should not error if the local uploader is not used" do
+      clear_config([Pleroma.Upload, :base_url], "http://localhost")
+      clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.S3)
+
+      refute capture_log(fn ->
+               DeprecationWarnings.check_uploader_base_url_is_not_base_domain()
+             end) =~ "Your Akkoma Host and your Upload base_url's host are the same!"
+    end
+
+    test "should not error if the akkoma domain is different from the upload domain" do
+      clear_config([Pleroma.Upload, :base_url], "https://media.localhost")
+      clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+
+      refute capture_log(fn ->
+               DeprecationWarnings.check_uploader_base_url_is_not_base_domain()
+             end) =~ "Your Akkoma Host and your Upload base_url's host are the same!"
+
+      clear_config([Pleroma.Upload, :base_url])
+    end
+  end
 end

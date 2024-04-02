@@ -7,6 +7,8 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlugTest do
 
   alias Plug.Conn
 
+  setup_all do: clear_config([Pleroma.Upload, :base_url], nil)
+
   describe "http security enabled" do
     setup do: clear_config([:http_security, :enabled], true)
 

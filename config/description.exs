@@ -100,9 +100,9 @@ config :pleroma, :config_description, [
         label: "Base URL",
         type: :string,
         description:
-          "Base URL for the uploads. Required if you use a CDN or host attachments under a different domain.",
+          "Base URL for the uploads. Required if you use a CDN or host attachments under a different domain - it is HIGHLY recommended that you **do not** set this to be the same as the domain akkoma is hosted on.",
         suggestions: [
-          "https://cdn-host.com"
+          "https://media.akkoma.dev/media/"
         ]
       },
       %{
