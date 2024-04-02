@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Upgrade Notes
 
 - As mentioned in "Changed", `Pleroma.Upload, :base_url` **MUST** be configured. Uploads will fail without it.
+  - Akkoma will refuse to start if this is not set.
 - Same with media proxy.
 
 ## 2024.02

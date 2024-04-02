@@ -341,9 +341,10 @@ defmodule Pleroma.Config.DeprecationWarnings do
   end
 
   def check_uploader_base_url_set() do
+    uses_local_uploader? = Config.get([Pleroma.Upload, :uploader]) == Pleroma.Uploaders.Local
     base_url = Pleroma.Config.get([Pleroma.Upload, :base_url])
 
-    if base_url do
+    if base_url || !uses_local_uploader? do
       :ok
     else
       Logger.error("""
@@ -361,6 +362,8 @@ defmodule Pleroma.Config.DeprecationWarnings do
   end
 
   def check_uploader_base_url_is_not_base_domain() do
+    uses_local_uploader? = Config.get([Pleroma.Upload, :uploader]) == Pleroma.Uploaders.Local
+
     uploader_host =
       [Pleroma.Upload, :base_url]
       |> Pleroma.Config.get()
@@ -372,7 +375,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
       |> Pleroma.Config.get()
       |> Keyword.get(:host)
 
-    if uploader_host == akkoma_host do
+    if uploader_host == akkoma_host && uses_local_uploader? do
       Logger.error("""
       !!!WARNING!!!
       Your Akkoma Host and your Upload base_url's host are the same!
