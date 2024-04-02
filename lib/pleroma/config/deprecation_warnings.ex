@@ -352,10 +352,11 @@ defmodule Pleroma.Config.DeprecationWarnings do
       Please make the following change:\n
       \n* `config :pleroma, Pleroma.Upload, base_url: "https://example.com/media/`
       \n
-      \nPlease note that it is HEAVILY recommended to use a subdomain to host user-uploaded media! 
+      \nPlease note that it is HEAVILY recommended to use a subdomain to host user-uploaded media!
       """)
 
-      :error
+      # This is a hard exit - the uploader will not work without a base_url
+      raise ArgumentError, message: "No base_url set for uploads - please set one in your config!"
     end
   end
 
@@ -369,7 +370,6 @@ defmodule Pleroma.Config.DeprecationWarnings do
     akkoma_host =
       [Pleroma.Web.Endpoint, :url]
       |> Pleroma.Config.get()
-      |> IO.inspect()
       |> Keyword.get(:host)
 
     if uploader_host == akkoma_host do

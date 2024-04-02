@@ -22,6 +22,7 @@ config :logger, :console,
 config :pleroma, :auth, oauth_consumer_strategies: []
 
 config :pleroma, Pleroma.Upload,
+  base_url: "http://localhost:4001/media/",
   filters: [],
   link_name: false
 
