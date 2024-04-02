@@ -291,7 +291,7 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
   end
 
   test "check_uploader_base_url_set/0" do
-    clear_config([Pleroma.Upload], base_url: nil)
+    clear_config([Pleroma.Upload, :base_url], nil)
 
     # we need to capture the error
     assert_raise ArgumentError, fn ->
@@ -300,24 +300,28 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
              end) =~ "Your config does not specify a base_url for uploads!"
     end
 
-    clear_config([Pleroma.Upload], base_url: "https://example.com")
+    clear_config([Pleroma.Upload, :base_url], "https://example.com")
 
     refute capture_log(fn ->
              DeprecationWarnings.check_uploader_base_url_set()
            end) =~ "Your config does not specify a base_url for uploads!"
+
+    clear_config([Pleroma.Upload, :base_url])
   end
 
   test "check_uploader_base_url_is_not_base_domain/0" do
-    clear_config([Pleroma.Upload], base_url: "http://localhost")
+    clear_config([Pleroma.Upload, :base_url], "http://localhost")
 
     assert capture_log(fn ->
              DeprecationWarnings.check_uploader_base_url_is_not_base_domain()
            end) =~ "Your Akkoma Host and your Upload base_url's host are the same!"
 
-    clear_config([Pleroma.Upload], base_url: "https://media.localhost")
+    clear_config([Pleroma.Upload, :base_url], "https://media.localhost")
 
     refute capture_log(fn ->
              DeprecationWarnings.check_uploader_base_url_is_not_base_domain()
            end) =~ "Your Akkoma Host and your Upload base_url's host are the same!"
+
+    clear_config([Pleroma.Upload, :base_url])
   end
 end
