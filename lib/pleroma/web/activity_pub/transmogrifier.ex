@@ -576,7 +576,12 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         _options
       ) do
     with %User{} = origin_user <- User.get_cached_by_ap_id(origin_actor),
-         {:ok, %User{} = target_user} <- User.get_or_fetch_by_ap_id(target_actor),
+         # Use a dramatically shortened maximum age before refresh here because it is reasonable
+         # for a user to
+         # 1. Add the alias to their new account and then
+         # 2. Press the button on their new account
+         # within a very short period of time and expect it to work
+         {:ok, %User{} = target_user} <- User.get_or_fetch_by_ap_id(target_actor, maximum_age: 5),
          true <- origin_actor in target_user.also_known_as do
       ActivityPub.move(origin_user, target_user, false)
     else
