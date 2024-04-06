@@ -14,8 +14,6 @@ defmodule Pleroma.Web.MediaProxy do
 
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
 
-  @mix_env Mix.env()
-
   def cache_table, do: @cache_table
 
   @spec in_banned_urls(String.t()) :: boolean()
@@ -146,14 +144,8 @@ defmodule Pleroma.Web.MediaProxy do
     if path = URI.parse(url_or_path).path, do: Path.basename(path)
   end
 
-  if @mix_env == :test do
-    def base_url do
-      Config.get([:media_proxy, :base_url], Endpoint.url())
-    end
-  else
-    def base_url do
-      Config.get!([:media_proxy, :base_url])
-    end
+  def base_url do
+    Config.get!([:media_proxy, :base_url])
   end
 
   defp proxy_url(path, sig_base64, url_base64, filename) do

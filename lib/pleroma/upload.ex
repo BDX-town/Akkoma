@@ -39,8 +39,6 @@ defmodule Pleroma.Upload do
   alias Pleroma.Web.ActivityPub.Utils
   require Logger
 
-  @mix_env Mix.env()
-
   @type source ::
           Plug.Upload.t()
           | (data_uri_string :: String.t())
@@ -230,13 +228,6 @@ defmodule Pleroma.Upload do
 
   defp url_from_spec(_upload, _base_url, {:url, url}), do: url
 
-  if @mix_env == :test do
-    defp choose_base_url(prim, sec \\ nil),
-      do: prim || sec || Pleroma.Web.Endpoint.url() <> "/media/"
-  else
-    defp choose_base_url(prim, sec \\ nil), do: prim || sec
-  end
-
   def base_url do
     uploader = Config.get([Pleroma.Upload, :uploader])
     upload_base_url = Config.get([Pleroma.Upload, :base_url])
@@ -244,7 +235,7 @@ defmodule Pleroma.Upload do
 
     case uploader do
       Pleroma.Uploaders.Local ->
-        choose_base_url(upload_base_url)
+        upload_base_url
 
       Pleroma.Uploaders.S3 ->
         bucket = Config.get([Pleroma.Uploaders.S3, :bucket])
@@ -270,7 +261,7 @@ defmodule Pleroma.Upload do
         end
 
       _ ->
-        choose_base_url(public_endpoint, upload_base_url)
+        public_endpoint || upload_base_url
     end
   end
 end
