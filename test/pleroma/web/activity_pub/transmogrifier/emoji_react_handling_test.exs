@@ -84,6 +84,32 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.EmojiReactHandlingTest do
     assert match?([[^shortcode, _, ^imgurl]], object.data["reactions"])
   end
 
+  test "it works for incoming custom emoji without tag array" do
+    user = insert(:user)
+    other_user = insert(:user, local: false)
+    {:ok, activity} = CommonAPI.post(user, %{status: "hello"})
+
+    shortcode = "blobcatgoogly"
+    imgurl = "https://example.org/emoji/b.png"
+    emoji = emoji_object(shortcode, imgurl, imgurl)
+    data = react_with_custom(activity.data["object"], other_user.ap_id, emoji, false)
+
+    assert %{} = data["tag"]
+
+    {:ok, %Activity{data: data, local: false}} = Transmogrifier.handle_incoming(data)
+
+    assert data["actor"] == other_user.ap_id
+    assert data["type"] == "EmojiReact"
+    assert data["object"] == activity.data["object"]
+    assert data["content"] == ":" <> shortcode <> ":"
+    assert [%{}] = data["tag"]
+
+    object = Object.get_by_ap_id(data["object"])
+
+    assert object.data["reaction_count"] == 1
+    assert match?([[^shortcode, _, _]], object.data["reactions"])
+  end
+
   test "it works for incoming custom emoji reactions from Misskey" do
     user = insert(:user)
     other_user = insert(:user, local: false)
@@ -198,12 +224,14 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.EmojiReactHandlingTest do
     }
   end
 
-  defp react_with_custom(object_id, as_actor, emoji) do
+  defp react_with_custom(object_id, as_actor, emoji, tag_array \\ true) do
+    tag = if tag_array, do: [emoji], else: emoji
+
     File.read!("test/fixtures/emoji-reaction.json")
     |> Jason.decode!()
     |> Map.put("object", object_id)
     |> Map.put("actor", as_actor)
     |> Map.put("content", ":" <> emoji["name"] <> ":")
-    |> Map.put("tag", [emoji])
+    |> Map.put("tag", tag)
   end
 end
