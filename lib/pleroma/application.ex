@@ -288,6 +288,7 @@ defmodule Pleroma.Application do
       |> Config.get([])
       |> Pleroma.HTTP.AdapterHelper.add_pool_size(pool_size)
       |> Pleroma.HTTP.AdapterHelper.maybe_add_proxy_pool(proxy)
+      |> Pleroma.HTTP.AdapterHelper.ensure_ipv6()
       |> Keyword.put(:name, MyFinch)
 
     [{Finch, config}]
