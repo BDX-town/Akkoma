@@ -26,6 +26,8 @@ config :pleroma, Pleroma.Upload,
   filters: [],
   link_name: false
 
+config :pleroma, :media_proxy, base_url: "http://localhost:4001"
+
 config :pleroma, Pleroma.Uploaders.Local, uploads: "test/uploads"
 
 config :pleroma, Pleroma.Emails.Mailer, adapter: Swoosh.Adapters.Test, enabled: true
