@@ -65,7 +65,7 @@ defmodule Pleroma.Web.WebFinger do
   end
 
   defp gather_aliases(%User{} = user) do
-    [user.ap_id | user.also_known_as]
+    [user.ap_id]
   end
 
   def represent_user(user, "JSON") do
