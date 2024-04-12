@@ -59,6 +59,7 @@ defmodule Pleroma.Object.FetcherTest do
 
       %{method: :get, url: "https://octodon.social/users/cwebber/statuses/111647596861000656"} ->
         %Tesla.Env{status: 403}
+
       # Spoof: mismatching ids
       # Variant 1: Non-exisitng fake id
       %{
