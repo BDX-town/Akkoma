@@ -39,6 +39,25 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
       %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
     end
 
+    test "note with url validates", %{note: note} do
+      note = Map.put(note, "url", "https://remote.example/link")
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "note with url array validates", %{note: note} do
+      note = Map.put(note, "url", ["https://remote.example/link"])
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "note with url array validates if contains a link object", %{note: note} do
+      note = Map.put(note, "url", [%{
+        "type" => "Link",
+        "href" => "https://remote.example/link"
+      }])
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+
     test "a note with a language validates" do
       insert(:user, %{ap_id: "https://mastodon.social/users/akkoma_ap_integration_tester"})
       note = File.read!("test/fixtures/mastodon/note_with_language.json") |> Jason.decode!()
