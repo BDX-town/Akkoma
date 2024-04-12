@@ -125,7 +125,26 @@ cp docker-resources/Caddyfile.example docker-resources/Caddyfile
 
 Then edit the TLD in your caddyfile to the domain you're serving on.
 
-Uncomment the `caddy` section in the docker compose file,
+Copy the commented out `caddy` section in `docker-compose.yml` into a new file called `docker-compose.override.yml` like so:
+```yaml
+version: "3.7"
+
+services:
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    links:
+      - akkoma
+    ports: [
+       "443:443",
+       "80:80"
+    ]
+    volumes:
+      - ./docker-resources/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy-data:/data
+      - ./caddy-config:/config
+```
+
 then run `docker compose up -d` again.
 
 #### Running a reverse proxy on the host
@@ -154,6 +173,12 @@ git pull
 ./docker-resources/manage.sh mix ecto.migrate
 docker compose restart akkoma db
 ```
+
+### Modifying the Docker services
+If you want to modify the services defined in the docker compose file, you can
+create a new file called `docker-compose.override.yml`. There you can add any
+overrides or additional services without worrying about git conflicts when a
+new release comes out.
 
 #### Further reading
 
