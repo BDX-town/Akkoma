@@ -17,8 +17,19 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCard do
 
   @impl Provider
   def build_tags(%{activity_id: id, object: object, user: user}) do
-    attachments = build_attachments(id, object)
-    scrubbed_content = Utils.scrub_html_and_truncate(object)
+    attachments =
+      if Utils.visible?(object) do
+        build_attachments(id, object)
+      else
+        []
+      end
+
+    scrubbed_content =
+      if Utils.visible?(object) do
+        Utils.scrub_html_and_truncate(object)
+      else
+        "Content cannot be displayed."
+      end
 
     [
       title_tag(user),
@@ -36,13 +47,17 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCard do
 
   @impl Provider
   def build_tags(%{user: user}) do
-    with truncated_bio = Utils.scrub_html_and_truncate(user.bio) do
-      [
-        title_tag(user),
-        {:meta, [name: "twitter:description", content: truncated_bio], []},
-        image_tag(user),
-        {:meta, [name: "twitter:card", content: "summary"], []}
-      ]
+    if Utils.visible?(user) do
+      with truncated_bio = Utils.scrub_html_and_truncate(user.bio) do
+        [
+          title_tag(user),
+          {:meta, [name: "twitter:description", content: truncated_bio], []},
+          image_tag(user),
+          {:meta, [name: "twitter:card", content: "summary"], []}
+        ]
+      end
+    else
+      []
     end
   end
 
@@ -51,7 +66,11 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCard do
   end
 
   def image_tag(user) do
-    {:meta, [name: "twitter:image", content: MediaProxy.preview_url(User.avatar_url(user))], []}
+    if Utils.visible?(user) do
+      {:meta, [name: "twitter:image", content: MediaProxy.preview_url(User.avatar_url(user))], []}
+    else
+      {:meta, [name: "twitter:image", content: ""], []}
+    end
   end
 
   defp build_attachments(id, %{data: %{"attachment" => attachments}}) do
