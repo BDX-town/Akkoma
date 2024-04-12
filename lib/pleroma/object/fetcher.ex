@@ -324,7 +324,11 @@ defmodule Pleroma.Object.Fetcher do
     date = Pleroma.Signature.signed_date()
 
     headers =
-      [{"accept", "application/activity+json"}]
+      [
+        # The first is required by spec, the second provided as a fallback for buggy implementations
+        {"accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""},
+        {"accept", "application/activity+json"}
+      ]
       |> maybe_date_fetch(date)
       |> sign_fetch(id, date)
 
