@@ -26,6 +26,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   import Ecto.Query
 
   require Pleroma.Constants
+  require Logger
 
   @doc """
   Modifies an incoming AP object (mastodon format) to our internal format.
@@ -161,10 +162,6 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
           object
       end
     else
-      {:quoting?, _} ->
-        object
-
-      _ ->
         object
     end
   end
