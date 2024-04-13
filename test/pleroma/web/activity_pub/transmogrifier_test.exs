@@ -570,7 +570,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
     test "returns nil when cannot normalize object" do
       assert capture_log(fn ->
                refute Transmogrifier.get_obj_helper("test-obj-id")
-             end) =~ "URI Scheme Invalid"
+             end) =~ ":valid_uri_scheme"
     end
 
     @tag capture_log: true
