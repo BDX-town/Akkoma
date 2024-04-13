@@ -153,7 +153,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
 
       # Object was created in the database
       object = Object.normalize(activity)
-      assert object.data["quoteUrl"] == "https://misskey.io/notes/8vs6wxufd0"
+      assert object.data["quoteUri"] == "https://misskey.io/notes/8vs6wxufd0"
 
       # It fetched the quoted post
       assert Object.normalize("https://misskey.io/notes/8vs6wxufd0")
