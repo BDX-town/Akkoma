@@ -1730,7 +1730,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
         Logger.debug("Could not decode user at fetch #{ap_id}, #{inspect(e)}")
         {:error, e}
 
-      {:error, {:reject, reason} = e} ->
+      {:reject, reason} = e ->
         Logger.debug("Rejected user #{ap_id}: #{inspect(reason)}")
         {:error, e}
 

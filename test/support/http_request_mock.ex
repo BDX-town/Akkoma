@@ -1340,7 +1340,6 @@ defmodule HttpRequestMock do
      }}
   end
 
-
   def get("https://example.org/emoji/firedfox.png", _, _, _) do
     {:ok, %Tesla.Env{status: 200, body: File.read!("test/fixtures/image.jpg")}}
   end

@@ -22,6 +22,18 @@ defmodule Pleroma.Workers.RemoteFetcherWorker do
       {:error, :allowed_depth} ->
         {:discard, :allowed_depth}
 
+      {:error, :invalid_uri_scheme} ->
+        {:discard, :invalid_uri_scheme}
+
+      {:error, :local_resource} ->
+        {:discard, :local_resource}
+
+      {:reject, _} ->
+        {:discard, :reject}
+
+      {:error, :id_mismatch} ->
+        {:discard, :id_mismatch}
+
       _ ->
         :error
     end

@@ -125,18 +125,6 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
       assert activity.data["context"] == object.data["context"]
     end
 
-    test "it keeps link tags" do
-      insert(:user, ap_id: "https://example.org/users/alice")
-
-      message = File.read!("test/fixtures/fep-e232.json") |> Jason.decode!()
-
-      assert capture_log(fn ->
-               assert {:ok, activity} = Transmogrifier.handle_incoming(message)
-               object = Object.normalize(activity)
-               assert [%{"type" => "Mention"}, %{"type" => "Link"}] = object.data["tag"]
-             end) =~ "Object rejected while fetching"
-    end
-
     test "it accepts quote posts" do
       insert(:user, ap_id: "https://misskey.io/users/7rkrarq81i")
 

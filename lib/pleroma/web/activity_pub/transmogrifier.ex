@@ -162,7 +162,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
           object
       end
     else
-        object
+      object
     end
   end
 
