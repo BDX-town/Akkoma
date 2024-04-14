@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest do
-  use Pleroma.DataCase, async: true
+  use Pleroma.DataCase
 
   alias Pleroma.Web.ActivityPub.ObjectValidator
   alias Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator
@@ -37,6 +37,42 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
 
     test "a basic note validates", %{note: note} do
       %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "note with url validates", %{note: note} do
+      note = Map.put(note, "url", "https://remote.example/link")
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "note with url array validates", %{note: note} do
+      note = Map.put(note, "url", ["https://remote.example/link"])
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "note with url array validates if contains a link object", %{note: note} do
+      note =
+        Map.put(note, "url", [
+          %{
+            "type" => "Link",
+            "href" => "https://remote.example/link"
+          }
+        ])
+
+      %{valid?: true} = ArticleNotePageValidator.cast_and_validate(note)
+    end
+
+    test "a note with a language validates" do
+      insert(:user, %{ap_id: "https://mastodon.social/users/akkoma_ap_integration_tester"})
+      note = File.read!("test/fixtures/mastodon/note_with_language.json") |> Jason.decode!()
+
+      %{
+        valid?: true,
+        changes: %{
+          contentMap: %{
+            "ja" => "<p>tag</p>"
+          }
+        }
+      } = ArticleNotePageValidator.cast_and_validate(note)
     end
 
     test "a note from factory validates" do
@@ -121,7 +157,9 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
       assert content =~ "@oops_not_a_mention"
 
       assert content =~
-               "<span class=\"mfm _mfm_jelly_\" style=\"display: inline-block; animation: 1s linear 0s infinite normal both running mfm-rubberBand;\">mfm goes here</span> </p>aaa"
+               "<span class=\"mfm _mfm_jelly_\">mfm goes here</span> </p>aaa"
+
+      assert content =~ "some text<br/>newline"
     end
 
     test "a misskey MFM status with a _misskey_content field should work and be linked", _ do

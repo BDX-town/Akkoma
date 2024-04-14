@@ -1,21 +1,16 @@
-# Pleroma Clients
-Note: Additional clients may be working but theses are officially supporting Pleroma.
-Feel free to contact us to be added to this list!
+# Akkoma Clients
+Note: Additional clients may work, but these are known to work with Akkoma.
+Apps listed here might not support all of Akkoma's features.
+
+## Multiplatform
+### Kaiteki
+- Homepage: <https://kaiteki.app/>
+- Source Code: <https://github.com/Kaiteki-Fedi/Kaiteki>
+- Contact: [@kaiteki@fedi.software](https://fedi.software/@Kaiteki)
+- Platforms: Web, Windows, Linux, Android
+- Features: MastoAPI, Supports multiple backends
 
 ## Desktop
-### Roma for Desktop
-- Homepage: <https://www.pleroma.com/#desktopApp>
-- Source Code: <https://github.com/roma-apps/roma-desktop>
-- Platforms: Windows, Mac, Linux
-- Features: MastoAPI, Streaming Ready
-
-### Social
-- Source Code: <https://gitlab.gnome.org/World/Social>
-- Contact: [@brainblasted@social.libre.fi](https://social.libre.fi/users/brainblasted)
-- Platforms: Linux (GNOME)
-- Note(2019-01-28): Not at a pre-alpha stage yet
-- Features: MastoAPI
-
 ### Whalebird
 - Homepage: <https://whalebird.social/>
 - Source Code: <https://github.com/h3poteto/whalebird-desktop>
@@ -30,28 +25,16 @@ Feel free to contact us to be added to this list!
 - Platforms: Android
 - Features: MastoAPI, ActivityPub (Client-to-Server)
 
-### Amaroq
-- Homepage: <https://itunes.apple.com/us/app/amaroq-for-mastodon/id1214116200>
-- Source Code: <https://github.com/ReticentJohn/Amaroq>
-- Contact: [@eurasierboy@mastodon.social](https://mastodon.social/users/eurasierboy)
-- Platforms: iOS
-- Features: MastoAPI, No Streaming
-
 ### Fedilab
 - Homepage: <https://fedilab.app/>
-- Source Code: <https://framagit.org/tom79/fedilab/>
-- Contact: [@fedilab@framapiaf.org](https://framapiaf.org/users/fedilab)
+- Source Code: <https://codeberg.org/tom79/Fedilab>
+- Contact: [@apps@toot.felilab.app](https://toot.fedilab.app/@apps)
 - Platforms: Android
 - Features: MastoAPI, Streaming Ready, Moderation, Text Formatting
 
-### Kyclos
-- Source Code: <https://git.pleroma.social/pleroma/harbour-kyclos>
-- Platforms: SailfishOS
-- Features: MastoAPI, No Streaming
-
 ### Husky
-- Source code: <https://git.mentality.rip/FWGS/Husky>
-- Contact: [@Husky@enigmatic.observer](https://enigmatic.observer/users/Husky)
+- Source code: <https://codeberg.org/husky/husky>
+- Contact: [@captainepoch@stereophonic.space](https://stereophonic.space/captainepoch)
 - Platforms: Android
 - Features: MastoAPI, No Streaming, Emoji Reactions, Text Formatting, FE Stickers
 
@@ -68,37 +51,12 @@ Feel free to contact us to be added to this list!
 - Platforms: Android
 - Features: MastoAPI, No Streaming
 
-### Twidere
-- Homepage: <https://twidere.mariotaku.org/>
-- Source Code: <https://github.com/TwidereProject/Twidere-Android/>
-- Contact: <me@mariotaku.org>
-- Platform: Android
-- Features: MastoAPI, No Streaming
-
-### Indigenous
-- Homepage: <https://indigenous.realize.be/>
-- Source Code: <https://github.com/swentel/indigenous-android/>
-- Contact: [@swentel@realize.be](https://realize.be)
-- Platforms: Android
-- Features: MastoAPI, No Streaming
-
 ## Alternative Web Interfaces
-### Brutaldon
-- Homepage: <https://jfm.carcosa.net/projects/software/brutaldon/>
-- Source Code: <https://git.carcosa.net/jmcbray/brutaldon>
-- Contact: [@gcupc@glitch.social](https://glitch.social/users/gcupc)
-- Features: MastoAPI, No Streaming
-
-### Halcyon
-- Source Code: <https://notabug.org/halcyon-suite/halcyon>
-- Contact: [@halcyon@social.csswg.org](https://social.csswg.org/users/halcyon)
-- Features: MastoAPI, Streaming Ready
-
 ### Pinafore
+- Note: Pinafore is unmaintained (See [the author's original article](https://nolanlawson.com/2023/01/09/retiring-pinafore/) for details)
 - Homepage: <https://pinafore.social/>
 - Source Code: <https://github.com/nolanlawson/pinafore>
 - Contact: [@pinafore@mastodon.technology](https://mastodon.technology/users/pinafore)
-- Note: Pleroma support is a secondary goal
 - Features: MastoAPI, No Streaming
 
 ### Sengi

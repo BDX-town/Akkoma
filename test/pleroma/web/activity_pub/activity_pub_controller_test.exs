@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity
@@ -31,14 +31,15 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
   end
 
   setup do: clear_config([:instance, :federating], true)
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "/relay" do
-    setup do: clear_config([:instance, :allow_relay])
+    setup do: clear_config([:instance, :allow_relay], true)
 
     test "with the relay active, it returns the relay user", %{conn: conn} do
       res =
         conn
-        |> get(activity_pub_path(conn, :relay))
+        |> get(~p"/relay")
         |> json_response(200)
 
       assert res["id"] =~ "/relay"
@@ -48,7 +49,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       clear_config([:instance, :allow_relay], false)
 
       conn
-      |> get(activity_pub_path(conn, :relay))
+      |> get(~p"/relay")
       |> json_response(404)
     end
 
@@ -58,7 +59,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:user, user)
-      |> get(activity_pub_path(conn, :relay))
+      |> get(~p"/relay")
       |> json_response(404)
     end
   end
@@ -67,7 +68,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "it returns the internal fetch user", %{conn: conn} do
       res =
         conn
-        |> get(activity_pub_path(conn, :internal_fetch))
+        |> get(~p"/internal/fetch")
         |> json_response(200)
 
       assert res["id"] =~ "/fetch"
@@ -79,7 +80,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:user, user)
-      |> get(activity_pub_path(conn, :internal_fetch))
+      |> get(~p"/internal/fetch")
       |> json_response(404)
     end
   end
@@ -660,35 +661,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       :ok = Mix.Tasks.Pleroma.Relay.run(["list"])
       assert_receive {:mix_shell, :info, ["https://relay.mastodon.host/actor"]}
-    end
-
-    @tag capture_log: true
-    test "without valid signature, " <>
-           "it only accepts Create activities and requires enabled federation",
-         %{conn: conn} do
-      data = File.read!("test/fixtures/mastodon-post-activity.json") |> Jason.decode!()
-      non_create_data = File.read!("test/fixtures/mastodon-announce.json") |> Jason.decode!()
-
-      conn = put_req_header(conn, "content-type", "application/activity+json")
-
-      clear_config([:instance, :federating], false)
-
-      conn
-      |> post("/inbox", data)
-      |> json_response(403)
-
-      conn
-      |> post("/inbox", non_create_data)
-      |> json_response(403)
-
-      clear_config([:instance, :federating], true)
-
-      ret_conn = post(conn, "/inbox", data)
-      assert "ok" == json_response(ret_conn, 200)
-
-      conn
-      |> post("/inbox", non_create_data)
-      |> json_response(400)
     end
 
     test "accepts Add/Remove activities", %{conn: conn} do

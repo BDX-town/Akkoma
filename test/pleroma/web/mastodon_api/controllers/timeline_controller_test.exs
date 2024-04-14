@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   import Pleroma.Factory
   import Tesla.Mock
@@ -288,7 +288,7 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
         get(conn, "/api/v1/timelines/public")
         |> json_response_and_validate_schema(200)
 
-      assert length(response) == 0
+      assert response == []
     end
 
     test "doesn't return replies if follow is posting with users from blocked domain" do
@@ -407,6 +407,25 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
         |> json_response_and_validate_schema(200)
 
       assert [] = result
+    end
+
+    test "should return 404 if disabled" do
+      clear_config([:instance, :federated_timeline_available], false)
+
+      result =
+        build_conn()
+        |> get("/api/v1/timelines/public")
+        |> json_response_and_validate_schema(404)
+
+      assert %{"error" => "Federated timeline is disabled"} = result
+    end
+
+    test "should not return 404 if local is specified" do
+      clear_config([:instance, :federated_timeline_available], false)
+
+      build_conn()
+      |> get("/api/v1/timelines/public?local=true")
+      |> json_response_and_validate_schema(200)
     end
   end
 
@@ -527,7 +546,7 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
         |> assign(:token, insert(:oauth_token, user: user_two, scopes: ["read:statuses"]))
 
       # Only direct should be visible here
-      res_conn = get(conn_user_two, "api/v1/timelines/direct")
+      res_conn = get(conn_user_two, "/api/v1/timelines/direct")
 
       assert [status] = json_response_and_validate_schema(res_conn, :ok)
 
@@ -539,14 +558,14 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
         build_conn()
         |> assign(:user, user_one)
         |> assign(:token, insert(:oauth_token, user: user_one, scopes: ["read:statuses"]))
-        |> get("api/v1/timelines/direct")
+        |> get("/api/v1/timelines/direct")
 
       [status] = json_response_and_validate_schema(res_conn, :ok)
 
       assert %{"visibility" => "direct"} = status
 
       # Both should be visible here
-      res_conn = get(conn_user_two, "api/v1/timelines/home")
+      res_conn = get(conn_user_two, "/api/v1/timelines/home")
 
       [_s1, _s2] = json_response_and_validate_schema(res_conn, :ok)
 
@@ -559,14 +578,14 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
           })
       end)
 
-      res_conn = get(conn_user_two, "api/v1/timelines/direct")
+      res_conn = get(conn_user_two, "/api/v1/timelines/direct")
 
       statuses = json_response_and_validate_schema(res_conn, :ok)
       assert length(statuses) == 20
 
       max_id = List.last(statuses)["id"]
 
-      res_conn = get(conn_user_two, "api/v1/timelines/direct?max_id=#{max_id}")
+      res_conn = get(conn_user_two, "/api/v1/timelines/direct?max_id=#{max_id}")
 
       assert [status] = json_response_and_validate_schema(res_conn, :ok)
 
@@ -591,7 +610,7 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
           visibility: "direct"
         })
 
-      res_conn = get(conn, "api/v1/timelines/direct")
+      res_conn = get(conn, "/api/v1/timelines/direct")
 
       [status] = json_response_and_validate_schema(res_conn, :ok)
       assert status["id"] == direct.id
@@ -1018,9 +1037,9 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
       ensure_authenticated_access(base_uri)
     end
 
-    test "with `%{local: true, federated: false}`, forbids unauthenticated access to public timeline" <>
-           "(but not to local public activities which are delivered as part of federated timeline)",
+    test "with `%{local: true, federated: false}`, forbids unauthenticated access to public timeline",
          %{conn: conn, base_uri: base_uri, error_response: error_response} do
+      # (but not to local public activities which are delivered as part of federated timeline)
       clear_config([:restrict_unauthenticated, :timelines, :local], true)
       clear_config([:restrict_unauthenticated, :timelines, :federated], false)
 
@@ -1036,9 +1055,8 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
   end
 
   describe "bubble" do
-    setup do: oauth_access(["read:statuses"])
-
-    test "filtering", %{conn: conn, user: user} do
+    test "filtering" do
+      %{conn: conn, user: user} = oauth_access(["read:statuses"])
       clear_config([:instance, :local_bubble], [])
       # our endpoint host has a port in it so let's set the AP ID
       local_user = insert(:user, %{ap_id: "https://localhost/users/user"})
@@ -1060,7 +1078,7 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
 
       assert local_activity.id in one_instance
 
-      # If we have others, also include theirs 
+      # If we have others, also include theirs
       clear_config([:instance, :local_bubble], ["example.com"])
 
       two_instances =
@@ -1071,6 +1089,20 @@ defmodule Pleroma.Web.MastodonAPI.TimelineControllerTest do
 
       assert local_activity.id in two_instances
       assert remote_activity.id in two_instances
+    end
+
+    test "restrict_unauthenticated with bubble timeline", %{conn: conn} do
+      clear_config([:restrict_unauthenticated, :timelines, :bubble], true)
+
+      conn
+      |> get("/api/v1/timelines/bubble")
+      |> json_response_and_validate_schema(:unauthorized)
+
+      clear_config([:restrict_unauthenticated, :timelines, :bubble], false)
+
+      conn
+      |> get("/api/v1/timelines/bubble")
+      |> json_response_and_validate_schema(200)
     end
   end
 

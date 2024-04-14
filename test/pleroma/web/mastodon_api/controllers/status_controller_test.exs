@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Activity
@@ -38,7 +38,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       response =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{
+        |> post("/api/v1/statuses", %{
           "content_type" => "text/plain",
           "source" => "Pleroma FE",
           "status" => "Hello world",
@@ -51,7 +51,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       response =
         conn
-        |> get("api/v1/statuses/#{response["id"]}", %{})
+        |> get("/api/v1/statuses/#{response["id"]}", %{})
         |> json_response_and_validate_schema(200)
 
       assert response["reblogs_count"] == 0
@@ -67,11 +67,17 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> post("/api/v1/statuses", %{
           "status" => "cofe",
           "spoiler_text" => "2hu",
-          "sensitive" => "0"
+          "sensitive" => "0",
+          "language" => "ja"
         })
 
-      assert %{"content" => "cofe", "id" => id, "spoiler_text" => "2hu", "sensitive" => false} =
-               json_response_and_validate_schema(conn_one, 200)
+      assert %{
+               "content" => "cofe",
+               "id" => id,
+               "spoiler_text" => "2hu",
+               "sensitive" => false,
+               "language" => "ja"
+             } = json_response_and_validate_schema(conn_one, 200)
 
       assert Activity.get_by_id(id)
 
@@ -110,7 +116,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn_four =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{
+        |> post("/api/v1/statuses", %{
           "status" => "oolong",
           "expires_in" => expires_in
         })
@@ -126,6 +132,35 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       )
     end
 
+    test "automatically setting a post expiry if status_ttl_days is set" do
+      user = insert(:user, status_ttl_days: 1)
+      %{user: _user, token: _token, conn: conn} = oauth_access(["write:statuses"], user: user)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "aa chikichiki banban"
+        })
+
+      assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
+
+      activity = Activity.get_by_id_with_object(id)
+      {:ok, expires_at, _} = DateTime.from_iso8601(activity.data["expires_at"])
+
+      assert Timex.diff(
+               expires_at,
+               DateTime.utc_now(),
+               :hours
+             ) == 23
+
+      assert_enqueued(
+        worker: Pleroma.Workers.PurgeExpiredActivity,
+        args: %{activity_id: id},
+        scheduled_at: DateTime.add(DateTime.utc_now(), 1 * 60 * 60 * 24)
+      )
+    end
+
     test "it fails to create a status if `expires_in` is less or equal than an hour", %{
       conn: conn
     } do
@@ -135,7 +170,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "Expiry date is too soon"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -147,7 +182,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "Expiry date is too soon"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -161,7 +196,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"error" => "[KeywordPolicy] Matches with rejected keyword"} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{"status" => "GNO/Linux"})
+               |> post("/api/v1/statuses", %{"status" => "GNO/Linux"})
                |> json_response_and_validate_schema(422)
     end
 
@@ -182,6 +217,18 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         })
 
       assert json_response_and_validate_schema(conn, 200)
+    end
+
+    test "posting a status with an invalid language", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "cofe",
+          "language" => "invalid"
+        })
+
+      assert %{"error" => "Invalid language"} = json_response_and_validate_schema(conn, 422)
     end
 
     test "replying to a status", %{user: user, conn: conn} do
@@ -297,7 +344,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
     test "fake statuses' preview card is not cached", %{conn: conn} do
       clear_config([:rich_media, :enabled], true)
 
-      Tesla.Mock.mock(fn
+      Tesla.Mock.mock_global(fn
         %{
           method: :get,
           url: "https://example.com/twitter-card"
@@ -354,7 +401,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> post("api/v1/statuses", %{"status" => content, "visibility" => "direct"})
+        |> post("/api/v1/statuses", %{"status" => content, "visibility" => "direct"})
 
       assert %{"id" => id} = response = json_response_and_validate_schema(conn, 200)
       assert response["visibility"] == "direct"
@@ -391,7 +438,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       result =
         conn
-        |> get("api/v1/statuses/#{activity}")
+        |> get("/api/v1/statuses/#{activity}")
 
       assert %{
                "content" => "cofe is my copilot",
@@ -420,7 +467,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       result =
         conn
-        |> get("api/v1/statuses/#{activity}")
+        |> get("/api/v1/statuses/#{activity}")
 
       assert %{
                "content" => "club mate is my wingman",
@@ -627,7 +674,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> put_req_header("content-type", "application/json")
         |> post("/api/v1/statuses", %{
           "status" => "desu~",
-          "poll" => %{"options" => Enum.map(0..limit, fn _ -> "desu" end), "expires_in" => 1}
+          "poll" => %{
+            "options" => Enum.map(0..limit, fn num -> "desu #{num}" end),
+            "expires_in" => 1
+          }
         })
 
       %{"error" => error} = json_response_and_validate_schema(conn, 422)
@@ -643,7 +693,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> post("/api/v1/statuses", %{
           "status" => "...",
           "poll" => %{
-            "options" => [Enum.reduce(0..limit, "", fn _, acc -> acc <> "." end)],
+            "options" => [String.duplicate(".", limit + 1), "lol"],
             "expires_in" => 1
           }
         })
@@ -724,6 +774,32 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert object.data["content"] == "very cool poll"
       assert object.data["type"] == "Question"
       assert length(object.data["oneOf"]) == 3
+    end
+
+    test "cannot have only one option", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "desu~",
+          "poll" => %{"options" => ["mew"], "expires_in" => 1}
+        })
+
+      %{"error" => error} = json_response_and_validate_schema(conn, 422)
+      assert error == "Poll must contain at least 2 options"
+    end
+
+    test "cannot have only duplicated options", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "desu~",
+          "poll" => %{"options" => ["mew", "mew"], "expires_in" => 1}
+        })
+
+      %{"error" => error} = json_response_and_validate_schema(conn, 422)
+      assert error == "Poll must contain at least 2 options"
     end
   end
 
@@ -996,6 +1072,27 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       refute Activity.get_by_id(activity1.id)
       refute Activity.get_by_id(activity2.id)
+    end
+
+    test "when you're privileged and the user is banned", %{conn: conn} do
+      clear_config([:instance, :moderator_privileges], [:messages_delete])
+      posting_user = insert(:user, is_active: false)
+      refute posting_user.is_active
+      activity = insert(:note_activity, user: posting_user)
+      user = insert(:user, is_moderator: true)
+
+      res_conn =
+        conn
+        |> assign(:user, user)
+        |> assign(:token, insert(:oauth_token, user: user, scopes: ["write:statuses"]))
+        |> delete("/api/v1/statuses/#{activity.id}")
+
+      assert %{} = json_response_and_validate_schema(res_conn, 200)
+
+      # assert ModerationLog |> Repo.one() |> ModerationLog.get_log_entry_message() ==
+      #          "@#{user.nickname} deleted status ##{activity.id}"
+
+      refute Activity.get_by_id(activity.id)
     end
   end
 
@@ -1313,7 +1410,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert %{"id" => id} =
                conn
                |> put_req_header("content-type", "application/json")
-               |> post("api/v1/statuses", %{
+               |> post("/api/v1/statuses", %{
                  "status" => "oolong",
                  "expires_in" => expires_in
                })
@@ -1482,7 +1579,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       conn
       |> assign(:user, user3)
       |> assign(:token, insert(:oauth_token, user: user3, scopes: ["read:statuses"]))
-      |> get("api/v1/timelines/home")
+      |> get("/api/v1/timelines/home")
 
     [reblogged_activity] = json_response_and_validate_schema(conn3, 200)
 
@@ -1786,7 +1883,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
     # Using the header for pagination works correctly
     [next, _] = get_resp_header(result, "link") |> hd() |> String.split(", ")
-    [_, max_id] = Regex.run(~r/max_id=([^&]+)/, next)
+    [_, max_id] = Regex.run(~r/max_id=([^&>]+)/, next)
 
     assert max_id == third_favorite.id
 
@@ -1913,6 +2010,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, "🎅")
       User.mute(user, other_user)
 
+      deactivated_user = insert(:user)
+      {:ok, _} = CommonAPI.react_with_emoji(activity.id, deactivated_user, "🎅")
+      User.set_activation(deactivated_user, false)
+
       result =
         conn
         |> get("/api/v1/statuses/?ids[]=#{activity.id}")
@@ -1920,6 +2021,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       assert [
                %{
+                 "emoji_reactions" => [],
                  "pleroma" => %{
                    "emoji_reactions" => []
                  }
@@ -1994,6 +2096,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert response["quote_id"] == quoted_status.id
       assert response["quote"]["id"] == quoted_status.id
       assert response["quote"]["content"] == quoted_status.object.data["content"]
+      assert response["pleroma"]["context"] == quoted_status.data["context"]
     end
 
     test "posting a quote, quoting a status that isn't public", %{conn: conn} do

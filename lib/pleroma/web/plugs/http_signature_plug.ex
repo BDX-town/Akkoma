@@ -4,10 +4,15 @@
 
 defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   import Plug.Conn
-  import Phoenix.Controller, only: [get_format: 1, text: 2]
+  import Phoenix.Controller, only: [get_format: 1]
+
+  use Pleroma.Web, :verified_routes
   alias Pleroma.Activity
-  alias Pleroma.Web.Router
+  alias Pleroma.Signature
+  alias Pleroma.Instances
   require Logger
+
+  @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
 
   def init(options) do
     options
@@ -18,7 +23,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   end
 
   def call(conn, _opts) do
-    if get_format(conn) == "activity+json" do
+    if get_format(conn) in ["json", "activity+json"] do
       conn
       |> maybe_assign_valid_signature()
       |> maybe_require_signature()
@@ -28,10 +33,10 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   end
 
   def route_aliases(%{path_info: ["objects", id], query_string: query_string}) do
-    ap_id = Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :object, id)
+    ap_id = url(~p[/objects/#{id}])
 
     with %Activity{} = activity <- Activity.get_by_object_ap_id_with_object(ap_id) do
-      ["/notice/#{activity.id}", "/notice/#{activity.id}?#{query_string}"]
+      [~p"/notice/#{activity.id}", "/notice/#{activity.id}?#{query_string}"]
     else
       _ -> []
     end
@@ -57,6 +62,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
     conn
     |> assign(:valid_signature, HTTPSignatures.validate_conn(conn))
+    |> assign(:signature_actor_id, signature_host(conn))
     |> assign_valid_signature_on_route_aliases(rest)
   end
 
@@ -78,16 +84,45 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn |> get_req_header("signature") |> Enum.at(0, false)
   end
 
-  defp maybe_require_signature(%{assigns: %{valid_signature: true}} = conn), do: conn
+  defp maybe_require_signature(
+         %{assigns: %{valid_signature: true, signature_actor_id: actor_id}} = conn
+       ) do
+    # inboxes implicitly need http signatures for authentication
+    # so we don't really know if the instance will have broken federation after
+    # we turn on authorized_fetch_mode.
+    #
+    # to "check" this is a signed fetch, verify if method is GET
+    if conn.method == "GET" do
+      actor_host = URI.parse(actor_id).host
 
-  defp maybe_require_signature(conn) do
-    if Pleroma.Config.get([:activitypub, :authorized_fetch_mode], false) do
-      conn
-      |> put_status(:unauthorized)
-      |> text("Request not signed")
-      |> halt()
+      case @cachex.get(:request_signatures_cache, actor_host) do
+        {:ok, nil} ->
+          Logger.debug("Successful signature from #{actor_host}")
+          Instances.set_request_signatures(actor_host)
+          @cachex.put(:request_signatures_cache, actor_host, true)
+
+        {:ok, true} ->
+          :noop
+
+        any ->
+          Logger.warning(
+            "expected request signature cache to return a boolean, instead got #{inspect(any)}"
+          )
+      end
+    end
+
+    conn
+  end
+
+  defp maybe_require_signature(conn), do: conn
+
+  defp signature_host(conn) do
+    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
+         {:ok, actor_id} <- Signature.key_id_to_actor_id(kid) do
+      actor_id
     else
-      conn
+      e ->
+        {:error, e}
     end
   end
 end

@@ -17,6 +17,7 @@ defmodule Pleroma.Signature do
       key_id
       |> URI.parse()
       |> Map.put(:fragment, nil)
+      |> Map.put(:query, nil)
       |> remove_suffix(@known_suffixes)
 
     maybe_ap_id = URI.to_string(uri)
@@ -27,7 +28,7 @@ defmodule Pleroma.Signature do
 
       _ ->
         case Pleroma.Web.WebFinger.finger(maybe_ap_id) do
-          %{"ap_id" => ap_id} -> {:ok, ap_id}
+          {:ok, %{"ap_id" => ap_id}} -> {:ok, ap_id}
           _ -> {:error, maybe_ap_id}
         end
     end
@@ -75,6 +76,6 @@ defmodule Pleroma.Signature do
   def signed_date, do: signed_date(NaiveDateTime.utc_now())
 
   def signed_date(%NaiveDateTime{} = date) do
-    Timex.format!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
+    Timex.lformat!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT", "en")
   end
 end

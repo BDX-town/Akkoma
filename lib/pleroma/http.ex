@@ -27,10 +27,10 @@ defmodule Pleroma.HTTP do
           nil | {:ok, Env.t()} | {:error, any()}
   def get(url, headers \\ [], options \\ [])
   def get(nil, _, _), do: nil
-  def get(url, headers, options), do: request(:get, url, "", headers, options)
+  def get(url, headers, options), do: request(:get, url, nil, headers, options)
 
   @spec head(Request.url(), Request.headers(), keyword()) :: {:ok, Env.t()} | {:error, any()}
-  def head(url, headers \\ [], options \\ []), do: request(:head, url, "", headers, options)
+  def head(url, headers \\ [], options \\ []), do: request(:head, url, nil, headers, options)
 
   @doc """
   Performs POST request.
@@ -62,10 +62,17 @@ defmodule Pleroma.HTTP do
     uri = URI.parse(url)
     adapter_opts = AdapterHelper.options(uri, options || [])
 
+    adapter_opts =
+      if uri.scheme == :https do
+        AdapterHelper.maybe_add_cacerts(adapter_opts, :public_key.cacerts_get())
+      else
+        adapter_opts
+      end
+
     options = put_in(options[:adapter], adapter_opts)
     params = options[:params] || []
     request = build_request(method, headers, options, url, body, params)
-    client = Tesla.client([Tesla.Middleware.FollowRedirects])
+    client = Tesla.client([Tesla.Middleware.FollowRedirects, Tesla.Middleware.Telemetry])
 
     request(client, request)
   end

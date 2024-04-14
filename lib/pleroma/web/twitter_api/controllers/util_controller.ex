@@ -150,7 +150,10 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
     end
   end
 
-  def remote_interaction(%{body_params: %{ap_id: ap_id, profile: profile}} = conn, _params) do
+  def remote_interaction(
+        %Plug.Conn{body_params: %{ap_id: ap_id, profile: profile}} = conn,
+        _params
+      ) do
     with {:ok, %{"subscribe_address" => template}} <- WebFinger.finger(profile) do
       conn
       |> json(%{url: String.replace(template, "{uri}", ap_id)})
@@ -181,7 +184,13 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
     json(conn, emoji)
   end
 
-  def update_notificaton_settings(%{assigns: %{user: user}} = conn, params) do
+  def update_notificaton_settings(
+        %{assigns: %{user: user}, body_params: body_params} = conn,
+        params
+      ) do
+    # OpenApiSpex 3.x prevents Plug's usual parameter premerging
+    params = Map.merge(params, body_params)
+
     with {:ok, _} <- User.update_notification_settings(user, params) do
       json(conn, %{status: "success"})
     end

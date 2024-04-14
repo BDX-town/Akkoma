@@ -26,7 +26,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     filters = Config.get([Pleroma.Upload]) |> Keyword.get(:filters, [])
 
     if Pleroma.Upload.Filter.Exiftool in filters do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using Exiftool as a filter instead of Exiftool.StripLocation. This should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -62,10 +62,10 @@ defmodule Pleroma.Config.DeprecationWarnings do
   def check_simple_policy_tuples do
     has_strings =
       Config.get([:mrf_simple])
-      |> Enum.any?(fn {_, v} -> Enum.any?(v, &is_binary/1) end)
+      |> Enum.any?(fn {_, v} -> is_list(v) and Enum.any?(v, &is_binary/1) end)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the SimplePolicy configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -103,6 +103,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
       new_config =
         Config.get([:mrf_simple])
+        |> Enum.filter(fn {_k, v} -> not is_atom(v) end)
         |> Enum.map(fn {k, v} ->
           {k,
            Enum.map(v, fn
@@ -123,7 +124,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     has_strings = Config.get([:instance, :quarantined_instances], []) |> Enum.any?(&is_binary/1)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the quarantined_instances configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -160,7 +161,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     has_strings = Config.get([:mrf, :transparency_exclusions]) |> Enum.any?(&is_binary/1)
 
     if has_strings do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using strings in the transparency_exclusions configuration instead of tuples. They should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
@@ -195,7 +196,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
   def check_hellthread_threshold do
     if Config.get([:mrf_hellthread, :threshold]) do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       You are using the old configuration mechanism for the hellthread filter. Please check config.md.
       """)
@@ -218,6 +219,9 @@ defmodule Pleroma.Config.DeprecationWarnings do
       check_quarantined_instances_tuples(),
       check_transparency_exclusions_tuples(),
       check_simple_policy_tuples(),
+      check_http_adapter(),
+      check_uploader_base_url_set(),
+      check_uploader_base_url_is_not_base_domain(),
       check_exiftool_filter()
     ]
     |> Enum.reduce(:ok, fn
@@ -244,6 +248,32 @@ defmodule Pleroma.Config.DeprecationWarnings do
       :error
     else
       :ok
+    end
+  end
+
+  def check_http_adapter do
+    http_adapter = Application.get_env(:tesla, :adapter)
+
+    case http_adapter do
+      {Tesla.Adapter.Finch, _} ->
+        :ok
+
+      Tesla.Mock ->
+        # tests do be testing
+        :ok
+
+      _anything_else ->
+        Logger.error("""
+        !!!CONFIG ERROR!!!
+        Your config is using a custom tesla adapter, this was standardised
+        to finch in 2022.06, and alternate adapters were removed in 2023.02.
+        Please ensure you either:
+        \n* do not have any custom value for `:tesla, :adapter`, or
+        \n* have `config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}`
+        (your current value is #{inspect(http_adapter)})
+        """)
+
+        :error
     end
   end
 
@@ -274,7 +304,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     if warning == "" do
       :ok
     else
-      Logger.warn(warning_preface <> warning)
+      Logger.warning(warning_preface <> warning)
       :error
     end
   end
@@ -284,7 +314,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     whitelist = Config.get([:media_proxy, :whitelist])
 
     if Enum.any?(whitelist, &(not String.starts_with?(&1, "http"))) do
-      Logger.warn("""
+      Logger.warning("""
       !!!DEPRECATION WARNING!!!
       Your config is using old format (only domain) for MediaProxy whitelist option. Setting should work for now, but you are advised to change format to scheme with port to prevent possible issues later.
       """)
@@ -346,5 +376,55 @@ defmodule Pleroma.Config.DeprecationWarnings do
     else
       :ok
     end
+  end
+
+  def check_uploader_base_url_set() do
+    uses_local_uploader? = Config.get([Pleroma.Upload, :uploader]) == Pleroma.Uploaders.Local
+    base_url = Pleroma.Config.get([Pleroma.Upload, :base_url])
+
+    if base_url || !uses_local_uploader? do
+      :ok
+    else
+      Logger.error("""
+      !!!WARNING!!!
+      Your config does not specify a base_url for uploads!
+      Please make the following change:\n
+      \n* `config :pleroma, Pleroma.Upload, base_url: "https://example.com/media/`
+      \n
+      \nPlease note that it is HEAVILY recommended to use a subdomain to host user-uploaded media!
+      """)
+
+      # This is a hard exit - the uploader will not work without a base_url
+      raise ArgumentError, message: "No base_url set for uploads - please set one in your config!"
+    end
+  end
+
+  def check_uploader_base_url_is_not_base_domain() do
+    uses_local_uploader? = Config.get([Pleroma.Upload, :uploader]) == Pleroma.Uploaders.Local
+
+    uploader_host =
+      [Pleroma.Upload, :base_url]
+      |> Pleroma.Config.get()
+      |> URI.parse()
+      |> Map.get(:host)
+
+    akkoma_host =
+      [Pleroma.Web.Endpoint, :url]
+      |> Pleroma.Config.get()
+      |> Keyword.get(:host)
+
+    if uploader_host == akkoma_host && uses_local_uploader? do
+      Logger.error("""
+      !!!WARNING!!!
+      Your Akkoma Host and your Upload base_url's host are the same!
+      This can potentially be insecure!
+
+      It is HIGHLY recommended that you migrate your media uploads
+      to a subdomain at your earliest convenience
+      """)
+    end
+
+    # This isn't actually an error condition, just a warning
+    :ok
   end
 end

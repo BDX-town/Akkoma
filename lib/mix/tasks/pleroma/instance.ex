@@ -20,6 +20,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           output: :string,
           output_psql: :string,
           domain: :string,
+          media_url: :string,
           instance_name: :string,
           admin_email: :string,
           notify_email: :string,
@@ -36,8 +37,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           listen_port: :string,
           strip_uploads_location: :string,
           read_uploads_description: :string,
-          anonymize_uploads: :string,
-          dedupe_uploads: :string
+          anonymize_uploads: :string
         ],
         aliases: [
           o: :output,
@@ -60,10 +60,18 @@ defmodule Mix.Tasks.Pleroma.Instance do
           get_option(
             options,
             :domain,
-            "What domain will your instance use? (e.g pleroma.soykaf.com)"
+            "What domain will your instance use? (e.g akkoma.example.com)"
           ),
           ":"
         ) ++ [443]
+
+      media_url =
+        get_option(
+          options,
+          :media_url,
+          "What base url will uploads use? (e.g https://media.example.com/media)\n" <>
+            "  Generally this should NOT use the same domain as the instance       "
+        )
 
       name =
         get_option(
@@ -204,14 +212,6 @@ defmodule Mix.Tasks.Pleroma.Instance do
           "n"
         ) === "y"
 
-      dedupe_uploads =
-        get_option(
-          options,
-          :dedupe_uploads,
-          "Do you want to deduplicate uploaded files? (y/n)",
-          "n"
-        ) === "y"
-
       Config.put([:instance, :static_dir], static_dir)
 
       secret = :crypto.strong_rand_bytes(64) |> Base.encode64() |> binary_part(0, 64)
@@ -225,6 +225,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
         EEx.eval_file(
           template_dir <> "/sample_config.eex",
           domain: domain,
+          media_url: media_url,
           port: port,
           email: email,
           notify_email: notify_email,
@@ -249,8 +250,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
             upload_filters(%{
               strip_location: strip_uploads_location,
               read_description: read_uploads_description,
-              anonymize: anonymize_uploads,
-              dedupe: dedupe_uploads
+              anonymize: anonymize_uploads
             })
         )
 
@@ -266,12 +266,22 @@ defmodule Mix.Tasks.Pleroma.Instance do
       config_dir = Path.dirname(config_path)
       psql_dir = Path.dirname(psql_path)
 
-      [config_dir, psql_dir, static_dir, uploads_dir]
-      |> Enum.reject(&File.exists?/1)
-      |> Enum.map(&File.mkdir_p!/1)
+      # Note: Distros requiring group read (0o750) on those directories should
+      # pre-create the directories.
+      to_create =
+        [config_dir, psql_dir, static_dir, uploads_dir]
+        |> Enum.reject(&File.exists?/1)
+
+      for dir <- to_create do
+        File.mkdir_p!(dir)
+        File.chmod!(dir, 0o700)
+      end
 
       shell_info("Writing config to #{config_path}.")
 
+      # Sadly no fchmod(2) equivalent in Elixir…
+      File.touch!(config_path)
+      File.chmod!(config_path, 0o640)
       File.write(config_path, result_config)
       shell_info("Writing the postgres script to #{psql_path}.")
       File.write(psql_path, result_psql)
@@ -290,8 +300,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
     else
       shell_error(
         "The task would have overwritten the following files:\n" <>
-          (Enum.map(will_overwrite, &"- #{&1}\n") |> Enum.join("")) <>
-          "Rerun with `--force` to overwrite them."
+          Enum.map_join(will_overwrite, &"- #{&1}\n") <> "Rerun with `--force` to overwrite them."
       )
     end
   end
@@ -336,15 +345,6 @@ defmodule Mix.Tasks.Pleroma.Instance do
         enabled_filters
       end
 
-    enabled_filters =
-      if filters.dedupe do
-        enabled_filters ++ [Pleroma.Upload.Filter.Dedupe]
-      else
-        enabled_filters
-      end
-
     enabled_filters
   end
-
-  defp upload_filters(_), do: []
 end

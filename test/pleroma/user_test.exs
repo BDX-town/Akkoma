@@ -326,9 +326,9 @@ defmodule Pleroma.UserTest do
         insert(:user, %{
           local: false,
           nickname: "fuser2",
-          ap_id: "http://localhost:4001/users/fuser2",
-          follower_address: "http://localhost:4001/users/fuser2/followers",
-          following_address: "http://localhost:4001/users/fuser2/following"
+          ap_id: "http://remote.org/users/fuser2",
+          follower_address: "http://remote.org/users/fuser2/followers",
+          following_address: "http://remote.org/users/fuser2/following"
         })
 
       {:ok, user, followed} = User.follow(user, followed, :follow_accept)
@@ -444,17 +444,20 @@ defmodule Pleroma.UserTest do
     end
 
     setup do:
-            clear_config(:mrf_simple,
-              media_removal: [],
-              media_nsfw: [],
-              federated_timeline_removal: [],
-              report_removal: [],
-              reject: [],
-              followers_only: [],
-              accept: [],
-              avatar_removal: [],
-              banner_removal: [],
-              reject_deletes: []
+            clear_config(
+              [:mrf_simple],
+              %{
+                media_removal: [],
+                media_nsfw: [],
+                federated_timeline_removal: [],
+                report_removal: [],
+                reject: [],
+                followers_only: [],
+                accept: [],
+                avatar_removal: [],
+                banner_removal: [],
+                reject_deletes: []
+              }
             )
 
     setup do:
@@ -496,9 +499,6 @@ defmodule Pleroma.UserTest do
       ObanHelpers.perform_all()
 
       Pleroma.Emails.UserEmail.account_confirmation_email(registered_user)
-      # temporary hackney fix until hackney max_connections bug is fixed
-      # https://git.pleroma.social/pleroma/pleroma/-/issues/2101
-      |> Swoosh.Email.put_private(:hackney_options, ssl_options: [versions: [:"tlsv1.2"]])
       |> assert_email_sent()
     end
 
@@ -548,6 +548,21 @@ defmodule Pleroma.UserTest do
       clear_config([:instance, :account_approval_required], true)
       clear_config([:welcome, :email, :enabled], true)
       clear_config([:welcome, :email, :sender], "lain@lain.com")
+
+      # The user is still created
+      assert {:ok, %User{nickname: "nick"}} = User.register(cng)
+
+      # No emails are sent
+      ObanHelpers.perform_all()
+      refute_email_sent()
+    end
+
+    test "it works when the registering user does not provide an email" do
+      clear_config([Pleroma.Emails.Mailer, :enabled], false)
+      clear_config([:instance, :account_activation_required], false)
+      clear_config([:instance, :account_approval_required], true)
+
+      cng = User.register_changeset(%User{}, @full_user_data |> Map.put(:email, ""))
 
       # The user is still created
       assert {:ok, %User{nickname: "nick"}} = User.register(cng)
@@ -965,28 +980,37 @@ defmodule Pleroma.UserTest do
 
       assert user.last_refreshed_at == orig_user.last_refreshed_at
     end
+
+    test "it doesn't fail on invalid alsoKnownAs entries" do
+      Tesla.Mock.mock(fn
+        %{url: "https://mbp.example.com/"} ->
+          %Tesla.Env{
+            status: 200,
+            body:
+              "test/fixtures/microblogpub/user_with_invalid_also_known_as.json"
+              |> File.read!(),
+            headers: [{"content-type", "application/activity+json"}]
+          }
+
+        _ ->
+          %Tesla.Env{status: 404}
+      end)
+
+      assert {:ok, %User{also_known_as: []}} =
+               User.get_or_fetch_by_ap_id("https://mbp.example.com/")
+    end
   end
 
   test "returns an ap_id for a user" do
     user = insert(:user)
 
-    assert User.ap_id(user) ==
-             Pleroma.Web.Router.Helpers.user_feed_url(
-               Pleroma.Web.Endpoint,
-               :feed_redirect,
-               user.nickname
-             )
+    assert User.ap_id(user) == url(@endpoint, ~p[/users/#{user.nickname}])
   end
 
   test "returns an ap_followers link for a user" do
     user = insert(:user)
 
-    assert User.ap_followers(user) ==
-             Pleroma.Web.Router.Helpers.user_feed_url(
-               Pleroma.Web.Endpoint,
-               :feed_redirect,
-               user.nickname
-             ) <> "/followers"
+    assert User.ap_followers(user) == url(@endpoint, ~p[/users/#{user.nickname}/followers])
   end
 
   describe "remote user changeset" do
@@ -1324,30 +1348,32 @@ defmodule Pleroma.UserTest do
       collateral_user =
         insert(:user, %{ap_id: "https://another-awful-and-rude-instance.com/user/bully"})
 
-      {:ok, user} = User.block_domain(user, "*.awful-and-rude-instance.com")
+      {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
 
       refute User.blocks?(user, collateral_user)
     end
 
-    test "blocks domain with wildcard for subdomain" do
-      user = insert(:user)
-
-      user_from_subdomain =
-        insert(:user, %{ap_id: "https://subdomain.awful-and-rude-instance.com/user/bully"})
-
-      user_with_two_subdomains =
-        insert(:user, %{
-          ap_id: "https://subdomain.second_subdomain.awful-and-rude-instance.com/user/bully"
-        })
-
-      user_domain = insert(:user, %{ap_id: "https://awful-and-rude-instance.com/user/bully"})
-
-      {:ok, user} = User.block_domain(user, "*.awful-and-rude-instance.com")
-
-      assert User.blocks?(user, user_from_subdomain)
-      assert User.blocks?(user, user_with_two_subdomains)
-      assert User.blocks?(user, user_domain)
-    end
+    # This behaviour is not honoured by the timeline query
+    # re-add at a later date when UX is established
+    # test "blocks domain with wildcard for subdomain" do
+    #  user = insert(:user)
+    #
+    #  user_from_subdomain =
+    #    insert(:user, %{ap_id: "https://subdomain.awful-and-rude-instance.com/user/bully"})
+    #
+    #  user_with_two_subdomains =
+    #    insert(:user, %{
+    #      ap_id: "https://subdomain.second_subdomain.awful-and-rude-instance.com/user/bully"
+    #    })
+    #
+    #  user_domain = insert(:user, %{ap_id: "https://awful-and-rude-instance.com/user/bully"})
+    #
+    #  {:ok, user} = User.block_domain(user, "awful-and-rude-instance.com")
+    #
+    #  assert User.blocks?(user, user_from_subdomain)
+    #  assert User.blocks?(user, user_with_two_subdomains)
+    #  assert User.blocks?(user, user_domain)
+    # end
 
     test "unblocks domains" do
       user = insert(:user)
@@ -2151,8 +2177,8 @@ defmodule Pleroma.UserTest do
 
   describe "sync followers count" do
     setup do
-      user1 = insert(:user, local: false, ap_id: "http://localhost:4001/users/masto_closed")
-      user2 = insert(:user, local: false, ap_id: "http://localhost:4001/users/fuser2")
+      user1 = insert(:user, local: false, ap_id: "http://remote.org/users/masto_closed")
+      user2 = insert(:user, local: false, ap_id: "http://remote.org/users/fuser2")
       insert(:user, local: true)
       insert(:user, local: false, is_active: false)
       {:ok, user1: user1, user2: user2}
@@ -2246,8 +2272,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
@@ -2268,8 +2294,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
@@ -2290,8 +2316,8 @@ defmodule Pleroma.UserTest do
       other_user =
         insert(:user,
           local: false,
-          follower_address: "http://localhost:4001/users/masto_closed/followers",
-          following_address: "http://localhost:4001/users/masto_closed/following",
+          follower_address: "http://remote.org/users/masto_closed/followers",
+          following_address: "http://remote.org/users/masto_closed/following",
           ap_enabled: true
         )
 
@@ -2490,6 +2516,16 @@ defmodule Pleroma.UserTest do
     assert User.avatar_url(user, no_default: true) == nil
   end
 
+  test "avatar object with nil in href" do
+    user = insert(:user, avatar: %{"url" => [%{"href" => nil}]})
+    assert User.avatar_url(user) != nil
+  end
+
+  test "banner object with nil in href" do
+    user = insert(:user, banner: %{"url" => [%{"href" => nil}]})
+    assert User.banner_url(user) != nil
+  end
+
   test "get_host/1" do
     user = insert(:user, ap_id: "https://lain.com/users/lain", nickname: "lain")
     assert User.get_host(user) == "lain.com"
@@ -2655,6 +2691,107 @@ defmodule Pleroma.UserTest do
 
       assert user3_updated.also_known_as |> length() == 1
       assert user.ap_id in user3_updated.also_known_as
+    end
+  end
+
+  describe "follow_hashtag/2" do
+    test "should follow a hashtag" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 1
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+
+    test "should not follow a hashtag twice" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 1
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+
+    test "can follow multiple hashtags" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+      other_hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.follow_hashtag(other_hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 2
+      assert hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+      assert other_hashtag.name in Enum.map(user.followed_hashtags, fn %{name: name} -> name end)
+    end
+  end
+
+  describe "unfollow_hashtag/2" do
+    test "should unfollow a hashtag" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 0
+    end
+
+    test "should not error when trying to unfollow a hashtag twice" do
+      user = insert(:user)
+      hashtag = insert(:hashtag)
+
+      assert {:ok, _} = user |> User.follow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+      assert {:ok, _} = user |> User.unfollow_hashtag(hashtag)
+
+      user = User.get_cached_by_ap_id(user.ap_id)
+
+      assert user.followed_hashtags |> Enum.count() == 0
+    end
+  end
+
+  describe "accepts_direct_messages?/2" do
+    test "should return true if the recipient follows the sender and has set accept to :people_i_follow" do
+      recipient =
+        insert(:user, %{
+          accepts_direct_messages_from: :people_i_follow
+        })
+
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
+
+      CommonAPI.follow(recipient, sender)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return true if the recipient has set accept to :everyone" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :everybody})
+      sender = insert(:user)
+
+      assert User.accepts_direct_messages?(recipient, sender)
+    end
+
+    test "should return false if the receipient set accept to :nobody" do
+      recipient = insert(:user, %{accepts_direct_messages_from: :nobody})
+      sender = insert(:user)
+
+      refute User.accepts_direct_messages?(recipient, sender)
     end
   end
 end

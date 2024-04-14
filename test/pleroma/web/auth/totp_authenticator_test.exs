@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.Auth.TOTPAuthenticatorTest do
-  use Pleroma.Web.ConnCase, async: true
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.MFA
   alias Pleroma.MFA.BackupCodes
@@ -34,7 +34,7 @@ defmodule Pleroma.Web.Auth.TOTPAuthenticatorTest do
 
     hashed_codes =
       backup_codes
-      |> Enum.map(&Pleroma.Password.Pbkdf2.hash_pwd_salt(&1))
+      |> Enum.map(&Pleroma.Password.hash_pwd_salt(&1))
 
     user =
       insert(:user,

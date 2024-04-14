@@ -8,12 +8,14 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
 
   require Logger
 
+  @mix_env Mix.env()
+
   def init(opts), do: opts
 
   def call(conn, _options) do
     if Config.get([:http_security, :enabled]) do
       conn
-      |> merge_resp_headers(headers())
+      |> merge_resp_headers(headers(conn))
       |> maybe_send_sts_header(Config.get([:http_security, :sts]))
     else
       conn
@@ -36,19 +38,19 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
     end
   end
 
-  def headers do
+  @spec headers(Plug.Conn.t()) :: [{String.t(), String.t()}]
+  def headers(conn) do
     referrer_policy = Config.get([:http_security, :referrer_policy])
     report_uri = Config.get([:http_security, :report_uri])
     custom_http_frontend_headers = custom_http_frontend_headers()
 
     headers = [
-      {"x-xss-protection", "1; mode=block"},
+      {"x-xss-protection", "0"},
       {"x-permitted-cross-domain-policies", "none"},
       {"x-frame-options", "DENY"},
       {"x-content-type-options", "nosniff"},
       {"referrer-policy", referrer_policy},
-      {"x-download-options", "noopen"},
-      {"content-security-policy", csp_string()},
+      {"content-security-policy", csp_string(conn)},
       {"permissions-policy", "interest-cohort=()"}
     ]
 
@@ -68,7 +70,7 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
         ]
       }
 
-      [{"reply-to", Jason.encode!(report_group)} | headers]
+      [{"report-to", Jason.encode!(report_group)} | headers]
     else
       headers
     end
@@ -76,21 +78,20 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
 
   static_csp_rules = [
     "default-src 'none'",
-    "base-uri 'self'",
+    "base-uri 'none'",
     "frame-ancestors 'none'",
-    "style-src 'self' 'unsafe-inline'",
-    "font-src 'self'",
     "manifest-src 'self'"
   ]
 
   @csp_start [Enum.join(static_csp_rules, ";") <> ";"]
 
-  defp csp_string do
+  defp csp_string(conn) do
     scheme = Config.get([Pleroma.Web.Endpoint, :url])[:scheme]
     static_url = Pleroma.Web.Endpoint.static_url()
     websocket_url = Pleroma.Web.Endpoint.websocket_url()
     report_uri = Config.get([:http_security, :report_uri])
-
+    %{assigns: %{csp_nonce: nonce}} = conn
+    nonce_tag = "nonce-" <> nonce
     img_src = "img-src 'self' data: blob:"
     media_src = "media-src 'self'"
 
@@ -104,20 +105,24 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
         {[img_src, " https:"], [media_src, " https:"]}
       end
 
-    connect_src = ["connect-src 'self' blob: ", static_url, ?\s, websocket_url]
-
     connect_src =
-      if Config.get(:env) == :dev do
-        [connect_src, " http://localhost:3035/"]
+      if Config.get([:media_proxy, :enabled]) do
+        sources = build_csp_multimedia_source_list()
+        ["connect-src 'self' ", static_url, ?\s, websocket_url, ?\s, sources]
       else
-        connect_src
+        ["connect-src 'self' ", static_url, ?\s, websocket_url]
       end
 
+    style_src = "style-src 'self' '#{nonce_tag}'"
+    font_src = "font-src 'self'"
+
+    script_src = "script-src 'self' '#{nonce_tag}' "
+
     script_src =
-      if Config.get(:env) == :dev do
-        "script-src 'self' 'unsafe-eval'"
+      if @mix_env == :dev do
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
       else
-        "script-src 'self'"
+        script_src
       end
 
     report = if report_uri, do: ["report-uri ", report_uri, ";report-to csp-endpoint"]
@@ -128,6 +133,8 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
     |> add_csp_param(media_src)
     |> add_csp_param(connect_src)
     |> add_csp_param(script_src)
+    |> add_csp_param(font_src)
+    |> add_csp_param(style_src)
     |> add_csp_param(insecure)
     |> add_csp_param(report)
     |> :erlang.iolist_to_binary()
@@ -193,7 +200,7 @@ defmodule Pleroma.Web.Plugs.HTTPSecurityPlug do
 
   def warn_if_disabled do
     unless Config.get([:http_security, :enabled]) do
-      Logger.warn("
+      Logger.warning("
                                  .i;;;;i.
                                iYcviii;vXY:
                              .YXi       .i1c.
@@ -238,11 +245,9 @@ your instance and your users via malicious posts:
 
   defp maybe_send_sts_header(conn, true) do
     max_age_sts = Config.get([:http_security, :sts_max_age])
-    max_age_ct = Config.get([:http_security, :ct_max_age])
 
     merge_resp_headers(conn, [
-      {"strict-transport-security", "max-age=#{max_age_sts}; includeSubDomains"},
-      {"expect-ct", "enforce, max-age=#{max_age_ct}"}
+      {"strict-transport-security", "max-age=#{max_age_sts}; includeSubDomains; preload"}
     ])
   end
 

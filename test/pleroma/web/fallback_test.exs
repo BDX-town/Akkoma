@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.FallbackTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
   import Pleroma.Factory
 
   describe "neither preloaded data nor metadata attached to" do
@@ -70,12 +70,6 @@ defmodule Pleroma.Web.FallbackTest do
       refute html_response(public_page, 200) =~ "<!--server-generated-meta-->"
       assert html_response(public_page, 200) =~ "initial-results"
     end
-  end
-
-  test "GET /api*path", %{conn: conn} do
-    assert conn
-           |> get("/api/foo")
-           |> json_response(404) == %{"error" => "Not implemented"}
   end
 
   test "GET /pleroma/admin -> /pleroma/admin/", %{conn: conn} do

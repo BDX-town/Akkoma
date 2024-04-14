@@ -53,6 +53,7 @@ defmodule Pleroma.Application do
     Config.DeprecationWarnings.warn()
     Pleroma.Web.Plugs.HTTPSecurityPlug.warn_if_disabled()
     Pleroma.ApplicationRequirements.verify!()
+    load_all_pleroma_modules()
     load_custom_modules()
     Pleroma.Docs.JSON.compile()
     limiters_setup()
@@ -73,7 +74,8 @@ defmodule Pleroma.Application do
           Pleroma.JobQueueMonitor,
           {Majic.Pool, [name: Pleroma.MajicPool, pool_size: Config.get([:majic_pool, :size], 2)]},
           {Oban, Config.get(Oban)},
-          Pleroma.Web.Endpoint
+          Pleroma.Web.Endpoint,
+          Pleroma.Web.Telemetry
         ] ++
         elasticsearch_children() ++
         task_children(@mix_env) ++
@@ -86,7 +88,7 @@ defmodule Pleroma.Application do
     # Go for the default 3 unless we're in test
     max_restarts =
       if @mix_env == :test do
-        100
+        1000
       else
         3
       end
@@ -111,7 +113,7 @@ defmodule Pleroma.Application do
         num
       else
         e ->
-          Logger.warn(
+          Logger.warning(
             "Could not get the postgres version: #{inspect(e)}.\nSetting the default value of 9.6"
           )
 
@@ -143,6 +145,24 @@ defmodule Pleroma.Application do
     end
   end
 
+  def load_all_pleroma_modules do
+    :code.all_available()
+    |> Enum.filter(fn {mod, _, _} ->
+      mod
+      |> to_string()
+      |> String.starts_with?("Elixir.Pleroma.")
+    end)
+    |> Enum.map(fn {mod, _, _} ->
+      mod
+      |> to_string()
+      |> String.to_existing_atom()
+      |> Code.ensure_loaded!()
+    end)
+
+    # Use this when 1.15 is standard
+    # |> Code.ensure_all_loaded!()
+  end
+
   defp cachex_children do
     [
       build_cachex("used_captcha", ttl_interval: seconds_valid_interval()),
@@ -156,7 +176,10 @@ defmodule Pleroma.Application do
       build_cachex("emoji_packs", expiration: emoji_packs_expiration(), limit: 10),
       build_cachex("failed_proxy_url", limit: 2500),
       build_cachex("banned_urls", default_ttl: :timer.hours(24 * 30), limit: 5_000),
-      build_cachex("translations", default_ttl: :timer.hours(24 * 30), limit: 2500)
+      build_cachex("translations", default_ttl: :timer.hours(24 * 30), limit: 2500),
+      build_cachex("instances", default_ttl: :timer.hours(24), ttl_interval: 1000, limit: 2500),
+      build_cachex("request_signatures", default_ttl: :timer.hours(24 * 30), limit: 3000),
+      build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300)
     ]
   end
 
@@ -196,6 +219,8 @@ defmodule Pleroma.Application do
     ]
   end
 
+  @spec task_children(atom()) :: [map()]
+
   defp task_children(:test) do
     [
       %{
@@ -221,6 +246,7 @@ defmodule Pleroma.Application do
     ]
   end
 
+  @spec elasticsearch_children :: [Pleroma.Search.Elasticsearch.Cluster]
   def elasticsearch_children do
     config = Config.get([Pleroma.Search, :module])
 
@@ -253,11 +279,16 @@ defmodule Pleroma.Application do
   defp http_children do
     proxy_url = Config.get([:http, :proxy_url])
     proxy = Pleroma.HTTP.AdapterHelper.format_proxy(proxy_url)
+    pool_size = Config.get([:http, :pool_size])
+
+    :public_key.cacerts_load()
 
     config =
       [:http, :adapter]
       |> Config.get([])
+      |> Pleroma.HTTP.AdapterHelper.add_pool_size(pool_size)
       |> Pleroma.HTTP.AdapterHelper.maybe_add_proxy_pool(proxy)
+      |> Pleroma.HTTP.AdapterHelper.ensure_ipv6()
       |> Keyword.put(:name, MyFinch)
 
     [{Finch, config}]

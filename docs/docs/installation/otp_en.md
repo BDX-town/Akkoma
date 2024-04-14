@@ -5,7 +5,7 @@
 This guide covers a installation using an OTP release. To install Akkoma from source, please check out the corresponding guide for your distro.
 
 ## Pre-requisites
-* A machine running Linux with GNU (e.g. Debian, Ubuntu) or musl (e.g. Alpine) libc and `x86_64`, `aarch64` or `armv7l` CPU, you have root access to. If you are not sure if it's compatible see [Detecting flavour section](#detecting-flavour) below
+* A machine running Linux with GNU (e.g. Debian, Ubuntu) or musl (e.g. Alpine) libc and an `x86_64` or `arm64` CPU you have root access to. If you are not sure if it's compatible see [Detecting flavour section](#detecting-flavour) below
 * For installing OTP releases on RedHat-based distros like Fedora and Centos Stream, please follow [this guide](./otp_redhat_en.md) instead.
 * A (sub)domain pointed to the machine
 
@@ -15,16 +15,16 @@ While in theory OTP releases are possbile to install on any compatible machine, 
 
 ### Detecting flavour
 
-This is a little more complex than it used to be (thanks ubuntu)
-
 Use the following mapping to figure out your flavour:
 
-| distribution  | flavour            | available branches  |
-| ------------- | ------------------ | ------------------- |
-| debian stable | amd64              | develop, stable     |
-| ubuntu focal  | amd64              | develop, stable     |
-| ubuntu jammy  | amd64-ubuntu-jammy | develop, stable     |
-| alpine        | amd64-musl         | stable              |
+| distribution    | architecture       | flavour             | available branches  |
+| --------------- | ------------------ | ------------------- | ------------------- |
+| debian bookworm | amd64              | amd64               | develop, stable     |
+| debian bookworm | arm64              | arm64               | stable              |
+| ubuntu jammy    | amd64              | amd64               | develop, stable     |
+| ubuntu jammy    | arm64              | arm64               | develop, stable     |
+| alpine          | amd64              | amd64-musl          | stable              |
+| alpine          | arm64              | arm64-musl          | stable              |
 
 Other similar distributions will _probably_ work, but if it is not listed above, there is no official
 support.
@@ -119,11 +119,15 @@ adduser --system --shell  /bin/false --home /opt/akkoma akkoma
 
 # Set the flavour environment variable to the string you got in Detecting flavour section.
 # For example if the flavour is `amd64-musl` the command will be
-export FLAVOUR="amd64-musl"
+#     export FLAVOUR="amd64-musl"
+export FLAVOUR="<replace-this-with-the-correct-flavour-string>"
+
+# Make sure the SHELL variable is set
+export SHELL="${SHELL:-/bin/sh}"
 
 # Clone the release build into a temporary directory and unpack it
 su akkoma -s $SHELL -lc "
-curl 'https://akkoma-updates.s3-website.fr-par.scw.cloud/develop/akkoma-$FLAVOUR.zip' -o /tmp/akkoma.zip
+curl 'https://akkoma-updates.s3-website.fr-par.scw.cloud/stable/akkoma-$FLAVOUR.zip' -o /tmp/akkoma.zip
 unzip /tmp/akkoma.zip -d /tmp/
 "
 
@@ -183,18 +187,18 @@ The location of nginx configs is dependent on the distro
 
 === "Alpine"
     ```
-    cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
+    cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/conf.d/akkoma.conf
     ```
 
 === "Debian/Ubuntu"
     ```
-    cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/sites-available/akkoma.conf
+    cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/sites-available/akkoma.conf
     ln -s /etc/nginx/sites-available/akkoma.conf /etc/nginx/sites-enabled/akkoma.conf
     ```
 
 If your distro does not have either of those you can append `include /etc/nginx/akkoma.conf` to the end of the http section in /etc/nginx/nginx.conf and
 ```sh
-cp /opt/akkoma/installation/nginx/akkoma.nginx /etc/nginx/akkoma.conf
+cp /opt/akkoma/installation/akkoma.nginx /etc/nginx/akkoma.conf
 ```
 
 #### Edit the nginx config

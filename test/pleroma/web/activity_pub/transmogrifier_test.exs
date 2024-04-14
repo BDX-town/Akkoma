@@ -4,8 +4,8 @@
 
 defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   use Oban.Testing, repo: Pleroma.Repo
-  use Pleroma.DataCase
-
+  use Pleroma.DataCase, async: false
+  @moduletag :mocked
   alias Pleroma.Activity
   alias Pleroma.Object
   alias Pleroma.Tests.ObanHelpers
@@ -25,6 +25,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   end
 
   setup do: clear_config([:instance, :max_remote_account_fields])
+  setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
 
   describe "handle_incoming" do
     test "it works for incoming unfollows with an existing follow" do
@@ -535,7 +536,7 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
     test "returns nil when cannot normalize object" do
       assert capture_log(fn ->
                refute Transmogrifier.get_obj_helper("test-obj-id")
-             end) =~ "Unsupported URI scheme"
+             end) =~ "URI Scheme Invalid"
     end
 
     @tag capture_log: true

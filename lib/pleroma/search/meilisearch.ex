@@ -128,7 +128,7 @@ defmodule Pleroma.Search.Meilisearch do
           trimmed
         end
 
-      if String.length(content) > 1 do
+      if String.length(content) > 1 and not is_nil(data["published"]) do
         {:ok, published, _} = DateTime.from_iso8601(data["published"])
 
         %{
@@ -154,10 +154,11 @@ defmodule Pleroma.Search.Meilisearch do
 
       with {:ok, res} <- result,
            true <- Map.has_key?(res, "taskUid") do
-        # Do nothing
+        {:ok, res}
       else
-        _ ->
+        err ->
           Logger.error("Failed to add activity #{activity.id} to index: #{inspect(result)}")
+          {:error, err}
       end
     end
   end

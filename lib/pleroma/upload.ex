@@ -64,6 +64,9 @@ defmodule Pleroma.Upload do
           description: String.t(),
           path: String.t()
         }
+
+  @always_enabled_filters [Pleroma.Upload.Filter.Dedupe]
+
   defstruct [
     :id,
     :name,
@@ -76,15 +79,6 @@ defmodule Pleroma.Upload do
     :path
   ]
 
-  defp get_description(upload) do
-    case {upload.description, Pleroma.Config.get([Pleroma.Upload, :default_description])} do
-      {description, _} when is_binary(description) -> description
-      {_, :filename} -> upload.name
-      {_, str} when is_binary(str) -> str
-      _ -> ""
-    end
-  end
-
   @spec store(source, options :: [option()]) :: {:ok, Map.t()} | {:error, any()}
   @doc "Store a file. If using a `Plug.Upload{}` as the source, be sure to use `Majic.Plug` to ensure its content_type and filename is correct."
   def store(upload, opts \\ []) do
@@ -93,7 +87,7 @@ defmodule Pleroma.Upload do
     with {:ok, upload} <- prepare_upload(upload, opts),
          upload = %__MODULE__{upload | path: upload.path || "#{upload.id}/#{upload.name}"},
          {:ok, upload} <- Pleroma.Upload.Filter.filter(opts.filters, upload),
-         description = get_description(upload),
+         description = Map.get(upload, :description) || "",
          {_, true} <-
            {:description_limit,
             String.length(description) <= Pleroma.Config.get([:instance, :description_limit])},
@@ -152,7 +146,11 @@ defmodule Pleroma.Upload do
       activity_type: Keyword.get(opts, :activity_type, activity_type),
       size_limit: Keyword.get(opts, :size_limit, size_limit),
       uploader: Keyword.get(opts, :uploader, Pleroma.Config.get([__MODULE__, :uploader])),
-      filters: Keyword.get(opts, :filters, Pleroma.Config.get([__MODULE__, :filters])),
+      filters:
+        Enum.uniq(
+          Keyword.get(opts, :filters, Pleroma.Config.get([__MODULE__, :filters])) ++
+            @always_enabled_filters
+        ),
       description: Keyword.get(opts, :description),
       base_url: base_url()
     }
@@ -174,7 +172,7 @@ defmodule Pleroma.Upload do
   defp prepare_upload(%{img: "data:image/" <> image_data}, opts) do
     parsed = Regex.named_captures(~r/(?<filetype>jpeg|png|gif);base64,(?<data>.*)/, image_data)
     data = Base.decode64!(parsed["data"], ignore: :whitespace)
-    hash = Base.encode16(:crypto.hash(:sha256, data), lower: true)
+    hash = Base.encode16(:crypto.hash(:sha256, data), case: :lower)
 
     with :ok <- check_binary_size(data, opts.size_limit),
          tmp_path <- tempfile_for_image(data),
@@ -250,7 +248,7 @@ defmodule Pleroma.Upload do
 
     case uploader do
       Pleroma.Uploaders.Local ->
-        upload_base_url || Pleroma.Web.Endpoint.url() <> "/media/"
+        upload_base_url
 
       Pleroma.Uploaders.S3 ->
         bucket = Config.get([Pleroma.Uploaders.S3, :bucket])
@@ -276,7 +274,7 @@ defmodule Pleroma.Upload do
         end
 
       _ ->
-        public_endpoint || upload_base_url || Pleroma.Web.Endpoint.url() <> "/media/"
+        public_endpoint || upload_base_url
     end
   end
 end

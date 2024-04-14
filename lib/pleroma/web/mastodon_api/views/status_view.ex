@@ -21,6 +21,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   alias Pleroma.Web.MastodonAPI.StatusView
   alias Pleroma.Web.MediaProxy
   alias Pleroma.Web.PleromaAPI.EmojiReactionController
+  require Logger
 
   import Pleroma.Web.ActivityPub.Visibility, only: [get_visibility: 1, visible_for_user?: 2]
 
@@ -65,7 +66,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   # This should be removed in a future version of Pleroma. Pleroma-FE currently
   # depends on this field, as well.
   defp get_context_id(%{data: %{"context" => context}}) when is_binary(context) do
-    use Bitwise
+    import Bitwise
 
     :erlang.crc32(context)
     |> band(bnot(0x8000_0000))
@@ -87,6 +88,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   defp reblogged?(_activity, _user), do: false
 
   def render("index.json", opts) do
+    Logger.debug("Rendering index")
     reading_user = opts[:for]
     # To do: check AdminAPIControllerTest on the reasons behind nil activities in the list
     activities = Enum.filter(opts.activities, & &1)
@@ -131,13 +133,15 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       |> Map.put(:parent_activities, parent_activities)
       |> Map.put(:relationships, relationships_opt)
 
-    safe_render_many(activities, StatusView, "show.json", opts)
+    render_many(activities, StatusView, "show.json", opts)
   end
 
   def render(
         "show.json",
-        %{activity: %{data: %{"type" => "Announce", "object" => _object}} = activity} = opts
+        %{activity: %{id: id, data: %{"type" => "Announce", "object" => _object}} = activity} =
+          opts
       ) do
+    Logger.debug("Rendering reblog #{id}")
     user = CommonAPI.get_user(activity.data["actor"])
     created_at = Utils.to_masto_date(activity.data["published"])
     object = Object.normalize(activity, fetch: false)
@@ -169,6 +173,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       |> Enum.map(fn user -> AccountView.render("mention.json", %{user: user}) end)
 
     {pinned?, pinned_at} = pin_data(object, user)
+    lang = language(object)
 
     %{
       id: to_string(activity.id),
@@ -182,7 +187,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       in_reply_to_id: nil,
       in_reply_to_account_id: nil,
       reblog: reblogged,
-      content: reblogged[:content] || "",
+      content: "",
       created_at: created_at,
       reblogs_count: 0,
       replies_count: 0,
@@ -199,7 +204,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       mentions: mentions,
       tags: reblogged[:tags] || [],
       application: build_application(object.data["generator"]),
-      language: nil,
+      language: lang,
       emojis: [],
       pleroma: %{
         local: activity.local,
@@ -208,213 +213,220 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
     }
   end
 
-  def render("show.json", %{activity: %{data: %{"object" => _object}} = activity} = opts) do
-    object = Object.normalize(activity, fetch: false)
+  def render("show.json", %{activity: %{id: id, data: %{"object" => _object}} = activity} = opts) do
+    Logger.debug("Rendering status #{id}")
 
-    user = CommonAPI.get_user(activity.data["actor"])
-    user_follower_address = user.follower_address
+    with %Object{} = object <- Object.normalize(activity, fetch: false) do
+      user = CommonAPI.get_user(activity.data["actor"])
+      user_follower_address = user.follower_address
 
-    like_count = object.data["like_count"] || 0
-    announcement_count = object.data["announcement_count"] || 0
+      like_count = object.data["like_count"] || 0
+      announcement_count = object.data["announcement_count"] || 0
 
-    hashtags = Object.hashtags(object)
-    sensitive = object.data["sensitive"] || Enum.member?(hashtags, "nsfw")
+      hashtags = Object.hashtags(object)
+      sensitive = object.data["sensitive"] || Enum.member?(hashtags, "nsfw")
 
-    tags = Object.tags(object)
+      tags = Object.tags(object)
 
-    tag_mentions =
-      tags
-      |> Enum.filter(fn tag -> is_map(tag) and tag["type"] == "Mention" end)
-      |> Enum.map(fn tag -> tag["href"] end)
+      tag_mentions =
+        tags
+        |> Enum.filter(fn tag -> is_map(tag) and tag["type"] == "Mention" end)
+        |> Enum.map(fn tag -> tag["href"] end)
 
-    mentions =
-      (object.data["to"] ++ tag_mentions)
-      |> Enum.uniq()
-      |> Enum.map(fn
-        Pleroma.Constants.as_public() -> nil
-        ^user_follower_address -> nil
-        ap_id -> User.get_cached_by_ap_id(ap_id)
-      end)
-      |> Enum.filter(& &1)
-      |> Enum.map(fn user -> AccountView.render("mention.json", %{user: user}) end)
+      to_data = if is_nil(object.data["to"]), do: [], else: object.data["to"]
 
-    favorited = opts[:for] && opts[:for].ap_id in (object.data["likes"] || [])
+      mentions =
+        (to_data ++ tag_mentions)
+        |> Enum.uniq()
+        |> Enum.map(fn
+          Pleroma.Constants.as_public() -> nil
+          ^user_follower_address -> nil
+          ap_id -> User.get_cached_by_ap_id(ap_id)
+        end)
+        |> Enum.filter(& &1)
+        |> Enum.map(fn user -> AccountView.render("mention.json", %{user: user}) end)
 
-    bookmarked = Activity.get_bookmark(activity, opts[:for]) != nil
+      favorited = opts[:for] && opts[:for].ap_id in (object.data["likes"] || [])
 
-    client_posted_this_activity = opts[:for] && user.id == opts[:for].id
+      bookmarked = Activity.get_bookmark(activity, opts[:for]) != nil
 
-    expires_at =
-      with true <- client_posted_this_activity,
-           %Oban.Job{scheduled_at: scheduled_at} <-
-             Pleroma.Workers.PurgeExpiredActivity.get_expiration(activity.id) do
-        scheduled_at
-      else
-        _ -> nil
-      end
+      client_posted_this_activity = opts[:for] && user.id == opts[:for].id
 
-    thread_muted? =
-      cond do
-        is_nil(opts[:for]) -> false
-        is_boolean(activity.thread_muted?) -> activity.thread_muted?
-        true -> CommonAPI.thread_muted?(opts[:for], activity)
-      end
+      expires_at =
+        with true <- client_posted_this_activity,
+             %Oban.Job{scheduled_at: scheduled_at} <-
+               Pleroma.Workers.PurgeExpiredActivity.get_expiration(activity.id) do
+          scheduled_at
+        else
+          _ -> nil
+        end
 
-    attachment_data = object.data["attachment"] || []
-    attachments = render_many(attachment_data, StatusView, "attachment.json", as: :attachment)
+      thread_muted? =
+        cond do
+          is_nil(opts[:for]) -> false
+          is_boolean(activity.thread_muted?) -> activity.thread_muted?
+          true -> CommonAPI.thread_muted?(opts[:for], activity)
+        end
 
-    created_at = Utils.to_masto_date(object.data["published"])
+      attachment_data = object.data["attachment"] || []
+      attachments = render_many(attachment_data, StatusView, "attachment.json", as: :attachment)
 
-    edited_at =
-      with %{"updated" => updated} <- object.data,
-           date <- Utils.to_masto_date(updated),
-           true <- date != "" do
-        date
-      else
-        _ ->
-          nil
-      end
+      created_at = Utils.to_masto_date(object.data["published"])
 
-    reply_to = get_reply_to(activity, opts)
+      edited_at =
+        with %{"updated" => updated} <- object.data,
+             date <- Utils.to_masto_date(updated),
+             true <- date != "" do
+          date
+        else
+          _ ->
+            nil
+        end
 
-    reply_to_user = reply_to && CommonAPI.get_user(reply_to.data["actor"])
+      reply_to = get_reply_to(activity, opts)
 
-    history_len =
-      1 +
-        (Object.Updater.history_for(object.data)
-         |> Map.get("orderedItems")
-         |> length())
+      reply_to_user = reply_to && CommonAPI.get_user(reply_to.data["actor"])
 
-    # See render("history.json", ...) for more details
-    # Here the implicit index of the current content is 0
-    chrono_order = history_len - 1
+      history_len =
+        1 +
+          (Object.Updater.history_for(object.data)
+           |> Map.get("orderedItems")
+           |> length())
 
-    content =
-      object
-      |> render_content()
+      # See render("history.json", ...) for more details
+      # Here the implicit index of the current content is 0
+      chrono_order = history_len - 1
 
-    content_html =
-      content
-      |> Activity.HTML.get_cached_scrubbed_html_for_activity(
-        User.html_filter_policy(opts[:for]),
-        activity,
-        "mastoapi:content:#{chrono_order}"
-      )
+      content =
+        object
+        |> render_content()
 
-    content_plaintext =
-      content
-      |> Activity.HTML.get_cached_stripped_html_for_activity(
-        activity,
-        "mastoapi:content:#{chrono_order}"
-      )
-
-    summary = object.data["summary"] || ""
-
-    card = render("card.json", Pleroma.Web.RichMedia.Helpers.fetch_data_for_activity(activity))
-
-    url =
-      if user.local do
-        Pleroma.Web.Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :notice, activity)
-      else
-        object.data["url"] || object.data["external_url"] || object.data["id"]
-      end
-
-    direct_conversation_id =
-      with {_, nil} <- {:direct_conversation_id, opts[:direct_conversation_id]},
-           {_, true} <- {:include_id, opts[:with_direct_conversation_id]},
-           {_, %User{} = for_user} <- {:for_user, opts[:for]} do
-        Activity.direct_conversation_id(activity, for_user)
-      else
-        {:direct_conversation_id, participation_id} when is_integer(participation_id) ->
-          participation_id
-
-        _e ->
-          nil
-      end
-
-    emoji_reactions =
-      object.data
-      |> Map.get("reactions", [])
-      |> EmojiReactionController.filter_allowed_users(
-        opts[:for],
-        Map.get(opts, :with_muted, false)
-      )
-      |> Stream.map(fn {emoji, users, url} ->
-        build_emoji_map(emoji, users, url, opts[:for])
-      end)
-      |> Enum.to_list()
-
-    # Status muted state (would do 1 request per status unless user mutes are preloaded)
-    muted =
-      thread_muted? ||
-        UserRelationship.exists?(
-          get_in(opts, [:relationships, :user_relationships]),
-          :mute,
-          opts[:for],
-          user,
-          fn for_user, user -> User.mutes?(for_user, user) end
+      content_html =
+        content
+        |> Activity.HTML.get_cached_scrubbed_html_for_activity(
+          User.html_filter_policy(opts[:for]),
+          activity,
+          "mastoapi:content:#{chrono_order}"
         )
 
-    {pinned?, pinned_at} = pin_data(object, user)
+      content_plaintext =
+        content
+        |> Activity.HTML.get_cached_stripped_html_for_activity(
+          activity,
+          "mastoapi:content:#{chrono_order}"
+        )
 
-    quote = Activity.get_quoted_activity_from_object(object)
+      summary = object.data["summary"] || ""
 
-    %{
-      id: to_string(activity.id),
-      uri: object.data["id"],
-      url: url,
-      account:
-        AccountView.render("show.json", %{
-          user: user,
-          for: opts[:for]
-        }),
-      in_reply_to_id: reply_to && to_string(reply_to.id),
-      in_reply_to_account_id: reply_to_user && to_string(reply_to_user.id),
-      reblog: nil,
-      card: card,
-      content: content_html,
-      text: opts[:with_source] && get_source_text(object.data["source"]),
-      created_at: created_at,
-      edited_at: edited_at,
-      reblogs_count: announcement_count,
-      replies_count: object.data["repliesCount"] || 0,
-      favourites_count: like_count,
-      reblogged: reblogged?(activity, opts[:for]),
-      favourited: present?(favorited),
-      bookmarked: present?(bookmarked),
-      muted: muted,
-      pinned: pinned?,
-      sensitive: sensitive,
-      spoiler_text: summary,
-      visibility: get_visibility(object),
-      media_attachments: attachments,
-      poll: render(PollView, "show.json", object: object, for: opts[:for]),
-      mentions: mentions,
-      tags: build_tags(tags),
-      application: build_application(object.data["generator"]),
-      language: nil,
-      emojis: build_emojis(object.data["emoji"]),
-      quote_id: if(quote, do: quote.id, else: nil),
-      quote: maybe_render_quote(quote, opts),
-      emoji_reactions: emoji_reactions,
-      pleroma: %{
-        local: activity.local,
-        conversation_id: get_context_id(activity),
-        context: object.data["context"],
-        in_reply_to_account_acct: reply_to_user && reply_to_user.nickname,
-        content: %{"text/plain" => content_plaintext},
-        spoiler_text: %{"text/plain" => summary},
-        expires_at: expires_at,
-        direct_conversation_id: direct_conversation_id,
-        thread_muted: thread_muted?,
+      card = render("card.json", Pleroma.Web.RichMedia.Helpers.fetch_data_for_activity(activity))
+
+      url =
+        if user.local do
+          url(~p[/notice/#{activity}])
+        else
+          object.data["url"] || object.data["external_url"] || object.data["id"]
+        end
+
+      direct_conversation_id =
+        with {_, nil} <- {:direct_conversation_id, opts[:direct_conversation_id]},
+             {_, true} <- {:include_id, opts[:with_direct_conversation_id]},
+             {_, %User{} = for_user} <- {:for_user, opts[:for]} do
+          Activity.direct_conversation_id(activity, for_user)
+        else
+          {:direct_conversation_id, participation_id} when is_integer(participation_id) ->
+            participation_id
+
+          _e ->
+            nil
+        end
+
+      emoji_reactions =
+        object.data
+        |> Map.get("reactions", [])
+        |> EmojiReactionController.filter_allowed_users(
+          opts[:for],
+          Map.get(opts, :with_muted, false)
+        )
+        |> Stream.map(fn {emoji, users, url} ->
+          build_emoji_map(emoji, users, url, opts[:for])
+        end)
+        |> Enum.to_list()
+
+      # Status muted state (would do 1 request per status unless user mutes are preloaded)
+      muted =
+        thread_muted? ||
+          UserRelationship.exists?(
+            get_in(opts, [:relationships, :user_relationships]),
+            :mute,
+            opts[:for],
+            user,
+            fn for_user, user -> User.mutes?(for_user, user) end
+          )
+
+      {pinned?, pinned_at} = pin_data(object, user)
+
+      quote = Activity.get_quoted_activity_from_object(object)
+      lang = language(object)
+
+      %{
+        id: to_string(activity.id),
+        uri: object.data["id"],
+        url: url,
+        account:
+          AccountView.render("show.json", %{
+            user: user,
+            for: opts[:for]
+          }),
+        in_reply_to_id: reply_to && to_string(reply_to.id),
+        in_reply_to_account_id: reply_to_user && to_string(reply_to_user.id),
+        reblog: nil,
+        card: card,
+        content: content_html,
+        text: opts[:with_source] && get_source_text(object.data["source"]),
+        created_at: created_at,
+        edited_at: edited_at,
+        reblogs_count: announcement_count,
+        replies_count: object.data["repliesCount"] || 0,
+        favourites_count: like_count,
+        reblogged: reblogged?(activity, opts[:for]),
+        favourited: present?(favorited),
+        bookmarked: present?(bookmarked),
+        muted: muted,
+        pinned: pinned?,
+        sensitive: sensitive,
+        spoiler_text: summary,
+        visibility: get_visibility(object),
+        media_attachments: attachments,
+        poll: render(PollView, "show.json", object: object, for: opts[:for]),
+        mentions: mentions,
+        tags: build_tags(tags),
+        application: build_application(object.data["generator"]),
+        language: lang,
+        emojis: build_emojis(object.data["emoji"]),
+        quote_id: if(quote, do: quote.id, else: nil),
+        quote: maybe_render_quote(quote, opts),
         emoji_reactions: emoji_reactions,
-        parent_visible: visible_for_user?(reply_to, opts[:for]),
-        pinned_at: pinned_at
-      },
-      akkoma: %{
-        source: object.data["source"]
+        pleroma: %{
+          local: activity.local,
+          conversation_id: get_context_id(activity),
+          context: object.data["context"],
+          in_reply_to_account_acct: reply_to_user && reply_to_user.nickname,
+          content: %{"text/plain" => content_plaintext},
+          spoiler_text: %{"text/plain" => summary},
+          expires_at: expires_at,
+          direct_conversation_id: direct_conversation_id,
+          thread_muted: thread_muted?,
+          emoji_reactions: emoji_reactions,
+          parent_visible: visible_for_user?(reply_to, opts[:for]),
+          pinned_at: pinned_at
+        },
+        akkoma: %{
+          source: object.data["source"]
+        }
       }
-    }
+    else
+      nil -> nil
+    end
   end
 
   def render("show.json", _) do
@@ -422,6 +434,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   end
 
   def render("history.json", %{activity: %{data: %{"object" => _object}} = activity} = opts) do
+    Logger.debug("Rendering history for #{activity.id}")
     object = Object.normalize(activity, fetch: false)
 
     hashtags = Object.hashtags(object)
@@ -608,6 +621,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   def render("attachment_meta.json", _), do: nil
 
   def render("context.json", %{activity: activity, activities: activities, user: user}) do
+    Logger.debug("Rendering context for #{activity.id}")
+
     %{ancestors: ancestors, descendants: descendants} =
       activities
       |> Enum.reverse()
@@ -782,4 +797,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   defp get_source_content_type(_source) do
     Utils.get_content_type(nil)
   end
+
+  defp language(%Object{data: %{"contentMap" => contentMap}}) when is_map(contentMap) do
+    contentMap
+    |> Map.keys()
+    |> Enum.at(0)
+  end
+
+  defp language(_), do: nil
 end

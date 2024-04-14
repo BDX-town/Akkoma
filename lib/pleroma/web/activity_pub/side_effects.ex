@@ -109,7 +109,7 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
          %User{} = followed <- User.get_cached_by_ap_id(followed_user),
          {_, {:ok, _, _}, _, _} <-
            {:following, User.follow(follower, followed, :follow_pending), follower, followed} do
-      if followed.local && !followed.is_locked do
+      if followed.local && User.can_direct_follow_local(follower, followed) do
         {:ok, accept_data, _} = Builder.accept(followed, object)
         {:ok, _activity, _} = Pipeline.common_pipeline(accept_data, local: true)
       end
@@ -192,6 +192,7 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
   # - Increase the user note count
   # - Increase the reply count
   # - Increase replies count
+  # - Ask for scraping of nodeinfo
   # - Set up ActivityExpiration
   # - Set up notifications
   # - Index incoming posts for search (if needed)
@@ -208,6 +209,10 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
       end
 
       reply_depth = (meta[:depth] || 0) + 1
+
+      Pleroma.Workers.NodeInfoFetcherWorker.enqueue("process", %{
+        "source_url" => activity.data["actor"]
+      })
 
       # FIXME: Force inReplyTo to replies
       if Pleroma.Web.Federator.allowed_thread_distance?(reply_depth) and
@@ -234,7 +239,9 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
 
       {:ok, activity, meta}
     else
-      e -> Repo.rollback(e)
+      e ->
+        Logger.error(inspect(e))
+        Repo.rollback(e)
     end
   end
 
@@ -281,7 +288,6 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
 
   # Tasks this handles:
   # - Delete and unpins the create activity
-  # - Replace object with Tombstone
   # - Set up notification
   # - Reduce the user note count
   # - Reduce the reply count

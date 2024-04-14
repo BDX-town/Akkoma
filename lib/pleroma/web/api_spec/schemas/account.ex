@@ -109,6 +109,23 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Account do
           }
         }
       },
+      akkoma: %Schema{
+        type: :object,
+        properties: %{
+          instance: %Schema{
+            type: :object,
+            nullable: true,
+            properties: %{
+              name: %Schema{type: :string},
+              favicon: %Schema{type: :string, format: :uri, nullable: true},
+              # XXX: proper nodeinfo schema
+              nodeinfo: %Schema{type: :object, nullable: true}
+            }
+          },
+          status_ttl_days: %Schema{type: :integer, nullable: true},
+          permit_followback: %Schema{type: :boolean}
+        }
+      },
       source: %Schema{
         type: :object,
         properties: %{
@@ -198,6 +215,18 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Account do
         "settings_store" => %{
           "pleroma-fe" => %{}
         }
+      },
+      "akkoma" => %{
+        "instance" => %{
+          "name" => "ihatebeinga.live",
+          "favicon" => "https://ihatebeinga.live/favicon.png",
+          "nodeinfo" =>
+            %{
+              # XXX: nodeinfo schema
+            }
+        },
+        "status_ttl_days" => nil,
+        "permit_followback" => true
       },
       "source" => %{
         "fields" => [],

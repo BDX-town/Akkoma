@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
-  use Pleroma.Web.ConnCase, async: true
+  use Pleroma.Web.ConnCase, async: false
 
   import Pleroma.Factory
 
@@ -25,7 +25,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     {:ok, %{admin: admin, token: token, conn: conn}}
   end
 
-  describe "GET /api/pleroma/admin/reports/:id" do
+  describe "GET /api/v1/pleroma/admin/reports/:id" do
     test "returns report by its id", %{conn: conn} do
       [reporter, target_user] = insert_pair(:user)
       activity = insert(:note_activity, user: target_user)
@@ -39,13 +39,13 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       conn
       |> put_req_header("content-type", "application/json")
-      |> post("/api/pleroma/admin/reports/#{report_id}/notes", %{
+      |> post("/api/v1/pleroma/admin/reports/#{report_id}/notes", %{
         content: "this is an admin note"
       })
 
       response =
         conn
-        |> get("/api/pleroma/admin/reports/#{report_id}")
+        |> get("/api/v1/pleroma/admin/reports/#{report_id}")
         |> json_response_and_validate_schema(:ok)
 
       assert response["id"] == report_id
@@ -55,13 +55,13 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     end
 
     test "returns 404 when report id is invalid", %{conn: conn} do
-      conn = get(conn, "/api/pleroma/admin/reports/test")
+      conn = get(conn, "/api/v1/pleroma/admin/reports/test")
 
       assert json_response_and_validate_schema(conn, :not_found) == %{"error" => "Not found"}
     end
   end
 
-  describe "PATCH /api/pleroma/admin/reports" do
+  describe "PATCH /api/v1/pleroma/admin/reports" do
     setup do
       [reporter, target_user] = insert_pair(:user)
       activity = insert(:note_activity, user: target_user)
@@ -94,7 +94,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
         conn
         |> assign(:token, read_token)
         |> put_req_header("content-type", "application/json")
-        |> patch("/api/pleroma/admin/reports", %{
+        |> patch("/api/v1/pleroma/admin/reports", %{
           "reports" => [%{"state" => "resolved", "id" => id}]
         })
         |> json_response_and_validate_schema(403)
@@ -106,7 +106,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
       conn
       |> assign(:token, write_token)
       |> put_req_header("content-type", "application/json")
-      |> patch("/api/pleroma/admin/reports", %{
+      |> patch("/api/v1/pleroma/admin/reports", %{
         "reports" => [%{"state" => "resolved", "id" => id}]
       })
       |> json_response_and_validate_schema(:no_content)
@@ -115,7 +115,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     test "mark report as resolved", %{conn: conn, id: id, admin: admin} do
       conn
       |> put_req_header("content-type", "application/json")
-      |> patch("/api/pleroma/admin/reports", %{
+      |> patch("/api/v1/pleroma/admin/reports", %{
         "reports" => [
           %{"state" => "resolved", "id" => id}
         ]
@@ -134,7 +134,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     test "closes report", %{conn: conn, id: id, admin: admin} do
       conn
       |> put_req_header("content-type", "application/json")
-      |> patch("/api/pleroma/admin/reports", %{
+      |> patch("/api/v1/pleroma/admin/reports", %{
         "reports" => [
           %{"state" => "closed", "id" => id}
         ]
@@ -154,7 +154,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> patch("/api/pleroma/admin/reports", %{
+        |> patch("/api/v1/pleroma/admin/reports", %{
           "reports" => [
             %{"state" => "test", "id" => id}
           ]
@@ -168,7 +168,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> patch("/api/pleroma/admin/reports", %{
+        |> patch("/api/v1/pleroma/admin/reports", %{
           "reports" => [
             %{"state" => "closed", "id" => "test"}
           ]
@@ -185,7 +185,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     } do
       conn
       |> put_req_header("content-type", "application/json")
-      |> patch("/api/pleroma/admin/reports", %{
+      |> patch("/api/v1/pleroma/admin/reports", %{
         "reports" => [
           %{"state" => "resolved", "id" => id},
           %{"state" => "closed", "id" => second_report_id}
@@ -208,11 +208,11 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     end
   end
 
-  describe "GET /api/pleroma/admin/reports" do
+  describe "GET /api/v1/pleroma/admin/reports" do
     test "returns empty response when no reports created", %{conn: conn} do
       response =
         conn
-        |> get(report_path(conn, :index))
+        |> get(~p"/api/v1/pleroma/admin/reports")
         |> json_response_and_validate_schema(:ok)
 
       assert Enum.empty?(response["reports"])
@@ -232,7 +232,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index))
+        |> get(~p"/api/v1/pleroma/admin/reports")
         |> json_response_and_validate_schema(:ok)
 
       [report] = response["reports"]
@@ -264,7 +264,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index, %{state: "open"}))
+        |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "open"]}])
         |> json_response_and_validate_schema(:ok)
 
       assert [open_report] = response["reports"]
@@ -276,7 +276,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       response =
         conn
-        |> get(report_path(conn, :index, %{state: "closed"}))
+        |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "closed"]}])
         |> json_response_and_validate_schema(:ok)
 
       assert [closed_report] = response["reports"]
@@ -288,7 +288,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       assert %{"total" => 0, "reports" => []} ==
                conn
-               |> get(report_path(conn, :index, %{state: "resolved"}))
+               |> get(~p[/api/v1/pleroma/admin/reports?#{[state: "resolved"]}])
                |> json_response_and_validate_schema(:ok)
     end
 
@@ -300,14 +300,14 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
         build_conn()
         |> assign(:user, user)
         |> assign(:token, token)
-        |> get("/api/pleroma/admin/reports")
+        |> get("/api/v1/pleroma/admin/reports")
 
       assert json_response(conn, :forbidden) ==
                %{"error" => "User is not a staff member."}
     end
 
     test "returns 403 when requested by anonymous" do
-      conn = get(build_conn(), "/api/pleroma/admin/reports")
+      conn = get(build_conn(), "/api/v1/pleroma/admin/reports")
 
       assert json_response(conn, :forbidden) == %{
                "error" => "Invalid credentials."
@@ -315,7 +315,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     end
   end
 
-  describe "POST /api/pleroma/admin/reports/:id/notes" do
+  describe "POST /api/v1/pleroma/admin/reports/:id/notes" do
     setup %{conn: conn, admin: admin} do
       [reporter, target_user] = insert_pair(:user)
       activity = insert(:note_activity, user: target_user)
@@ -329,13 +329,13 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
 
       conn
       |> put_req_header("content-type", "application/json")
-      |> post("/api/pleroma/admin/reports/#{report_id}/notes", %{
+      |> post("/api/v1/pleroma/admin/reports/#{report_id}/notes", %{
         content: "this is disgusting!"
       })
 
       conn
       |> put_req_header("content-type", "application/json")
-      |> post("/api/pleroma/admin/reports/#{report_id}/notes", %{
+      |> post("/api/v1/pleroma/admin/reports/#{report_id}/notes", %{
         content: "this is disgusting2!"
       })
 
@@ -356,7 +356,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
     end
 
     test "it returns reports with notes", %{conn: conn, admin: admin} do
-      conn = get(conn, "/api/pleroma/admin/reports")
+      conn = get(conn, "/api/v1/pleroma/admin/reports")
 
       response = json_response_and_validate_schema(conn, 200)
       notes = hd(response["reports"])["notes"]
@@ -379,7 +379,7 @@ defmodule Pleroma.Web.AdminAPI.ReportControllerTest do
       assert ReportNote |> Repo.all() |> length() == 2
       assert [note, _] = Repo.all(ReportNote)
 
-      delete(conn, "/api/pleroma/admin/reports/#{report_id}/notes/#{note.id}")
+      delete(conn, "/api/v1/pleroma/admin/reports/#{report_id}/notes/#{note.id}")
 
       assert ReportNote |> Repo.all() |> length() == 1
     end

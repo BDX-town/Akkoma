@@ -136,7 +136,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.drop(["conversation", "inReplyToAtomUri"])
       else
         e ->
-          Logger.warn("Couldn't fetch #{inspect(in_reply_to_id)}, error: #{inspect(e)}")
+          Logger.warning("Couldn't fetch reply@#{inspect(in_reply_to_id)}, error: #{inspect(e)}")
           object
       end
     else
@@ -159,7 +159,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.put("quoteUri", quoted_object.data["id"])
       else
         e ->
-          Logger.warn("Couldn't fetch #{inspect(quote_url)}, error: #{inspect(e)}")
+          Logger.warning("Couldn't fetch quote@#{inspect(quote_url)}, error: #{inspect(e)}")
           object
       end
     else
@@ -346,11 +346,16 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def fix_tag(object), do: object
 
   # content map usually only has one language so this will do for now.
-  def fix_content_map(%{"contentMap" => content_map} = object) do
+  def fix_content_map(%{"contentMap" => content_map} = object) when is_map(content_map) do
     content_groups = Map.to_list(content_map)
-    {_, content} = Enum.at(content_groups, 0)
 
-    Map.put(object, "content", content)
+    if Enum.empty?(content_groups) do
+      object
+    else
+      {_, content} = Enum.at(content_groups, 0)
+
+      Map.put(object, "content", content)
+    end
   end
 
   def fix_content_map(object), do: object
@@ -414,28 +419,19 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def handle_incoming(
         %{
           "type" => "Like",
-          "_misskey_reaction" => reaction,
-          "tag" => _
+          "content" => reaction
         } = data,
         options
       ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
-  end
-
-  def handle_incoming(
-        %{
-          "type" => "Like",
-          "_misskey_reaction" => reaction
-        } = data,
-        options
-      ) do
-    data
-    |> Map.put("type", "EmojiReact")
-    |> Map.put("content", reaction)
-    |> handle_incoming(options)
+    if Pleroma.Emoji.is_unicode_emoji?(reaction) || Pleroma.Emoji.matches_shortcode?(reaction) do
+      data
+      |> Map.put("type", "EmojiReact")
+      |> handle_incoming(options)
+    else
+      data
+      |> Map.delete("content")
+      |> handle_incoming(options)
+    end
   end
 
   def handle_incoming(
@@ -580,7 +576,12 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         _options
       ) do
     with %User{} = origin_user <- User.get_cached_by_ap_id(origin_actor),
-         {:ok, %User{} = target_user} <- User.get_or_fetch_by_ap_id(target_actor),
+         # Use a dramatically shortened maximum age before refresh here because it is reasonable
+         # for a user to
+         # 1. Add the alias to their new account and then
+         # 2. Press the button on their new account
+         # within a very short period of time and expect it to work
+         {:ok, %User{} = target_user} <- User.get_or_fetch_by_ap_id(target_actor, maximum_age: 5),
          true <- origin_actor in target_user.also_known_as do
       ActivityPub.move(origin_user, target_user, false)
     else
@@ -833,7 +834,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
       Map.put(data, "object", external_url)
     else
       {:fetch, e} ->
-        Logger.error("Couldn't fetch #{object} #{inspect(e)}")
+        Logger.error("Couldn't fetch fixed_object@#{object} #{inspect(e)}")
         data
 
       _ ->
@@ -924,8 +925,13 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   def prepare_attachments(object) do
     attachments =
-      object
-      |> Map.get("attachment", [])
+      case Map.get(object, "attachment", []) do
+        [_ | _] = list -> list
+        _ -> []
+      end
+
+    attachments =
+      attachments
       |> Enum.map(fn data ->
         [%{"mediaType" => media_type, "href" => href} = url | _] = data["url"]
 

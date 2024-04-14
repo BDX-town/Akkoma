@@ -16,15 +16,17 @@ config :pleroma, Pleroma.Captcha,
 
 # Print only warnings and errors during test
 config :logger, :console,
-  level: :warn,
+  level: :warning,
   format: "\n[$level] $message\n"
 
 config :pleroma, :auth, oauth_consumer_strategies: []
 
 config :pleroma, Pleroma.Upload,
+  base_url: "http://localhost:4001/media/",
   filters: [],
-  link_name: false,
-  default_description: :filename
+  link_name: false
+
+config :pleroma, :media_proxy, base_url: "http://localhost:4001"
 
 config :pleroma, Pleroma.Uploaders.Local, uploads: "test/uploads"
 
@@ -82,10 +84,7 @@ config :web_push_encryption, :vapid_details,
     "BLH1qVhJItRGCfxgTtONfsOKDc9VRAraXw-3NsmjMngWSh7NxOizN6bkuRA7iLTMPS82PjwJAr3UoK9EC1IFrz4",
   private_key: "_-XZ0iebPrRfZ_o0-IatTdszYa8VCH1yLN-JauK7HHA"
 
-config :pleroma, Oban,
-  queues: false,
-  crontab: false,
-  plugins: false
+config :pleroma, Oban, testing: :manual
 
 config :pleroma, Pleroma.ScheduledActivity,
   daily_user_limit: 2,
@@ -139,6 +138,8 @@ config :pleroma, Pleroma.Search.Meilisearch, url: "http://127.0.0.1:7700/", priv
 # Reduce recompilation time
 # https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects
 config :phoenix, :plug_init_mode, :runtime
+config :pleroma, :instances_favicons, enabled: false
+config :pleroma, :instances_nodeinfo, enabled: false
 
 if File.exists?("./config/test.secret.exs") do
   import_config "test.secret.exs"

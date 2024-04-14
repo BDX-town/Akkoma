@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.Repo
   alias Pleroma.User
@@ -14,6 +14,10 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
   alias Pleroma.Web.Plugs.SetLocalePlug
 
   import Pleroma.Factory
+
+  setup do
+    clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+  end
 
   describe "account fetching" do
     test "works by id" do
@@ -902,6 +906,12 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
                |> post("/api/v1/accounts/#{followed.id}/follow", %{reblogs: true})
                |> json_response_and_validate_schema(200)
 
+      assert %{"showing_reblogs" => true} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> post("/api/v1/accounts/#{followed.id}/follow", %{reblogs: "1"})
+               |> json_response_and_validate_schema(200)
+
       assert [%{"id" => ^reblog_id}] =
                conn
                |> get("/api/v1/timelines/home")
@@ -931,6 +941,12 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
                |> post("/api/v1/accounts/#{followed.id}/follow", %{reblogs: false})
                |> json_response_and_validate_schema(200)
 
+      assert %{"showing_reblogs" => false} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> post("/api/v1/accounts/#{followed.id}/follow", %{reblogs: "0"})
+               |> json_response_and_validate_schema(200)
+
       assert [] ==
                conn
                |> get("/api/v1/timelines/home")
@@ -941,21 +957,23 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       %{conn: conn} = oauth_access(["follow"])
       followed = insert(:user)
 
-      ret_conn =
-        conn
-        |> put_req_header("content-type", "application/json")
-        |> post("/api/v1/accounts/#{followed.id}/follow", %{notify: true})
+      assert %{"subscribing" => true} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> post("/api/v1/accounts/#{followed.id}/follow", %{notify: true})
+               |> json_response_and_validate_schema(200)
 
-      assert %{"id" => _id, "subscribing" => true} =
-               json_response_and_validate_schema(ret_conn, 200)
+      assert %{"subscribing" => true} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> post("/api/v1/accounts/#{followed.id}/follow", %{notify: "1"})
+               |> json_response_and_validate_schema(200)
 
-      ret_conn =
-        conn
-        |> put_req_header("content-type", "application/json")
-        |> post("/api/v1/accounts/#{followed.id}/follow", %{notify: false})
-
-      assert %{"id" => _id, "subscribing" => false} =
-               json_response_and_validate_schema(ret_conn, 200)
+      assert %{"subscribing" => false} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> post("/api/v1/accounts/#{followed.id}/follow", %{notify: false})
+               |> json_response_and_validate_schema(200)
     end
 
     test "following / unfollowing errors", %{user: user, conn: conn} do
@@ -1766,21 +1784,21 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/mutes")
       |> json_response_and_validate_schema(200)
 
-    assert [id1, id2, id3] == Enum.map(result, & &1["id"])
+    assert [id3, id2, id1] == Enum.map(result, & &1["id"])
 
     result =
       conn
       |> get("/api/v1/mutes?limit=1")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id1}] = result
+    assert [%{"id" => ^id3}] = result
 
     result =
       conn
       |> get("/api/v1/mutes?since_id=#{id1}")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id2}, %{"id" => ^id3}] = result
+    assert [%{"id" => ^id3}, %{"id" => ^id2}] = result
 
     result =
       conn
@@ -1794,7 +1812,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/mutes?since_id=#{id1}&limit=1")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id2}] = result
+    assert [%{"id" => ^id3}] = result
   end
 
   test "list of mutes with with_relationships parameter" do
@@ -1813,7 +1831,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
 
     assert [
              %{
-               "id" => ^id1,
+               "id" => ^id3,
                "pleroma" => %{"relationship" => %{"muting" => true, "followed_by" => true}}
              },
              %{
@@ -1821,7 +1839,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
                "pleroma" => %{"relationship" => %{"muting" => true, "followed_by" => true}}
              },
              %{
-               "id" => ^id3,
+               "id" => ^id1,
                "pleroma" => %{"relationship" => %{"muting" => true, "followed_by" => true}}
              }
            ] =
@@ -1846,7 +1864,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/blocks")
       |> json_response_and_validate_schema(200)
 
-    assert [id1, id2, id3] == Enum.map(result, & &1["id"])
+    assert [id3, id2, id1] == Enum.map(result, & &1["id"])
 
     result =
       conn
@@ -1854,7 +1872,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/blocks?limit=1")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id1}] = result
+    assert [%{"id" => ^id3}] = result
 
     result =
       conn
@@ -1862,7 +1880,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/blocks?since_id=#{id1}")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id2}, %{"id" => ^id3}] = result
+    assert [%{"id" => ^id3}, %{"id" => ^id2}] = result
 
     result =
       conn
@@ -1878,7 +1896,40 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       |> get("/api/v1/blocks?since_id=#{id1}&limit=1")
       |> json_response_and_validate_schema(200)
 
-    assert [%{"id" => ^id2}] = result
+    assert [%{"id" => ^id3}] = result
+  end
+
+  test "list of blocks with with_relationships parameter" do
+    %{user: user, conn: conn} = oauth_access(["read:blocks"])
+    %{id: id1} = other_user1 = insert(:user)
+    %{id: id2} = other_user2 = insert(:user)
+    %{id: id3} = other_user3 = insert(:user)
+
+    {:ok, _, _} = User.follow(other_user1, user)
+    {:ok, _, _} = User.follow(other_user2, user)
+    {:ok, _, _} = User.follow(other_user3, user)
+
+    {:ok, _} = User.block(user, other_user1)
+    {:ok, _} = User.block(user, other_user2)
+    {:ok, _} = User.block(user, other_user3)
+
+    assert [
+             %{
+               "id" => ^id3,
+               "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
+             },
+             %{
+               "id" => ^id2,
+               "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
+             },
+             %{
+               "id" => ^id1,
+               "pleroma" => %{"relationship" => %{"blocking" => true, "followed_by" => false}}
+             }
+           ] =
+             conn
+             |> get("/api/v1/blocks?with_relationships=true")
+             |> json_response_and_validate_schema(200)
   end
 
   test "account lookup", %{conn: conn} do
@@ -1903,6 +1954,50 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       conn
       |> get("/api/v1/accounts/lookup?acct=unexisting_nickname")
       |> json_response_and_validate_schema(404)
+  end
+
+  test "account lookup with restrict unauthenticated profiles for local" do
+    clear_config([:restrict_unauthenticated, :profiles, :local], true)
+
+    user = insert(:user, local: true)
+    reading_user = insert(:user)
+
+    conn =
+      build_conn()
+      |> get("/api/v1/accounts/lookup?acct=#{user.nickname}")
+
+    assert json_response_and_validate_schema(conn, 401)
+
+    conn =
+      build_conn()
+      |> assign(:user, reading_user)
+      |> assign(:token, insert(:oauth_token, user: reading_user, scopes: ["read:accounts"]))
+      |> get("/api/v1/accounts/lookup?acct=#{user.nickname}")
+
+    assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
+    assert id == user.id
+  end
+
+  test "account lookup with restrict unauthenticated profiles for remote" do
+    clear_config([:restrict_unauthenticated, :profiles, :remote], true)
+
+    user = insert(:user, nickname: "user@example.com", local: false)
+    reading_user = insert(:user)
+
+    conn =
+      build_conn()
+      |> get("/api/v1/accounts/lookup?acct=#{user.nickname}")
+
+    assert json_response_and_validate_schema(conn, 401)
+
+    conn =
+      build_conn()
+      |> assign(:user, reading_user)
+      |> assign(:token, insert(:oauth_token, user: reading_user, scopes: ["read:accounts"]))
+      |> get("/api/v1/accounts/lookup?acct=#{user.nickname}")
+
+    assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
+    assert id == user.id
   end
 
   test "create a note on a user" do
@@ -1963,6 +2058,34 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       # remove non existing user
       conn_res = post(conn, "/api/v1/accounts/doesntexist/remove_from_followers")
       assert %{"error" => "Record not found"} = json_response_and_validate_schema(conn_res, 404)
+    end
+  end
+
+  describe "preferences" do
+    test "get account preferences" do
+      user = insert(:user, default_scope: "public")
+      %{conn: conn} = oauth_access(["read:accounts"], user: user)
+
+      conn = get(conn, "/api/v1/preferences")
+      response = json_response_and_validate_schema(conn, 200)
+
+      assert %{
+               "posting:default:language" => nil,
+               "posting:default:sensitive" => false,
+               "posting:default:visibility" => "public",
+               "reading:expand:media" => "default",
+               "reading:expand:spoilers" => false
+             } = response
+    end
+
+    test "test changing account preferences" do
+      user = insert(:user, default_scope: "unlisted")
+      %{conn: conn} = oauth_access(["read:accounts"], user: user)
+
+      conn = get(conn, "/api/v1/preferences")
+      response = json_response_and_validate_schema(conn, 200)
+
+      assert response["posting:default:visibility"] == "unlisted"
     end
   end
 end

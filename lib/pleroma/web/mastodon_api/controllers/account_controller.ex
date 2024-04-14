@@ -32,14 +32,14 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
 
   plug(Pleroma.Web.ApiSpec.CastAndValidate)
 
-  plug(:skip_auth when action in [:create, :lookup])
+  plug(:skip_auth when action in [:create])
 
   plug(:skip_public_check when action in [:show, :statuses])
 
   plug(
     OAuthScopesPlug,
     %{fallback: :proceed_unauthenticated, scopes: ["read:accounts"]}
-    when action in [:show, :followers, :following]
+    when action in [:show, :followers, :following, :lookup]
   )
 
   plug(
@@ -51,7 +51,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
   plug(
     OAuthScopesPlug,
     %{scopes: ["read:accounts"]}
-    when action in [:verify_credentials, :endorsements, :identity_proofs]
+    when action in [:verify_credentials, :endorsements, :identity_proofs, :preferences]
   )
 
   plug(
@@ -175,6 +175,11 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       value -> {:ok, value}
     end
 
+    status_ttl_days_value = fn
+      -1 -> {:ok, nil}
+      value -> {:ok, value}
+    end
+
     user_params =
       [
         :no_rich_text,
@@ -215,6 +220,9 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       # Note: param name is indeed :discoverable (not an error)
       |> Maps.put_if_present(:is_discoverable, params[:discoverable])
       |> Maps.put_if_present(:language, Pleroma.Web.Gettext.normalize_locale(params[:language]))
+      |> Maps.put_if_present(:status_ttl_days, params[:status_ttl_days], status_ttl_days_value)
+      |> Maps.put_if_present(:accepts_direct_messages_from, params[:accepts_direct_messages_from])
+      |> Maps.put_if_present(:permit_followback, params[:permit_followback])
 
     # What happens here:
     #
@@ -245,7 +253,17 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
         with_pleroma_settings: true
       )
     else
-      _e -> render_error(conn, :forbidden, "Invalid request")
+      {:error, %Ecto.Changeset{errors: [avatar: {"file is too large", _}]}} ->
+        render_error(conn, :request_entity_too_large, "File is too large")
+
+      {:error, %Ecto.Changeset{errors: [banner: {"file is too large", _}]}} ->
+        render_error(conn, :request_entity_too_large, "File is too large")
+
+      {:error, %Ecto.Changeset{errors: [background: {"file is too large", _}]}} ->
+        render_error(conn, :request_entity_too_large, "File is too large")
+
+      _e ->
+        render_error(conn, :forbidden, "Invalid request")
     end
   end
 
@@ -480,7 +498,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
     users =
       user
       |> User.muted_users_relation(_restrict_deactivated = true)
-      |> Pleroma.Pagination.fetch_paginated(Map.put(params, :skip_order, true))
+      |> Pleroma.Pagination.fetch_paginated(params)
 
     conn
     |> add_link_headers(users)
@@ -497,16 +515,22 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
     users =
       user
       |> User.blocked_users_relation(_restrict_deactivated = true)
-      |> Pleroma.Pagination.fetch_paginated(Map.put(params, :skip_order, true))
+      |> Pleroma.Pagination.fetch_paginated(params)
 
     conn
     |> add_link_headers(users)
-    |> render("index.json", users: users, for: user, as: :user)
+    |> render("index.json",
+      users: users,
+      for: user,
+      as: :user,
+      embed_relationships: embed_relationships?(params)
+    )
   end
 
   @doc "GET /api/v1/accounts/lookup"
-  def lookup(conn, %{acct: nickname} = _params) do
-    with %User{} = user <- User.get_by_nickname(nickname) do
+  def lookup(%{assigns: %{user: for_user}} = conn, %{acct: nickname} = _params) do
+    with %User{} = user <- User.get_by_nickname(nickname),
+         :visible <- User.visible_for(user, for_user) do
       render(conn, "show.json",
         user: user,
         skip_visibility_check: true
@@ -521,4 +545,9 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
 
   @doc "GET /api/v1/identity_proofs"
   def identity_proofs(conn, params), do: MastodonAPIController.empty_array(conn, params)
+
+  @doc "GET /api/v1/preferences"
+  def preferences(%{assigns: %{user: user}} = conn, _params) do
+    render(conn, "preferences.json", user: user)
+  end
 end

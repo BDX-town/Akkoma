@@ -89,7 +89,7 @@ defmodule Pleroma.Web.Plugs.RateLimiter do
   end
 
   defp handle_disabled(conn) do
-    Logger.warn(
+    Logger.warning(
       "Rate limiter disabled due to forwarded IP not being found. Please ensure your reverse proxy is providing the X-Forwarded-For header or disable the RemoteIP plug/rate limiter."
     )
 
@@ -197,11 +197,17 @@ defmodule Pleroma.Web.Plugs.RateLimiter do
     })
   end
 
-  defp ip(%{remote_ip: remote_ip}) do
+  defp ip(%{remote_ip: remote_ip}) when is_binary(remote_ip) do
+    remote_ip
+  end
+
+  defp ip(%{remote_ip: remote_ip}) when is_tuple(remote_ip) do
     remote_ip
     |> Tuple.to_list()
     |> Enum.join(".")
   end
+
+  defp ip(_), do: nil
 
   defp render_throttled_error(conn) do
     conn

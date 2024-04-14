@@ -65,7 +65,7 @@ defmodule Pleroma.Web.WebFinger do
   end
 
   defp gather_aliases(%User{} = user) do
-    [user.ap_id | user.also_known_as]
+    [user.ap_id]
   end
 
   def represent_user(user, "JSON") do
@@ -96,10 +96,11 @@ defmodule Pleroma.Web.WebFinger do
     |> XmlBuilder.to_doc()
   end
 
-  defp domain do
+  def domain do
     Pleroma.Config.get([__MODULE__, :domain]) || Pleroma.Web.Endpoint.host()
   end
 
+  @spec webfinger_from_xml(binary()) :: {:ok, map()} | nil
   defp webfinger_from_xml(body) do
     with {:ok, doc} <- XML.parse_document(body) do
       subject = XML.string_from_xpath("//Subject", doc)
@@ -163,7 +164,7 @@ defmodule Pleroma.Web.WebFinger do
       get_template_from_xml(body)
     else
       error ->
-        Logger.warn("Can't find LRDD template in #{inspect(meta_url)}: #{inspect(error)}")
+        Logger.warning("Can't find LRDD template in #{inspect(meta_url)}: #{inspect(error)}")
         {:error, :lrdd_not_found}
     end
   end

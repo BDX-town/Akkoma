@@ -14,9 +14,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
   alias Pleroma.HTTP.AdapterHelper
   require Logger
 
-  @type proxy ::
-          {Connection.host(), pos_integer()}
-          | {Connection.proxy_type(), Connection.host(), pos_integer()}
+  @type proxy :: {Connection.proxy_type(), Connection.host(), pos_integer(), list()}
 
   @callback options(keyword(), URI.t()) :: keyword()
 
@@ -25,7 +23,6 @@ defmodule Pleroma.HTTP.AdapterHelper do
 
   def format_proxy(proxy_url) do
     case parse_proxy(proxy_url) do
-      {:ok, host, port} -> {:http, host, port, []}
       {:ok, type, host, port} -> {type, host, port, []}
       _ -> nil
     end
@@ -48,6 +45,33 @@ defmodule Pleroma.HTTP.AdapterHelper do
     |> maybe_add_default_pool()
     |> maybe_add_conn_opts()
     |> put_in([:pools, :default, :conn_opts, :proxy], proxy)
+  end
+
+  def maybe_add_cacerts(opts, nil), do: opts
+
+  def maybe_add_cacerts(opts, cacerts) do
+    opts
+    |> maybe_add_pools()
+    |> maybe_add_default_pool()
+    |> maybe_add_conn_opts()
+    |> maybe_add_transport_opts()
+    |> put_in([:pools, :default, :conn_opts, :transport_opts, :cacerts], cacerts)
+  end
+
+  def add_pool_size(opts, pool_size) do
+    opts
+    |> maybe_add_pools()
+    |> maybe_add_default_pool()
+    |> put_in([:pools, :default, :size], pool_size)
+  end
+
+  def ensure_ipv6(opts) do
+    # Default transport opts already enable IPv6, so just ensure they're loaded
+    opts
+    |> maybe_add_pools()
+    |> maybe_add_default_pool()
+    |> maybe_add_conn_opts()
+    |> maybe_add_transport_opts()
   end
 
   defp maybe_add_pools(opts) do
@@ -78,6 +102,20 @@ defmodule Pleroma.HTTP.AdapterHelper do
     end
   end
 
+  defp maybe_add_transport_opts(opts) do
+    transport_opts = get_in(opts, [:pools, :default, :conn_opts, :transport_opts])
+
+    opts =
+      unless is_nil(transport_opts) do
+        opts
+      else
+        put_in(opts, [:pools, :default, :conn_opts, :transport_opts], [])
+      end
+
+    # IPv6 is disabled and IPv4 enabled by default; ensure we can use both
+    put_in(opts, [:pools, :default, :conn_opts, :transport_opts, :inet6], true)
+  end
+
   @doc """
   Merge default connection & adapter options with received ones.
   """
@@ -94,11 +132,11 @@ defmodule Pleroma.HTTP.AdapterHelper do
   defp proxy_type(_), do: {:error, :unknown}
 
   @spec parse_proxy(String.t() | tuple() | nil) ::
-          {:ok, host(), pos_integer()}
-          | {:ok, proxy_type(), host(), pos_integer()}
+          {:ok, proxy_type(), host(), pos_integer()}
           | {:error, atom()}
           | nil
   def parse_proxy(nil), do: nil
+  def parse_proxy(""), do: nil
 
   def parse_proxy(proxy) when is_binary(proxy) do
     with %URI{} = uri <- URI.parse(proxy),
@@ -106,7 +144,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
       {:ok, type, uri.host, uri.port}
     else
       e ->
-        Logger.warn("Parsing proxy failed #{inspect(proxy)}, #{inspect(e)}")
+        Logger.warning("Parsing proxy failed #{inspect(proxy)}, #{inspect(e)}")
         {:error, :invalid_proxy}
     end
   end
@@ -116,7 +154,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
       {:ok, type, host, port}
     else
       _ ->
-        Logger.warn("Parsing proxy failed #{inspect(proxy)}")
+        Logger.warning("Parsing proxy failed #{inspect(proxy)}")
         {:error, :invalid_proxy}
     end
   end

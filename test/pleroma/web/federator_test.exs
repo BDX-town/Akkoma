@@ -9,7 +9,8 @@ defmodule Pleroma.Web.FederatorTest do
   alias Pleroma.Web.Federator
   alias Pleroma.Workers.PublisherWorker
 
-  use Pleroma.DataCase
+  use Pleroma.DataCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   import Pleroma.Factory
@@ -22,7 +23,7 @@ defmodule Pleroma.Web.FederatorTest do
   end
 
   setup_all do: clear_config([:instance, :federating], true)
-  setup do: clear_config([:instance, :allow_relay])
+  setup do: clear_config([:instance, :allow_relay], true)
   setup do: clear_config([:mrf, :policies])
   setup do: clear_config([:mrf_keyword])
 
@@ -49,7 +50,7 @@ defmodule Pleroma.Web.FederatorTest do
         ObanHelpers.perform(all_enqueued(worker: PublisherWorker))
       end
 
-      assert_received :relay_publish
+      assert_receive :relay_publish
     end
 
     test "with relays deactivated, it does not publish to the relay", %{

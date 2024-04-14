@@ -13,6 +13,7 @@ defmodule Pleroma.Web.Endpoint do
 
   plug(Pleroma.Web.Plugs.SetLocalePlug)
   plug(CORSPlug)
+  plug(Pleroma.Web.Plugs.CSPNoncePlug)
   plug(Pleroma.Web.Plugs.HTTPSecurityPlug)
   plug(Pleroma.Web.Plugs.UploadedMedia)
 
@@ -96,7 +97,11 @@ defmodule Pleroma.Web.Endpoint do
     Plug.Static,
     at: "/",
     from: :pleroma,
-    only: Pleroma.Constants.static_only_files(),
+    only: Pleroma.Web.static_paths(),
+    # JSON-LD is accepted by some servers for AP objects and activities,
+    # thus only enable it here instead of a global extension mapping
+    # (it's our only *.jsonld file anyway)
+    content_types: %{"litepub-0.1.jsonld" => "application/ld+json"},
     # credo:disable-for-previous-line Credo.Check.Readability.MaxLineLength
     gzip: true,
     cache_control_for_etags: @static_cache_control,
@@ -123,7 +128,7 @@ defmodule Pleroma.Web.Endpoint do
   plug(Plug.Parsers,
     parsers: [
       :urlencoded,
-      {:multipart, length: {Config, :get, [[:instance, :upload_limit]]}},
+      Pleroma.Web.Plugs.Parsers.Multipart,
       :json
     ],
     pass: ["*/*"],

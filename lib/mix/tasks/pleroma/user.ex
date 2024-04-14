@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Pleroma.User do
   alias Pleroma.UserInviteToken
   alias Pleroma.Web.ActivityPub.Builder
   alias Pleroma.Web.ActivityPub.Pipeline
+  use Pleroma.Web, :verified_routes
 
   @shortdoc "Manages Pleroma users"
   @moduledoc File.read!("docs/docs/administration/CLI_tasks/user.md")
@@ -113,9 +114,7 @@ defmodule Mix.Tasks.Pleroma.User do
          {:ok, token} <- Pleroma.PasswordResetToken.create_token(user) do
       shell_info("Generated password reset token for #{user.nickname}")
 
-      IO.puts("URL: #{Pleroma.Web.Router.Helpers.reset_password_url(Pleroma.Web.Endpoint,
-      :reset,
-      token.token)}")
+      IO.puts("URL: #{~p[/api/v1/pleroma/password_reset/#{token.token}]}")
     else
       _ ->
         shell_error("No local user #{nickname}")
@@ -301,13 +300,7 @@ defmodule Mix.Tasks.Pleroma.User do
          {:ok, invite} <- UserInviteToken.create_invite(options) do
       shell_info("Generated user invite token " <> String.replace(invite.invite_type, "_", " "))
 
-      url =
-        Pleroma.Web.Router.Helpers.redirect_url(
-          Pleroma.Web.Endpoint,
-          :registration_page,
-          invite.token
-        )
-
+      url = url(~p[/registration/#{invite.token}])
       IO.puts(url)
     else
       error ->
@@ -376,9 +369,11 @@ defmodule Mix.Tasks.Pleroma.User do
   def run(["show", nickname]) do
     start_pleroma()
 
-    nickname
-    |> User.get_cached_by_nickname()
-    |> IO.inspect()
+    user =
+      nickname
+      |> User.get_cached_by_nickname()
+
+    shell_info("#{inspect(user)}")
   end
 
   def run(["send_confirmation", nickname]) do
@@ -387,7 +382,6 @@ defmodule Mix.Tasks.Pleroma.User do
     with %User{} = user <- User.get_cached_by_nickname(nickname) do
       user
       |> Pleroma.Emails.UserEmail.account_confirmation_email()
-      |> IO.inspect()
       |> Pleroma.Emails.Mailer.deliver!()
 
       shell_info("#{nickname}'s email sent")
@@ -463,15 +457,21 @@ defmodule Mix.Tasks.Pleroma.User do
 
     with %User{local: true} = user <- User.get_cached_by_nickname(nickname) do
       blocks = User.following_ap_ids(user)
-      IO.inspect(blocks, limit: :infinity)
+      IO.puts("#{inspect(blocks)}")
     end
   end
 
   def run(["timeline_query", nickname]) do
     start_pleroma()
+
     params = %{local: true}
 
     with %User{local: true} = user <- User.get_cached_by_nickname(nickname) do
+      followed_hashtags =
+        user
+        |> User.followed_hashtags()
+        |> Enum.map(& &1.id)
+
       params =
         params
         |> Map.put(:type, ["Create", "Announce"])
@@ -482,6 +482,7 @@ defmodule Mix.Tasks.Pleroma.User do
         |> Map.put(:announce_filtering_user, user)
         |> Map.put(:user, user)
         |> Map.put(:local_only, params[:local])
+        |> Map.put(:hashtags, followed_hashtags)
         |> Map.delete(:local)
 
       _activities =

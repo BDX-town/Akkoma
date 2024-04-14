@@ -11,7 +11,7 @@ If you want to generate a restrictive `robots.txt`, you can run the following mi
 === "OTP"
 
     ```sh
-    ./bin/pleroma_ctl robots_txt disallow_all
+    ./bin/pleroma_ctl robotstxt disallow_all
     ```
 
 === "From Source"

@@ -26,7 +26,9 @@ defmodule Pleroma.HTML.Scrubber.Default do
     "nofollow",
     "noopener",
     "noreferrer",
-    "ugc"
+    "ugc",
+    "tag ugc",
+    "ugc tag"
   ])
 
   Meta.allow_tag_with_these_attributes(:a, ["name", "title"])
@@ -55,8 +57,6 @@ defmodule Pleroma.HTML.Scrubber.Default do
   Meta.allow_tag_with_these_attributes(:rtc, [])
   Meta.allow_tag_with_these_attributes(:u, [])
   Meta.allow_tag_with_these_attributes(:ul, [])
-
-  Meta.allow_tags_with_style_attributes([:span])
 
   Meta.allow_tag_with_this_attribute_values(:span, "class", [
     "h-card",
@@ -98,7 +98,6 @@ defmodule Pleroma.HTML.Scrubber.Default do
     Meta.allow_tag_with_these_attributes(:img, [
       "width",
       "height",
-      "class",
       "title",
       "alt"
     ])
@@ -129,6 +128,4 @@ defmodule Pleroma.HTML.Scrubber.Default do
   Meta.allow_tag_with_these_attributes(:small, [])
 
   Meta.strip_everything_not_covered()
-
-  defp scrub_css(value), do: value
 end

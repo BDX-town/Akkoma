@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
+  @moduletag :mocked
   use Oban.Testing, repo: Pleroma.Repo
 
   alias Pleroma.Tests.ObanHelpers
@@ -23,10 +24,61 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
   describe "PUT /api/pleroma/notification_settings" do
     setup do: oauth_access(["write:accounts"])
 
-    test "it updates notification settings", %{user: user, conn: conn} do
+    test "it updates notification settings via url paramters", %{user: user, conn: conn} do
       conn
       |> put(
         "/api/pleroma/notification_settings?#{URI.encode_query(%{block_from_strangers: true})}"
+      )
+      |> json_response_and_validate_schema(:ok)
+
+      user = refresh_record(user)
+
+      assert %Pleroma.User.NotificationSetting{
+               block_from_strangers: true,
+               hide_notification_contents: false
+             } == user.notification_settings
+    end
+
+    test "it updates notification settings via JSON body params", %{user: user, conn: conn} do
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> put(
+        "/api/pleroma/notification_settings",
+        %{"block_from_strangers" => true}
+      )
+      |> json_response_and_validate_schema(:ok)
+
+      user = refresh_record(user)
+
+      assert %Pleroma.User.NotificationSetting{
+               block_from_strangers: true,
+               hide_notification_contents: false
+             } == user.notification_settings
+    end
+
+    test "it updates notification settings via form data", %{user: user, conn: conn} do
+      conn
+      |> put_req_header("content-type", "multipart/form-data")
+      |> put(
+        "/api/pleroma/notification_settings",
+        %{:block_from_strangers => true}
+      )
+      |> json_response_and_validate_schema(:ok)
+
+      user = refresh_record(user)
+
+      assert %Pleroma.User.NotificationSetting{
+               block_from_strangers: true,
+               hide_notification_contents: false
+             } == user.notification_settings
+    end
+
+    test "it updates notification settings via urlencoded body", %{user: user, conn: conn} do
+      conn
+      |> put_req_header("content-type", "application/x-www-form-urlencoded")
+      |> put(
+        "/api/pleroma/notification_settings",
+        "block_from_strangers=true"
       )
       |> json_response_and_validate_schema(:ok)
 
@@ -42,6 +94,27 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
       conn
       |> put(
         "/api/pleroma/notification_settings?#{URI.encode_query(%{hide_notification_contents: 1})}"
+      )
+      |> json_response_and_validate_schema(:ok)
+
+      user = refresh_record(user)
+
+      assert %Pleroma.User.NotificationSetting{
+               block_from_strangers: false,
+               hide_notification_contents: true
+             } == user.notification_settings
+    end
+
+    # we already test all body variants for block_from_strangers, so just one should suffice here
+    test "it updates notification settings to enable hiding contents via JSON body params", %{
+      user: user,
+      conn: conn
+    } do
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> put(
+        "/api/pleroma/notification_settings",
+        %{"hide_notification_contents" => true}
       )
       |> json_response_and_validate_schema(:ok)
 
@@ -77,11 +150,11 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
     end
   end
 
-  describe "/api/pleroma/emoji" do
+  describe "/api/v1/pleroma/emoji" do
     test "returns json with custom emoji with tags", %{conn: conn} do
       emoji =
         conn
-        |> get("/api/pleroma/emoji")
+        |> get("/api/v1/pleroma/emoji")
         |> json_response_and_validate_schema(200)
 
       assert Enum.all?(emoji, fn
@@ -95,7 +168,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
     end
   end
 
-  describe "GET /api/pleroma/healthcheck" do
+  describe "GET /api/v1/pleroma/healthcheck" do
     setup do: clear_config([:instance, :healthcheck])
 
     test "returns 503 when healthcheck disabled", %{conn: conn} do
@@ -103,7 +176,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
 
       response =
         conn
-        |> get("/api/pleroma/healthcheck")
+        |> get("/api/v1/pleroma/healthcheck")
         |> json_response_and_validate_schema(503)
 
       assert response == %{}
@@ -116,7 +189,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
         system_info: fn -> %Pleroma.Healthcheck{healthy: true} end do
         response =
           conn
-          |> get("/api/pleroma/healthcheck")
+          |> get("/api/v1/pleroma/healthcheck")
           |> json_response_and_validate_schema(200)
 
         assert %{
@@ -136,7 +209,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
         system_info: fn -> %Pleroma.Healthcheck{healthy: false} end do
         response =
           conn
-          |> get("/api/pleroma/healthcheck")
+          |> get("/api/v1/pleroma/healthcheck")
           |> json_response_and_validate_schema(503)
 
         assert %{
@@ -334,7 +407,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
       new: fn -> "test_captcha" end do
       resp =
         conn
-        |> get("/api/pleroma/captcha")
+        |> get("/api/v1/pleroma/captcha")
         |> response(200)
 
       assert resp == "\"test_captcha\""
@@ -459,7 +532,10 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "multipart/form-data")
-        |> post("/api/pleroma/change_email", %{password: "test", email: "cofe@foobar.com"})
+        |> post("/api/pleroma/change_email", %{
+          password: "test",
+          email: "cofe@foobar.com"
+        })
 
       assert json_response_and_validate_schema(conn, 200) == %{"status" => "success"}
     end
@@ -550,7 +626,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
 
       assert json_response_and_validate_schema(conn, 200) == %{"status" => "success"}
       fetched_user = User.get_cached_by_id(user.id)
-      assert Pleroma.Password.Pbkdf2.verify_pass("newpass", fetched_user.password_hash) == true
+      assert Pleroma.Password.checkpw("newpass", fetched_user.password_hash) == true
     end
   end
 
@@ -961,7 +1037,9 @@ defmodule Pleroma.Web.TwitterAPI.UtilControllerTest do
       conn =
         conn
         |> put_req_header("content-type", "application/json")
-        |> delete("/api/pleroma/aliases", %{alias: non_alias_user |> User.full_nickname()})
+        |> delete("/api/pleroma/aliases", %{
+          alias: non_alias_user |> User.full_nickname()
+        })
 
       assert %{"error" => "Account has no such alias."} =
                json_response_and_validate_schema(conn, 404)

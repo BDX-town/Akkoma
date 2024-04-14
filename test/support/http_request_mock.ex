@@ -5,7 +5,16 @@
 defmodule HttpRequestMock do
   require Logger
 
-  def activitypub_object_headers, do: [{"content-type", "application/activity+json"}]
+  def activitypub_object_headers,
+    do: [
+      {"content-type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""}
+    ]
+
+  # The Accept headers we genrate to be exact; AP spec only requires the first somewhere
+  @activitypub_accept_headers [
+    {"accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""},
+    {"accept", "application/activity+json"}
+  ]
 
   def request(
         %Tesla.Env{
@@ -21,7 +30,7 @@ defmodule HttpRequestMock do
     else
       error ->
         with {:error, message} <- error do
-          Logger.warn(to_string(message))
+          Logger.warning(to_string(message))
         end
 
         {_, _r} = error
@@ -97,7 +106,7 @@ defmodule HttpRequestMock do
          File.read!("test/fixtures/users_mock/masto_featured.json")
          |> String.replace("{{domain}}", "mastodon.sdf.org")
          |> String.replace("{{nickname}}", "rinpatch"),
-       headers: [{"content-type", "application/activity+json"}]
+       headers: activitypub_object_headers()
      }}
   end
 
@@ -208,7 +217,7 @@ defmodule HttpRequestMock do
         "https://mst3k.interlinked.me/users/luciferMysticus",
         _,
         _,
-        [{"accept", "application/activity+json"}]
+        @activitypub_accept_headers
       ) do
     {:ok,
      %Tesla.Env{
@@ -231,7 +240,7 @@ defmodule HttpRequestMock do
         "https://hubzilla.example.org/channel/kaniini",
         _,
         _,
-        [{"accept", "application/activity+json"}]
+        @activitypub_accept_headers
       ) do
     {:ok,
      %Tesla.Env{
@@ -241,7 +250,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://niu.moe/users/rye", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://niu.moe/users/rye", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -250,7 +259,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://n1u.moe/users/rye", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://n1u.moe/users/rye", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -270,7 +279,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://puckipedia.com/", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://puckipedia.com/", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -342,9 +351,12 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://mobilizon.org/events/252d5816-00a3-4a89-a66f-15bf65c33e39", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get(
+        "https://mobilizon.org/events/252d5816-00a3-4a89-a66f-15bf65c33e39",
+        _,
+        _,
+        @activitypub_accept_headers
+      ) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -353,7 +365,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://mobilizon.org/@tcit", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://mobilizon.org/@tcit", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -416,9 +428,7 @@ defmodule HttpRequestMock do
     {:ok, %Tesla.Env{status: 404, body: ""}}
   end
 
-  def get("http://mastodon.example.org/users/relay", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get("http://mastodon.example.org/users/relay", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -427,9 +437,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://mastodon.example.org/users/gargron", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get("http://mastodon.example.org/users/gargron", _, _, @activitypub_accept_headers) do
     {:error, :nxdomain}
   end
 
@@ -572,6 +580,7 @@ defmodule HttpRequestMock do
      }}
   end
 
+  # Mastodon status via display URL
   def get(
         "http://mastodon.example.org/@admin/99541947525187367",
         _,
@@ -581,6 +590,23 @@ defmodule HttpRequestMock do
     {:ok,
      %Tesla.Env{
        status: 200,
+       url: "http://mastodon.example.org/@admin/99541947525187367",
+       body: File.read!("test/fixtures/mastodon-note-object.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  # same status via its canonical ActivityPub id
+  def get(
+        "http://mastodon.example.org/users/admin/statuses/99541947525187367",
+        _,
+        _,
+        _
+      ) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       url: "http://mastodon.example.org/users/admin/statuses/99541947525187367",
        body: File.read!("test/fixtures/mastodon-note-object.json"),
        headers: activitypub_object_headers()
      }}
@@ -602,7 +628,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://mstdn.io/users/mayuutann", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://mstdn.io/users/mayuutann", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -615,7 +641,7 @@ defmodule HttpRequestMock do
         "https://mstdn.io/users/mayuutann/statuses/99568293732299394",
         _,
         _,
-        [{"accept", "application/activity+json"}]
+        @activitypub_accept_headers
       ) do
     {:ok,
      %Tesla.Env{
@@ -761,7 +787,7 @@ defmodule HttpRequestMock do
         "http://gs.example.org:4040/index.php/user/1",
         _,
         _,
-        [{"accept", "application/activity+json"}]
+        @activitypub_accept_headers
       ) do
     {:ok, %Tesla.Env{status: 406, body: ""}}
   end
@@ -948,7 +974,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://social.heldscal.la/user/23211", _, _, [{"accept", "application/activity+json"}]) do
+  def get("https://social.heldscal.la/user/23211", _, _, @activitypub_accept_headers) do
     {:ok, Tesla.Mock.json(%{"id" => "https://social.heldscal.la/user/23211"}, status: 200)}
   end
 
@@ -964,7 +990,7 @@ defmodule HttpRequestMock do
     {:ok, %Tesla.Env{status: 200, body: File.read!("test/fixtures/rich_media/ogp.html")}}
   end
 
-  def get("http://localhost:4001/users/masto_closed/followers", _, _, _) do
+  def get("http://remote.org/users/masto_closed/followers", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -973,7 +999,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/followers?page=1", _, _, _) do
+  def get("http://remote.org/users/masto_closed/followers?page=1", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -982,7 +1008,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/following", _, _, _) do
+  def get("http://remote.org/users/masto_closed/following", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -991,7 +1017,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/masto_closed/following?page=1", _, _, _) do
+  def get("http://remote.org/users/masto_closed/following?page=1", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1000,7 +1026,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:8080/followers/fuser3", _, _, _) do
+  def get("http://remote.org/followers/fuser3", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1009,7 +1035,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:8080/following/fuser3", _, _, _) do
+  def get("http://remote.org/following/fuser3", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1018,7 +1044,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/fuser2/followers", _, _, _) do
+  def get("http://remote.org/users/fuser2/followers", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1027,7 +1053,7 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://localhost:4001/users/fuser2/following", _, _, _) do
+  def get("http://remote.org/users/fuser2/following", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1078,6 +1104,14 @@ defmodule HttpRequestMock do
   end
 
   def get("http://404.site" <> _, _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 404,
+       body: ""
+     }}
+  end
+
+  def get("https://404.site" <> _, _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 404,
@@ -1181,13 +1215,11 @@ defmodule HttpRequestMock do
          File.read!("test/fixtures/users_mock/masto_featured.json")
          |> String.replace("{{domain}}", "lm.kazv.moe")
          |> String.replace("{{nickname}}", "mewmew"),
-       headers: [{"content-type", "application/activity+json"}]
+       headers: activitypub_object_headers()
      }}
   end
 
-  def get("https://info.pleroma.site/activity.json", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get("https://info.pleroma.site/activity.json", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1200,9 +1232,7 @@ defmodule HttpRequestMock do
     {:ok, %Tesla.Env{status: 404, body: ""}}
   end
 
-  def get("https://info.pleroma.site/activity2.json", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get("https://info.pleroma.site/activity2.json", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1215,9 +1245,7 @@ defmodule HttpRequestMock do
     {:ok, %Tesla.Env{status: 404, body: ""}}
   end
 
-  def get("https://info.pleroma.site/activity3.json", _, _, [
-        {"accept", "application/activity+json"}
-      ]) do
+  def get("https://info.pleroma.site/activity3.json", _, _, @activitypub_accept_headers) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -1395,6 +1423,15 @@ defmodule HttpRequestMock do
      %Tesla.Env{
        status: 200,
        body: File.read!("test/fixtures/tesla_mock/mk.absturztau.be-93e7nm8wqg.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  def get("https://mk.absturztau.be/notes/93e7nm8wqg/activity", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       body: File.read!("test/fixtures/tesla_mock/mk.absturztau.be-93e7nm8wqg-activity.json"),
        headers: activitypub_object_headers()
      }}
   end

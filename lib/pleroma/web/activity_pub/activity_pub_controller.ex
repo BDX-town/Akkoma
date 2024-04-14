@@ -8,7 +8,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   alias Pleroma.Activity
   alias Pleroma.Delivery
   alias Pleroma.Object
-  alias Pleroma.Object.Fetcher
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.Web.ActivityPub.InternalFetchActor
@@ -293,31 +292,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     |> json("Invalid HTTP Signature")
   end
 
-  # POST /relay/inbox -or- POST /internal/fetch/inbox
-  def inbox(conn, %{"type" => "Create"} = params) do
-    if FederatingPlug.federating?() do
-      post_inbox_relayed_create(conn, params)
-    else
-      conn
-      |> put_status(:bad_request)
-      |> json("Not federating")
-    end
-  end
-
   def inbox(conn, _params) do
     conn
     |> put_status(:bad_request)
     |> json("error, missing HTTP Signature")
-  end
-
-  defp post_inbox_relayed_create(conn, params) do
-    Logger.debug(
-      "Signature missing or not from author, relayed Create message, fetching object from source"
-    )
-
-    Fetcher.fetch_object_from_id(params["object"]["id"])
-
-    json(conn, "ok")
   end
 
   defp represent_service_actor(%User{} = user, conn) do
@@ -476,7 +454,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
         |> json(message)
 
       e ->
-        Logger.warn(fn -> "AP C2S: #{inspect(e)}" end)
+        Logger.warning(fn -> "AP C2S: #{inspect(e)}" end)
 
         conn
         |> put_status(:bad_request)

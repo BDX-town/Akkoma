@@ -7,14 +7,262 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## Added
-- Officially supported docker release
-- Ability to remove followers unilaterally without a block
+- Support for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) (proxy objects)
+- Verified support for elixir 1.16
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool.ReadDescription` returns description values to the FE so they can pre fill the image description field
 
-## Changes
+## Changed
+- Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripLocation`
+
+## Fixed
+- Issue preventing fetching anything from IPv6-only instances
+- Issue allowing post content to leak via opengraph tags despite :estrict\_unauthenticated being set
+
+## 2024.03
+
+## Added
+- CLI tasks best-effort checking for past abuse of the recent spoofing exploit
+- new `:mrf_steal_emoji, :download_unknown_size` option; defaults to `false`
+
+## Changed
+- `Pleroma.Upload, :base_url` now MUST be configured explicitly if used;
+  use of the same domain as the instance is **strongly** discouraged
+- `:media_proxy, :base_url` now MUST be configured explicitly if used;
+  use of the same domain as the instance is **strongly** discouraged
+- StealEmoji:
+  - now uses the pack.json format;
+    existing users must migrate with an out-of-band script (check release notes)
+  - only steals shortcodes recognised as valid
+  - URLs of stolen emoji is no longer predictable
+- The `Dedupe` upload filter is now always active;
+  `AnonymizeFilenames` is again opt-in
+- received AP data is sanity checked before we attempt to parse it as a user
+- Uploads, emoji and media proxy now restrict Content-Type headers to a safe subset
+- Akkoma will no longer fetch and parse objects hosted on the same domain
+
+## Fixed
+- Critical security issue allowing Akkoma to be used as a vector for
+  (depending on configuration) impersonation of other users or creation
+  of bogus users and posts on the upload domain
+- Critical security issue letting Akkoma fall for the above impersonation
+  payloads due to lack of strict id checking
+- Critical security issue allowing domains redirect to to pose as the initial domain
+  (e.g. with media proxy's fallback redirects)
+- refetched objects can no longer attribute themselves to third-party actors
+  (this had no externally visible effect since actor info is read from the Create activity)
+- our litepub JSON-LD schema is now served with the correct content type
+- remote APNG attachments are now recognised as images
+
+## Upgrade Notes
+
+- As mentioned in "Changed", `Pleroma.Upload, :base_url` **MUST** be configured. Uploads will fail without it.
+  - Akkoma will refuse to start if this is not set.
+- Same with media proxy.
+
+## 2024.02
+
+## Added
+- Full compatibility with Erlang OTP26
+- handling of GET /api/v1/preferences
+- Akkoma API is now documented
+- ability to auto-approve follow requests from users you are already following
+- The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
+
+## Changed
+- OTP builds are now built on erlang OTP26
+- The base Phoenix framework is now updated to 1.7
+- An `outbox` field has been added to actor profiles to comply with AP spec
+- User profile backgrounds do now federate with other Akkoma instances and Sharkey
+
+## Fixed
+- Documentation issue in which a non-existing nginx file was referenced
+- Issue where a bad inbox URL could break federation
+- Issue where hashtag rel values would be scrubbed
+- Issue where short domains listed in `transparency_obfuscate_domains` were not actually obfuscated
+
+## 2023.08
+
+## Added
+
+- Added a new configuration option to the MediaProxy feature that allows the blocking of specific domains from using the media proxy or being explicitly allowed by the Content-Security-Policy.
+  - Please make sure instances you wanted to block media from are not in the MediaProxy `whitelist`, and instead use `blocklist`.
+- `OnlyMedia` Upload Filter to simplify restricting uploads to audio, image, and video types
+- ARM64 OTP builds
+  - Ubuntu22 builds are available for develop and stable
+  - other distributions are stable only
+- Support for Elixir 1.15
+  - 1.14 is still supported
+  - OTP26 is currently "unsupported". It will probably work, but due to the way
+    it handles map ordering, the test suite will not pass for it as yet.
+
+## Changed
+
+- Alpine OTP builds are now from alpine 3.18, which is OpenSSLv3 compatible.
+  If you use alpine OTP builds you will have to update your local system.
+- Debian OTP builds are now from a base of bookworm, which is OpenSSLv3 compatible.
+  If you use debian OTP builds you will have to update your local system to
+  bookworm (currently: stable).
+- Ubuntu and debian builds are compatible again! (for now...)
+- Blocks/Mutes now return from max ID to min ID, in line with mastodon.
+- The AnonymizeFilename filter is now enabled by default.
+
+## Fixed
+
+- Deactivated users can no longer show up in the emoji reaction list
+- Embedded posts can no longer bypass `:restrict\_unauthenticated`
+- GET/HEAD requests will now work when requesting AWS-based instances.
+
+## Security
+
+- Add `no_new_privs` hardening to OpenRC and systemd service files
+- XML parsers cannot load any entities (thanks @Mae@is.badat.dev!)
+- Reduced permissions of config files and directories, distros requiring greater permissions like group-read need to pre-create the directories
+
+## Removed
+
+- Builds for debian oldstable (bullseye)
+  - If you are on oldstable you should NOT attempt to update OTP builds without
+    first updating your machine.
+
+## 2023.05
+
+## Added
+- Custom options for users to accept/reject private messages
+  - options: everybody, nobody, people\_i\_follow
+- MRF to reject notes from accounts newer than a given age
+  - this will have the side-effect of rejecting legitimate messages if your
+    post gets boosted outside of your local bubble and people your instance
+    does not know about reply to it.
+
+## Fixed
+- Support for `streams` public key URIs
+- Bookmarks are cleaned up on DB prune now
+
+## Security
+- Fixed mediaproxy being a bit of a silly billy
+
+## 2023.04
+
+## Added
+- Nodeinfo keys for unauthenticated timeline visibility
+- Option to disable federated timeline
+- Option to make the bubble timeline publicly accessible
+- Ability to swap between installed standard frontends
+  - *mastodon frontends are still not counted as standard frontends due to the complexity in serving them correctly*. 
+
+### Upgrade Notes
+- Elixir 1.14 is now required. If your distribution does not package this, you can
+  use [asdf](https://asdf-vm.com/). At time of writing, elixir 1.14.3 / erlang 25.3
+  is confirmed to work.
+
+## 2023.03
+
+## Fixed
+- Allowed contentMap to be updated on edit
+- Filter creation now accepts expires\_at
+
+### Changed
+- Restoring the database from a dump now goes much faster without need for work-arounds
+- Misskey reaction matching uses `content` parameter now
+
+### Added
+- Extend the mix task `prune_objects` with option `--prune-orphaned-activities` to also prune orphaned activities, allowing to reclaim even more database space
+
+### Removed
+- Possibility of using the `style` parameter on `span` elements. This will break certain MFM parameters.
+- Option for "default" image description.
+
+## 2023.02
+
+### Added
+- Prometheus metrics exporting from `/api/v1/akkoma/metrics`
+- Ability to alter http pool size
+- Translation of statuses via ArgosTranslate
+- Argon2 password hashing
+- Ability to "verify" links in profile fields via rel=me
+- Mix tasks to dump/load config to/from json for bulk editing
+- Followed hashtag list at /api/v1/followed\_tags, API parity with mastodon
+- Ability to set posting language in the post form, API parity with mastodon
+- Ability to match domains in MRF by a trailing wildcard
+  - Currently supported formats:
+    - `example.com` (implicitly matches `*.example.com`)
+    - `*.example.com`
+    - `example.*` (implicitly matches `*.example.*`)
+
+### Removed
+- Non-finch HTTP adapters
+- Legacy redirect from /api/pleroma/admin to /api/v1/pleroma/admin
+- Legacy redirects from /api/pleroma to /api/v1/pleroma
+- :crypt dependency
+
+### Changed
+- Return HTTP error 413 when uploading an avatar or banner that's above the configured upload limit instead of a 500.
+- Non-admin users now cannot register `admin` scope tokens (not security-critical, they didn't work before, but you _could_ create them)
+  - Admin scopes will be dropped on create
+- Rich media will now backoff for 20 minutes after a failure
+- Quote posts are now considered as part of the same thread as the post they are quoting
+- Extend the mix task `prune_objects` with options to keep more relevant posts
+- Simplified HTTP signature processing
+- Rich media will now hard-exit after 5 seconds, to prevent timeline hangs
+- HTTP Content Security Policy is now far more strict to prevent any potential XSS/CSS leakages
+- Follow requests are now paginated, matches mastodon API spec, so use the Link header to paginate.
+
+### Fixed 
+- /api/v1/accounts/lookup will now respect restrict\_unauthenticated
+- Unknown atoms in the config DB will no longer crash akkoma on boot
+
+### Upgrade notes
+- Ensure `config :tesla, :adapter` is either unset, or set to `{Tesla.Adapter.Finch, name: MyFinch}` in your .exs config
+- Pleroma-FE will need to be updated to handle the new /api/v1/pleroma endpoints for  custom emoji
+
+## 2022.12
+
+## Added
+- Config: HTTP timeout options, :pool\_timeout and :receive\_timeout
+- Added statistic gathering about instances which do/don't have signed fetches when they request from us
+- Ability to set a default post expiry time, after which the post will be deleted. If used in concert with ActivityExpiration MRF, the expiry which comes _sooner_ will be applied.
+- Regular task to prune local transient activities
+- Task to manually run the transient prune job (pleroma.database prune\_task)
+- Ability to follow hashtags
+- Option to extend `reject` in MRF-Simple to apply to entire threads, where the originating instance is rejected
+- Extra information to failed HTTP requests
+
+## Changed
+- MastoAPI: Accept BooleanLike input on `/api/v1/accounts/:id/follow` (fixes follows with mastodon.py)
+- Relays from akkoma are now off by default
+- NormalizeMarkup MRF is now on by default
+- Follow/Block/Mute imports now spin off into *n* tasks to avoid the oban timeout
+- Transient activities recieved from remote servers are no longer persisted in the database
+- Overhauled static-fe view for logged-out users
+- Blocked instances will now not be sent _any_ requests, even fetch ones that would get rejected by MRF anyhow
+
+## Removed
+- FollowBotPolicy
+- Passing of undo/block into MRF
+
+## Upgrade Notes
+- If you have an old instance, you will probably want to run `mix pleroma.database prune_task` in the foreground to catch it up with the history of your instance.
+
+## 2022.11
+
+## Added
+- Officially supported docker release
+- Ability to remove followers unilaterally without a block
+- Scraping of nodeinfo from remote instances to display instance info
+- `requested_by` in relationships when the user has requested to follow you
+
+## Changed
 - Follows no longer override domain blocks, a domain block is final
 - Deletes are now the lowest priority to publish and will be handled after creates
-- Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripLocation`
+- Domain blocks are now subdomain-matches by default
+
+## Fixed
+- Registrations via ldap are now compatible with the latest OTP24
+
+## Update notes
+- If you use LDAP and run from source, please update your elixir/erlang
+  to the latest. The changes in OTP24.3 are breaking.
+- You can now remove the leading `*.` from domain blocks, but you do not have to.
 
 ## 2022.10
 

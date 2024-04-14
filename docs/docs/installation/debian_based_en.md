@@ -4,7 +4,7 @@
 
 ## Installation
 
-This guide will assume you are on Debian 11 (“bullseye”) or later. This guide should also work with Ubuntu 18.04 (“Bionic Beaver”) and later. It also assumes that you have administrative rights, either as root or a user with [sudo permissions](https://www.digitalocean.com/community/tutorials/how-to-add-delete-and-grant-sudo-privileges-to-users-on-a-debian-vps). If you want to run this guide with root, ignore the `sudo` at the beginning of the lines, unless it calls a user like `sudo -Hu akkoma`; in this case, use `su <username> -s $SHELL -c 'command'` instead.
+This guide will assume you are on Debian 12 (“bookworm”) or later. This guide should also work with Ubuntu 22.04 (“Jammy Jellyfish”) and later. It also assumes that you have administrative rights, either as root or a user with [sudo permissions](https://www.digitalocean.com/community/tutorials/how-to-add-delete-and-grant-sudo-privileges-to-users-on-a-debian-vps). If you want to run this guide with root, ignore the `sudo` at the beginning of the lines, unless it calls a user like `sudo -Hu akkoma`; in this case, use `su <username> -s $SHELL -c 'command'` instead.
 
 {! installation/generic_dependencies.include !}
 
@@ -23,23 +23,7 @@ sudo apt full-upgrade
 sudo apt install git build-essential postgresql postgresql-contrib cmake libmagic-dev
 ```
 
-### Install Elixir and Erlang
-
-* Install Elixir and Erlang (you might need to use backports or [asdf](https://github.com/asdf-vm/asdf) on old systems):
-
-```shell
-sudo apt update
-sudo apt install elixir erlang-dev erlang-nox
-```
-
-
-### Optional packages: [`docs/installation/optional/media_graphics_packages.md`](../installation/optional/media_graphics_packages.md)
-
-```shell
-sudo apt install imagemagick ffmpeg libimage-exiftool-perl
-```
-
-### Install AkkomaBE
+### Create the akkoma user
 
 * Add a new system user for the Akkoma service:
 
@@ -49,12 +33,72 @@ sudo useradd -r -s /bin/false -m -d /var/lib/akkoma -U akkoma
 
 **Note**: To execute a single command as the Akkoma system user, use `sudo -Hu akkoma command`. You can also switch to a shell by using `sudo -Hu akkoma $SHELL`. If you don’t have and want `sudo` on your system, you can use `su` as root user (UID 0) for a single command by using `su -l akkoma -s $SHELL -c 'command'` and `su -l akkoma -s $SHELL` for starting a shell.
 
-* Git clone the AkkomaBE repository and make the Akkoma user the owner of the directory:
+### Install Elixir and Erlang
+
+If your distribution packages a recent enough version of Elixir, you can install it directly from the distro repositories and skip to the next section of the guide:
+
+```shell
+sudo apt install elixir erlang-dev erlang-nox
+```
+
+Otherwise use [asdf](https://github.com/asdf-vm/asdf) to install the latest versions of Elixir and Erlang.
+
+First, install some dependencies needed to build Elixir and Erlang:
+```shell
+sudo apt install curl unzip build-essential autoconf m4 libncurses5-dev libssh-dev unixodbc-dev xsltproc libxml2-utils libncurses-dev
+```
+
+Then login to the `akkoma` user and install asdf:
+```shell
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
+```
+
+Add the following lines to `~/.bashrc`:
+```shell
+. "$HOME/.asdf/asdf.sh"
+# asdf completions
+. "$HOME/.asdf/completions/asdf.bash"
+```
+
+Restart the shell:
+```shell
+exec $SHELL
+```
+
+Next install Erlang:
+```shell
+asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
+export KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac"
+asdf install erlang 25.3.2.5
+asdf global erlang 25.3.2.5
+```
+
+Now install Elixir:
+```shell
+asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
+asdf install elixir 1.15.4-otp-25
+asdf global elixir 1.15.4-otp-25
+```
+
+Confirm that Elixir is installed correctly by checking the version:
+```shell
+elixir --version
+```
+
+### Optional packages: [`docs/installation/optional/media_graphics_packages.md`](../installation/optional/media_graphics_packages.md)
+
+```shell
+sudo apt install imagemagick ffmpeg libimage-exiftool-perl
+```
+
+### Install AkkomaBE
+
+* Log into the `akkoma` user and clone the AkkomaBE repository from the stable branch and make the Akkoma user the owner of the directory:
 
 ```shell
 sudo mkdir -p /opt/akkoma
 sudo chown -R akkoma:akkoma /opt/akkoma
-sudo -Hu akkoma git clone https://akkoma.dev/AkkomaGang/akkoma.git /opt/akkoma
+sudo -Hu akkoma git clone https://akkoma.dev/AkkomaGang/akkoma.git -b stable /opt/akkoma
 ```
 
 * Change to the new directory:
@@ -74,7 +118,7 @@ sudo -Hu akkoma mix deps.get
   * This may take some time, because parts of akkoma get compiled first.
   * After that it will ask you a few questions about your instance and generates a configuration file in `config/generated_config.exs`.
 
-* Check the configuration and if all looks right, rename it, so Akkoma will load it (`prod.secret.exs` for productive instance, `dev.secret.exs` for development instances):
+* Check the configuration and if all looks right, rename it, so Akkoma will load it (`prod.secret.exs` for productive instances):
 
 ```shell
 sudo -Hu akkoma mv config/{generated_config.exs,prod.secret.exs}

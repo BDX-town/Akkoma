@@ -1,0 +1,171 @@
+form {
+    width: 100%;
+}
+
+.input {
+    color: var(--muted-text-color);
+    display: flex;
+    margin-left: 1em;
+    margin-right: 1em;
+    flex-direction: column;
+}
+
+input {
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    background-color: transparent;
+    color: inherit;
+    border: 0;
+    transition-property: border-bottom;
+    transition-duration: 0.35s;
+    border-bottom: 2px solid var(--faint);
+    font: inherit;
+    width: inherit;
+    box-sizing: border-box;
+}
+
+.scopes-input {
+    display: flex;
+    flex-direction: column;
+    margin: 1em 0;
+    color: var(--muted-text-color);
+}
+
+.scopes-input label:first-child {
+    height: 2em;
+}
+
+.scopes {
+    display: flex;
+    flex-wrap: wrap;
+    color: var(--primary-text-color);
+}
+
+.scope {
+    display: flex;
+    flex-basis: 100%;
+    height: 2em;
+    align-items: center;
+}
+
+.scope:before {
+    color: var(--primary-text-color);
+    content: "✔\fe0e";
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+[type="checkbox"]+label {
+    display: none;
+    cursor: pointer;
+    margin: 0.5em;
+}
+
+[type="checkbox"] {
+    display: none;
+}
+
+[type="checkbox"]+label:before {
+    cursor: pointer;
+    display: inline-block;
+    color: white;
+    background-color: var(--background-color);
+    border: 4px solid var(--background-color);
+    box-shadow: 0px 0px 1px 0 var(--brand-color);
+    width: 1.2em;
+    height: 1.2em;
+    margin-right: 1.0em;
+    content: "";
+    transition-property: background-color;
+    transition-duration: 0.35s;
+    color: var(--background-color);
+    margin-bottom: -0.2em;
+    border-radius: 2px;
+}
+
+[type="checkbox"]:checked+label:before {
+    background-color: var(--brand-color);
+}
+
+a.button,
+button {
+    width: 100%;
+    background-color: var(--btn);
+    color: var(--btnText);
+    border-radius: 4px;
+    border: none;
+    padding: 10px 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    box-shadow: var(--btnShadow);
+    font: inherit;
+}
+
+a.button:hover,
+button:hover {
+    cursor: pointer;
+    box-shadow: var(--btnHoverShadow);
+}
+
+.actions {
+    display: flex;
+    flex-grow: 1;
+}
+
+.actions button,
+.actions a.button {
+    width: auto;
+    margin-left: 2%;
+    width: 45%;
+    text-align: center;
+}
+
+.account-header__banner {
+    width: 100%;
+    height: 80px;
+    background-size: cover;
+    background-position: center;
+}
+
+.account-header__avatar {
+    width: 64px;
+    height: 64px;
+    background-size: cover;
+    background-position: center;
+    margin: -60px 10px 10px;
+    border: 6px solid var(--foreground-color);
+    border-radius: 999px;
+}
+
+.account-header__meta {
+    padding: 12px 20px 17px 70px;
+}
+
+.account-header__display-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.account-header__nickname {
+    font-size: 14px;
+    color: var(--muted-text-color);
+}
+
+.oauth {
+    /* Remote interaction /main/ostatus has such hierarchy, and its header and
+     * content do not pad themselves:
+     *   (.panel.oauth (h2)
+     *                 (form (input)
+     *                       (button))) */
+    padding: 1px 1em;
+}
+
+.oauth .container__content {
+    /* Frontend selection /oauth/authorize needs an inverse because its heading
+     * and content have their own background and padding:
+     *   (.panel.oauth (form (.container__content (.panel-heading)
+     *                                            (.panel-content)))) */
+    margin: -1px -1em;
+}

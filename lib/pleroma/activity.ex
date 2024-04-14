@@ -277,6 +277,13 @@ defmodule Pleroma.Activity do
 
   def get_create_by_object_ap_id_with_object(_), do: nil
 
+  def get_local_create_by_object_ap_id(ap_id) when is_binary(ap_id) do
+    ap_id
+    |> create_by_object_ap_id()
+    |> where(local: true)
+    |> Repo.one()
+  end
+
   @spec create_by_id_with_object(String.t()) :: t() | nil
   def create_by_id_with_object(id) do
     get_by_id_with_opts(id, preload: [:object], filter: [type: "Create"])
@@ -367,6 +374,14 @@ defmodule Pleroma.Activity do
     |> Repo.all()
   end
 
+  def follow_activity(%User{ap_id: ap_id}, %User{ap_id: followed_ap_id}) do
+    Queries.by_type("Follow")
+    |> where([a], a.actor == ^ap_id)
+    |> where([a], fragment("?->>'object' = ?", a.data, ^followed_ap_id))
+    |> where([a], fragment("?->>'state'", a.data) in ["pending", "accept"])
+    |> Repo.one()
+  end
+
   def restrict_deactivated_users(query) do
     query
     |> join(
@@ -375,7 +390,8 @@ defmodule Pleroma.Activity do
       active in fragment(
         "SELECT is_active from users WHERE ap_id = ? AND is_active = TRUE",
         activity.actor
-      )
+      ),
+      on: true
     )
   end
 

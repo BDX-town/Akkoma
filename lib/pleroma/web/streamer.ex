@@ -17,6 +17,7 @@ defmodule Pleroma.Web.Streamer do
   alias Pleroma.Web.OAuth.Token
   alias Pleroma.Web.Plugs.OAuthScopesPlug
   alias Pleroma.Web.StreamerView
+  require Pleroma.Constants
 
   @mix_env Mix.env()
   @registry Pleroma.Web.StreamerRegistry
@@ -24,6 +25,7 @@ defmodule Pleroma.Web.Streamer do
   def registry, do: @registry
 
   @public_streams ["public", "public:local", "public:media", "public:local:media"]
+  @local_streams ["public:local", "public:local:media"]
   @user_streams ["user", "user:notification", "direct"]
 
   @doc "Expands and authorizes a stream, and registers the process for streaming."
@@ -40,14 +42,37 @@ defmodule Pleroma.Web.Streamer do
     end
   end
 
+  defp can_access_stream(user, oauth_token, kind) do
+    with {_, true} <- {:restrict?, Config.restrict_unauthenticated_access?(:timelines, kind)},
+         {_, %User{id: user_id}, %Token{user_id: user_id}} <- {:user, user, oauth_token},
+         {_, true} <-
+           {:scopes,
+            OAuthScopesPlug.filter_descendants(["read:statuses"], oauth_token.scopes) != []} do
+      true
+    else
+      {:restrict?, _} ->
+        true
+
+      _ ->
+        false
+    end
+  end
+
   @doc "Expand and authorizes a stream"
   @spec get_topic(stream :: String.t(), User.t() | nil, Token.t() | nil, Map.t()) ::
           {:ok, topic :: String.t()} | {:error, :bad_topic}
   def get_topic(stream, user, oauth_token, params \\ %{})
 
-  # Allow all public steams.
-  def get_topic(stream, _user, _oauth_token, _params) when stream in @public_streams do
-    {:ok, stream}
+  # Allow all public steams if the instance allows unauthenticated access.
+  # Otherwise, only allow users with valid oauth tokens.
+  def get_topic(stream, user, oauth_token, _params) when stream in @public_streams do
+    kind = if stream in @local_streams, do: :local, else: :federated
+
+    if can_access_stream(user, oauth_token, kind) do
+      {:ok, stream}
+    else
+      {:error, :unauthorized}
+    end
   end
 
   # Allow all hashtags streams.
@@ -56,12 +81,20 @@ defmodule Pleroma.Web.Streamer do
   end
 
   # Allow remote instance streams.
-  def get_topic("public:remote", _user, _oauth_token, %{"instance" => instance} = _params) do
-    {:ok, "public:remote:" <> instance}
+  def get_topic("public:remote", user, oauth_token, %{"instance" => instance} = _params) do
+    if can_access_stream(user, oauth_token, :federated) do
+      {:ok, "public:remote:" <> instance}
+    else
+      {:error, :unauthorized}
+    end
   end
 
-  def get_topic("public:remote:media", _user, _oauth_token, %{"instance" => instance} = _params) do
-    {:ok, "public:remote:media:" <> instance}
+  def get_topic("public:remote:media", user, oauth_token, %{"instance" => instance} = _params) do
+    if can_access_stream(user, oauth_token, :federated) do
+      {:ok, "public:remote:media:" <> instance}
+    else
+      {:error, :unauthorized}
+    end
   end
 
   # Expand user streams.
@@ -252,7 +285,17 @@ defmodule Pleroma.Web.Streamer do
       User.get_recipients_from_activity(item)
       |> Enum.map(fn %{id: id} -> "user:#{id}" end)
 
-    Enum.each(recipient_topics, fn topic ->
+    hashtag_recipients =
+      if Pleroma.Constants.as_public() in item.recipients do
+        Pleroma.Hashtag.get_recipients_for_activity(item)
+        |> Enum.map(fn id -> "user:#{id}" end)
+      else
+        []
+      end
+
+    all_recipients = Enum.uniq(recipient_topics ++ hashtag_recipients)
+
+    Enum.each(all_recipients, fn topic ->
       push_to_socket(topic, item)
     end)
   end

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.PleromaAPI.AccountControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   alias Pleroma.Config
   alias Pleroma.Tests.ObanHelpers
@@ -133,7 +133,7 @@ defmodule Pleroma.Web.PleromaAPI.AccountControllerTest do
         |> get("/api/v1/pleroma/accounts/#{user.id}/favourites")
         |> json_response_and_validate_schema(200)
 
-      assert length(response) == 0
+      assert response == []
     end
 
     test "does not return others' favorited DM when user is not one of recipients", %{

@@ -258,7 +258,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     expected = %{
       id: to_string(note.id),
       uri: object_data["id"],
-      url: Pleroma.Web.Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :notice, note),
+      url: url(~p[/notice/#{note}]),
       account: AccountView.render("show.json", %{user: user, skip_visibility_check: true}),
       in_reply_to_id: nil,
       in_reply_to_account_id: nil,
@@ -594,6 +594,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     represented = StatusView.render("show.json", %{for: user, activity: reblog})
 
     assert represented[:id] == to_string(reblog.id)
+    assert represented[:content] == ""
     assert represented[:reblog][:id] == to_string(activity.id)
     assert represented[:emojis] == []
     assert_schema(represented, "Status", Pleroma.Web.ApiSpec.spec())

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.OAuth.OAuthControllerTest do
-  use Pleroma.Web.ConnCase
+  use Pleroma.Web.ConnCase, async: false
 
   import Pleroma.Factory
 
@@ -57,7 +57,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       assert response = html_response(conn, 200)
       assert response =~ "Sign in with Twitter"
-      assert response =~ o_auth_path(conn, :prepare_request)
+      assert response =~ ~p"/prepare_request"
     end
 
     test "GET /oauth/prepare_request encodes parameters as `state` and redirects", %{
@@ -81,9 +81,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       assert html_response(conn, 302)
 
-      redirect_query = URI.parse(redirected_to(conn)).query
-      assert %{"state" => state_param} = URI.decode_query(redirect_query)
-      assert {:ok, state_components} = Jason.decode(state_param)
+      assert {:ok, state_components} = Jason.decode(conn.resp_cookies["akkoma_oauth_state"].value)
 
       expected_client_id = app.client_id
       expected_redirect_uri = app.redirect_uris
@@ -97,7 +95,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
     end
 
     test "with user-bound registration, GET /oauth/<provider>/callback redirects to `redirect_uri` with `code`",
-         %{app: app, conn: conn} do
+         %{app: app, conn: _} do
       registration = insert(:registration)
       redirect_uri = OAuthController.default_redirect_uri(app)
 
@@ -109,15 +107,17 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       }
 
       conn =
-        conn
+        build_conn()
+        |> put_req_cookie("akkoma_oauth_state", Jason.encode!(state_params))
+        |> Plug.Session.call(Plug.Session.init(@session_opts))
+        |> fetch_session()
         |> assign(:ueberauth_auth, %{provider: registration.provider, uid: registration.uid})
         |> get(
           "/oauth/twitter/callback",
           %{
             "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
             "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
-            "provider" => "twitter",
-            "state" => Jason.encode!(state_params)
+            "provider" => "twitter"
           }
         )
 
@@ -162,15 +162,42 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
     test "on authentication error, GET /oauth/<provider>/callback redirects to `redirect_uri`", %{
       app: app,
-      conn: conn
+      conn: _
     } do
       state_params = %{
         "scope" => Enum.join(app.scopes, " "),
         "client_id" => app.client_id,
-        "redirect_uri" => OAuthController.default_redirect_uri(app),
-        "state" => ""
+        "redirect_uri" => OAuthController.default_redirect_uri(app)
       }
 
+      conn =
+        build_conn()
+        |> put_req_cookie("akkoma_oauth_state", Jason.encode!(state_params))
+        |> Plug.Session.call(Plug.Session.init(@session_opts))
+        |> fetch_session()
+        |> assign(:ueberauth_failure, %{errors: [%{message: "(error description)"}]})
+        |> get(
+          "/oauth/twitter/callback",
+          %{
+            "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
+            "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
+            "provider" => "twitter",
+            "state" => ""
+          }
+        )
+
+      assert html_response(conn, 302)
+      assert redirected_to(conn) == app.redirect_uris
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Failed to authenticate: (error description)."
+    end
+
+    test "on authentication error with no prior state, GET /oauth/<provider>/callback returns 400",
+         %{
+           app: _,
+           conn: conn
+         } do
       conn =
         conn
         |> assign(:ueberauth_failure, %{errors: [%{message: "(error description)"}]})
@@ -180,13 +207,11 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
             "oauth_token" => "G-5a3AAAAAAAwMH9AAABaektfSM",
             "oauth_verifier" => "QZl8vUqNvXMTKpdmUnGejJxuHG75WWWs",
             "provider" => "twitter",
-            "state" => Jason.encode!(state_params)
+            "state" => ""
           }
         )
 
-      assert html_response(conn, 302)
-      assert redirected_to(conn) == app.redirect_uris
-      assert get_flash(conn, :error) == "Failed to authenticate: (error description)."
+      assert response(conn, 400)
     end
 
     test "GET /oauth/registration_details renders registration details form", %{
@@ -307,7 +332,9 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
           |> post("/oauth/register", bad_params)
 
         assert html_response(conn, 403) =~ ~r/name="op" type="submit" value="register"/
-        assert get_flash(conn, :error) == "Error: #{bad_param} has already been taken."
+
+        assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+                 "Error: #{bad_param} has already been taken."
       end
     end
 
@@ -316,7 +343,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
            app: app,
            conn: conn
          } do
-      user = insert(:user, password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt("testpassword"))
+      user = insert(:user, password_hash: Pleroma.Password.hash_pwd_salt("testpassword"))
       registration = insert(:registration, user: nil)
       redirect_uri = OAuthController.default_redirect_uri(app)
 
@@ -347,7 +374,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
            app: app,
            conn: conn
          } do
-      user = insert(:user, password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt("testpassword"))
+      user = insert(:user, password_hash: Pleroma.Password.hash_pwd_salt("testpassword"))
       registration = insert(:registration, user: nil)
       unlisted_redirect_uri = "http://cross-site-request.com"
 
@@ -398,7 +425,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
         |> post("/oauth/register", params)
 
       assert html_response(conn, 401) =~ ~r/name="op" type="submit" value="connect"/
-      assert get_flash(conn, :error) == "Invalid Username/Password"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid Username/Password"
     end
   end
 
@@ -693,45 +720,112 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
   describe "POST /oauth/authorize" do
     test "redirects with oauth authorization, " <>
-           "granting requested app-supported scopes to both admin- and non-admin users" do
+           "granting requested app-supported scopes to admin users" do
       app_scopes = ["read", "write", "admin", "secret_scope"]
+      app = insert(:oauth_app, scopes: app_scopes)
+      redirect_uri = OAuthController.default_redirect_uri(app)
+      scopes_subset = ["read:subscope", "write", "admin"]
+      admin = insert(:user, is_admin: true)
+
+      # In case scope param is missing, expecting _all_ app-supported scopes to be granted
+      conn =
+        post(
+          build_conn(),
+          "/oauth/authorize",
+          %{
+            "authorization" => %{
+              "name" => admin.nickname,
+              "password" => "test",
+              "client_id" => app.client_id,
+              "redirect_uri" => redirect_uri,
+              "scope" => scopes_subset,
+              "state" => "statepassed"
+            }
+          }
+        )
+
+      target = redirected_to(conn)
+      assert target =~ redirect_uri
+
+      query = URI.parse(target).query |> URI.query_decoder() |> Map.new()
+
+      assert %{"state" => "statepassed", "code" => code} = query
+      auth = Repo.get_by(Authorization, token: code)
+      assert auth
+      assert auth.scopes == scopes_subset
+    end
+
+    test "redirects with oauth authorization, " <>
+           "granting requested app-supported scopes to moderators" do
+      app_scopes = ["read", "write", "admin", "secret_scope"]
+      app = insert(:oauth_app, scopes: app_scopes)
+      redirect_uri = OAuthController.default_redirect_uri(app)
+      scopes_subset = ["read:subscope", "write", "admin"]
+      admin = insert(:user, is_moderator: true)
+
+      # In case scope param is missing, expecting _all_ app-supported scopes to be granted
+      conn =
+        post(
+          build_conn(),
+          "/oauth/authorize",
+          %{
+            "authorization" => %{
+              "name" => admin.nickname,
+              "password" => "test",
+              "client_id" => app.client_id,
+              "redirect_uri" => redirect_uri,
+              "scope" => scopes_subset,
+              "state" => "statepassed"
+            }
+          }
+        )
+
+      target = redirected_to(conn)
+      assert target =~ redirect_uri
+
+      query = URI.parse(target).query |> URI.query_decoder() |> Map.new()
+
+      assert %{"state" => "statepassed", "code" => code} = query
+      auth = Repo.get_by(Authorization, token: code)
+      assert auth
+      assert auth.scopes == scopes_subset
+    end
+
+    test "redirects with oauth authorization, " <>
+           "granting requested app-supported scopes for non-admin users" do
+      app_scopes = ["read", "write", "secret_scope", "admin"]
       app = insert(:oauth_app, scopes: app_scopes)
       redirect_uri = OAuthController.default_redirect_uri(app)
 
       non_admin = insert(:user, is_admin: false)
-      admin = insert(:user, is_admin: true)
-      scopes_subset = ["read:subscope", "write", "admin"]
+      scopes_subset = ["read:subscope", "write", "admin", "admin:metrics"]
 
       # In case scope param is missing, expecting _all_ app-supported scopes to be granted
-      for user <- [non_admin, admin],
-          {requested_scopes, expected_scopes} <-
-            %{scopes_subset => scopes_subset, nil: app_scopes} do
-        conn =
-          post(
-            build_conn(),
-            "/oauth/authorize",
-            %{
-              "authorization" => %{
-                "name" => user.nickname,
-                "password" => "test",
-                "client_id" => app.client_id,
-                "redirect_uri" => redirect_uri,
-                "scope" => requested_scopes,
-                "state" => "statepassed"
-              }
+      conn =
+        post(
+          build_conn(),
+          "/oauth/authorize",
+          %{
+            "authorization" => %{
+              "name" => non_admin.nickname,
+              "password" => "test",
+              "client_id" => app.client_id,
+              "redirect_uri" => redirect_uri,
+              "scope" => scopes_subset,
+              "state" => "statepassed"
             }
-          )
+          }
+        )
 
-        target = redirected_to(conn)
-        assert target =~ redirect_uri
+      target = redirected_to(conn)
+      assert target =~ redirect_uri
 
-        query = URI.parse(target).query |> URI.query_decoder() |> Map.new()
+      query = URI.parse(target).query |> URI.query_decoder() |> Map.new()
 
-        assert %{"state" => "statepassed", "code" => code} = query
-        auth = Repo.get_by(Authorization, token: code)
-        assert auth
-        assert auth.scopes == expected_scopes
-      end
+      assert %{"state" => "statepassed", "code" => code} = query
+      auth = Repo.get_by(Authorization, token: code)
+      assert auth
+      assert auth.scopes == ["read:subscope", "write"]
     end
 
     test "authorize from cookie" do
@@ -831,33 +925,6 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       assert result =~ "Invalid Username/Password"
     end
 
-    test "returns 401 for missing scopes" do
-      user = insert(:user, is_admin: false)
-      app = insert(:oauth_app, scopes: ["read", "write", "admin"])
-      redirect_uri = OAuthController.default_redirect_uri(app)
-
-      result =
-        build_conn()
-        |> post("/oauth/authorize", %{
-          "authorization" => %{
-            "name" => user.nickname,
-            "password" => "test",
-            "client_id" => app.client_id,
-            "redirect_uri" => redirect_uri,
-            "state" => "statepassed",
-            "scope" => ""
-          }
-        })
-        |> html_response(:unauthorized)
-
-      # Keep the details
-      assert result =~ app.client_id
-      assert result =~ redirect_uri
-
-      # Error message
-      assert result =~ "This action is outside the authorized scopes"
-    end
-
     test "returns 401 for scopes beyond app scopes hierarchy", %{conn: conn} do
       user = insert(:user)
       app = insert(:oauth_app, scopes: ["read", "write"])
@@ -882,7 +949,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       assert result =~ redirect_uri
 
       # Error message
-      assert result =~ "This action is outside the authorized scopes"
+      assert result =~ "This action is outside of authorized scopes"
     end
   end
 
@@ -913,7 +980,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
     test "issues a token for `password` grant_type with valid credentials, with full permissions by default" do
       password = "testpassword"
-      user = insert(:user, password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password))
+      user = insert(:user, password_hash: Pleroma.Password.hash_pwd_salt(password))
 
       app = insert(:oauth_app, scopes: ["read", "write"])
 
@@ -943,7 +1010,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       user =
         insert(:user,
-          password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password),
+          password_hash: Pleroma.Password.hash_pwd_salt(password),
           multi_factor_authentication_settings: %MFA.Settings{
             enabled: true,
             totp: %MFA.Settings.TOTP{secret: otp_secret, confirmed: true}
@@ -1052,7 +1119,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
       password = "testpassword"
 
       {:ok, user} =
-        insert(:user, password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password))
+        insert(:user, password_hash: Pleroma.Password.hash_pwd_salt(password))
         |> User.confirmation_changeset(set_confirmation: false)
         |> User.update_and_set_cache()
 
@@ -1080,7 +1147,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       user =
         insert(:user,
-          password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password),
+          password_hash: Pleroma.Password.hash_pwd_salt(password),
           is_active: false
         )
 
@@ -1108,7 +1175,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       user =
         insert(:user,
-          password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password),
+          password_hash: Pleroma.Password.hash_pwd_salt(password),
           password_reset_pending: true
         )
 
@@ -1137,7 +1204,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       user =
         insert(:user,
-          password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password),
+          password_hash: Pleroma.Password.hash_pwd_salt(password),
           is_confirmed: false
         )
 
@@ -1165,7 +1232,7 @@ defmodule Pleroma.Web.OAuth.OAuthControllerTest do
 
       user =
         insert(:user,
-          password_hash: Pleroma.Password.Pbkdf2.hash_pwd_salt(password),
+          password_hash: Pleroma.Password.hash_pwd_salt(password),
           is_approved: false
         )
 

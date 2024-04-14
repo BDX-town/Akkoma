@@ -8,6 +8,7 @@ pidfile="/var/run/akkoma.pid"
 directory=/opt/akkoma
 healthcheck_delay=60
 healthcheck_timer=30
+no_new_privs="yes"
 
 : ${akkoma_port:-4000}
 
@@ -31,6 +32,7 @@ else
 fi
 
 export MIX_ENV=prod
+export ERL_EPMD_ADDRESS=127.0.0.1
 
 depend() {
 	need nginx postgresql

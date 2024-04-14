@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.Auth.BasicAuthTest do
-  use Pleroma.Web.ConnCase, async: true
+  use Pleroma.Web.ConnCase, async: false
 
   import Pleroma.Factory
 
@@ -11,7 +11,7 @@ defmodule Pleroma.Web.Auth.BasicAuthTest do
     conn: conn
   } do
     user = insert(:user)
-    assert Pleroma.Password.Pbkdf2.verify_pass("test", user.password_hash)
+    assert Pleroma.Password.checkpw("test", user.password_hash)
 
     basic_auth_contents =
       (URI.encode_www_form(user.nickname) <> ":" <> URI.encode_www_form("test"))
