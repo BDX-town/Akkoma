@@ -656,7 +656,7 @@ This filter replaces the declared filename (not the path) of an upload.
 
 #### Pleroma.Upload.Filter.Exiftool.StripMetadata
 
-This filter only strips the GPS and location metadata with Exiftool leaving color profiles and attributes intact.
+This filter strips metadata with Exiftool leaving color profiles and orientation intact.
 
 No specific configuration.
 

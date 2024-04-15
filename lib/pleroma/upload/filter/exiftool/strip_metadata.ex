@@ -4,7 +4,7 @@
 
 defmodule Pleroma.Upload.Filter.Exiftool.StripMetadata do
   @moduledoc """
-  Strips GPS related EXIF tags and overwrites the file in place.
+  Tries to strip all image metadata but colorspace and orientation overwriting the file in place.
   Also strips or replaces filesystem metadata e.g., timestamps.
   """
   @behaviour Pleroma.Upload.Filter
@@ -19,7 +19,17 @@ defmodule Pleroma.Upload.Filter.Exiftool.StripMetadata do
     try do
       case System.cmd(
              "exiftool",
-             ["-ignoreMinorErrors", "-overwrite_original", "-gps:all=", file],
+             [
+               "-ignoreMinorErrors",
+               "-overwrite_original",
+               "-all=",
+               "-CommonIFD0=",
+               "-TagsFromFile",
+               "@",
+               "-ColorSpaceTags",
+               "-Orientation",
+               file
+             ],
              parallelism: true
            ) do
         {_response, 0} -> {:ok, :filtered}

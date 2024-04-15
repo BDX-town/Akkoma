@@ -172,10 +172,10 @@ defmodule Mix.Tasks.Pleroma.Instance do
 
       {strip_uploads_metadata_message, strip_uploads_metadata_default} =
         if Pleroma.Utils.command_available?("exiftool") do
-          {"Do you want to strip location (GPS) data from uploaded images? This requires exiftool, it was detected as installed. (y/n)",
+          {"Do you want to strip metadata from uploaded images? This requires exiftool, it was detected as installed. (y/n)",
            "y"}
         else
-          {"Do you want to strip location (GPS) data from uploaded images? This requires exiftool, it was detected as not installed, please install it if you answer yes. (y/n)",
+          {"Do you want to strip metadata from uploaded images? This requires exiftool, it was detected as not installed, please install it if you answer yes. (y/n)",
            "n"}
         end
 
