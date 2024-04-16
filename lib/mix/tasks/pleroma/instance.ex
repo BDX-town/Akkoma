@@ -35,7 +35,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           static_dir: :string,
           listen_ip: :string,
           listen_port: :string,
-          strip_uploads_location: :string,
+          strip_uploads_metadata: :string,
           read_uploads_description: :string,
           anonymize_uploads: :string
         ],
@@ -170,7 +170,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
         )
         |> Path.expand()
 
-      {strip_uploads_location_message, strip_uploads_location_default} =
+      {strip_uploads_metadata_message, strip_uploads_metadata_default} =
         if Pleroma.Utils.command_available?("exiftool") do
           {"Do you want to strip location (GPS) data from uploaded images? This requires exiftool, it was detected as installed. (y/n)",
            "y"}
@@ -179,12 +179,12 @@ defmodule Mix.Tasks.Pleroma.Instance do
            "n"}
         end
 
-      strip_uploads_location =
+      strip_uploads_metadata =
         get_option(
           options,
-          :strip_uploads_location,
-          strip_uploads_location_message,
-          strip_uploads_location_default
+          :strip_uploads_metadata,
+          strip_uploads_metadata_message,
+          strip_uploads_metadata_default
         ) === "y"
 
       {read_uploads_description_message, read_uploads_description_default} =
@@ -248,7 +248,7 @@ defmodule Mix.Tasks.Pleroma.Instance do
           listen_port: listen_port,
           upload_filters:
             upload_filters(%{
-              strip_location: strip_uploads_location,
+              strip_metadata: strip_uploads_metadata,
               read_description: read_uploads_description,
               anonymize: anonymize_uploads
             })
@@ -325,8 +325,8 @@ defmodule Mix.Tasks.Pleroma.Instance do
 
   defp upload_filters(filters) when is_map(filters) do
     enabled_filters =
-      if filters.strip_location do
-        [Pleroma.Upload.Filter.Exiftool.StripLocation]
+      if filters.strip_metadata do
+        [Pleroma.Upload.Filter.Exiftool.StripMetadata]
       else
         []
       end

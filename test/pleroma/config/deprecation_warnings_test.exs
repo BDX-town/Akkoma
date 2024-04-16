@@ -21,7 +21,7 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
       assert capture_log(fn -> DeprecationWarnings.check_exiftool_filter() end) =~
                """
                !!!DEPRECATION WARNING!!!
-               Your config is using Exiftool as a filter instead of Exiftool.StripLocation. This should work for now, but you are advised to change to the new configuration to prevent possible issues later:
+               Your config is using Exiftool as a filter instead of Exiftool.StripMetadata. This should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
                ```
                config :pleroma, Pleroma.Upload,
@@ -33,19 +33,19 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
 
                ```
                config :pleroma, Pleroma.Upload,
-                 filters: [Pleroma.Upload.Filter.Exiftool.StripLocation]
+                 filters: [Pleroma.Upload.Filter.Exiftool.StripMetadata]
                ```
                """
     end
 
-    test "changes setting to exiftool strip location" do
+    test "changes setting to exiftool strip metadata" do
       clear_config(
         [Pleroma.Upload, :filters],
         [Pleroma.Upload.Filter.Exiftool, Pleroma.Upload.Filter.Exiftool.ReadDescription]
       )
 
       expected_config = [
-        Pleroma.Upload.Filter.Exiftool.StripLocation,
+        Pleroma.Upload.Filter.Exiftool.StripMetadata,
         Pleroma.Upload.Filter.Exiftool.ReadDescription
       ]
 
@@ -58,7 +58,7 @@ defmodule Pleroma.Config.DeprecationWarningsTest do
       clear_config(
         [Pleroma.Upload, :filters],
         [
-          Pleroma.Upload.Filter.Exiftool.StripLocation,
+          Pleroma.Upload.Filter.Exiftool.StripMetadata,
           Pleroma.Upload.Filter.Exiftool.ReadDescription
         ]
       )

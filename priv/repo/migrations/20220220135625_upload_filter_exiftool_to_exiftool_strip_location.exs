@@ -1,4 +1,4 @@
-defmodule Pleroma.Repo.Migrations.UploadFilterExiftoolToExiftoolStripLocation do
+defmodule Pleroma.Repo.Migrations.UploadFilterExiftoolToExiftoolStripMetadata do
   use Ecto.Migration
 
   alias Pleroma.ConfigDB
@@ -8,14 +8,14 @@ defmodule Pleroma.Repo.Migrations.UploadFilterExiftoolToExiftoolStripLocation do
       ConfigDB.get_by_params(%{group: :pleroma, key: Pleroma.Upload})
       |> update_filtername(
         Pleroma.Upload.Filter.Exiftool,
-        Pleroma.Upload.Filter.Exiftool.StripLocation
+        Pleroma.Upload.Filter.Exiftool.StripMetadata
       )
 
   def down,
     do:
       ConfigDB.get_by_params(%{group: :pleroma, key: Pleroma.Upload})
       |> update_filtername(
-        Pleroma.Upload.Filter.Exiftool.StripLocation,
+        Pleroma.Upload.Filter.Exiftool.StripMetadata,
         Pleroma.Upload.Filter.Exiftool
       )
 

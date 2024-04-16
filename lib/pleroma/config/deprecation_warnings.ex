@@ -28,7 +28,7 @@ defmodule Pleroma.Config.DeprecationWarnings do
     if Pleroma.Upload.Filter.Exiftool in filters do
       Logger.warning("""
       !!!DEPRECATION WARNING!!!
-      Your config is using Exiftool as a filter instead of Exiftool.StripLocation. This should work for now, but you are advised to change to the new configuration to prevent possible issues later:
+      Your config is using Exiftool as a filter instead of Exiftool.StripMetadata. This should work for now, but you are advised to change to the new configuration to prevent possible issues later:
 
       ```
       config :pleroma, Pleroma.Upload,
@@ -40,14 +40,14 @@ defmodule Pleroma.Config.DeprecationWarnings do
 
       ```
       config :pleroma, Pleroma.Upload,
-        filters: [Pleroma.Upload.Filter.Exiftool.StripLocation]
+        filters: [Pleroma.Upload.Filter.Exiftool.StripMetadata]
       ```
       """)
 
       new_config =
         filters
         |> Enum.map(fn
-          Pleroma.Upload.Filter.Exiftool -> Pleroma.Upload.Filter.Exiftool.StripLocation
+          Pleroma.Upload.Filter.Exiftool -> Pleroma.Upload.Filter.Exiftool.StripMetadata
           filter -> filter
         end)
 
