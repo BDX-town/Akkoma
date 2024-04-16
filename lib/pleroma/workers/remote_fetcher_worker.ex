@@ -34,8 +34,11 @@ defmodule Pleroma.Workers.RemoteFetcherWorker do
       {:error, :id_mismatch} ->
         {:discard, :id_mismatch}
 
-      _ ->
-        :error
+      {:error, _} = e ->
+        e
+
+      e ->
+        {:error, e}
     end
   end
 end
