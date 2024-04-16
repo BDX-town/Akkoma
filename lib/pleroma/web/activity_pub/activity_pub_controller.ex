@@ -9,16 +9,12 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   alias Pleroma.Delivery
   alias Pleroma.Object
   alias Pleroma.User
-  alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.Web.ActivityPub.InternalFetchActor
   alias Pleroma.Web.ActivityPub.ObjectView
-  alias Pleroma.Web.ActivityPub.Pipeline
   alias Pleroma.Web.ActivityPub.Relay
-  alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.UserView
   alias Pleroma.Web.ActivityPub.Utils
   alias Pleroma.Web.ActivityPub.Visibility
-  alias Pleroma.Web.ControllerHelper
   alias Pleroma.Web.Endpoint
   alias Pleroma.Web.Federator
   alias Pleroma.Web.Plugs.EnsureAuthenticatedPlug
@@ -36,14 +32,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     EnsureAuthenticatedPlug,
     [unless_func: &FederatingPlug.federating?/1] when action not in @federating_only_actions
   )
-
-  # Note: :following and :followers must be served even without authentication (as via :api)
-  plug(
-    EnsureAuthenticatedPlug
-    when action in [:read_inbox, :update_outbox, :whoami, :upload_media]
-  )
-
-  plug(Majic.Plug, [pool: Pleroma.MajicPool] when action in [:upload_media])
 
   plug(
     Pleroma.Web.Plugs.Cache,
@@ -234,43 +222,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     end
   end
 
-  def outbox(
-        %{assigns: %{user: for_user}} = conn,
-        %{"nickname" => nickname, "page" => page?} = params
-      )
-      when page? in [true, "true"] do
-    with %User{} = user <- User.get_cached_by_nickname(nickname) do
-      # "include_poll_votes" is a hack because postgres generates inefficient
-      # queries when filtering by 'Answer', poll votes will be hidden by the
-      # visibility filter in this case anyway
-      params =
-        params
-        |> Map.drop(["nickname", "page"])
-        |> Map.put("include_poll_votes", true)
-        |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
-
-      activities = ActivityPub.fetch_user_activities(user, for_user, params)
-
-      conn
-      |> put_resp_content_type("application/activity+json")
-      |> put_view(UserView)
-      |> render("activity_collection_page.json", %{
-        activities: activities,
-        pagination: ControllerHelper.get_pagination_fields(conn, activities),
-        iri: "#{user.ap_id}/outbox"
-      })
-    end
-  end
-
-  def outbox(conn, %{"nickname" => nickname}) do
-    with %User{} = user <- User.get_cached_by_nickname(nickname) do
-      conn
-      |> put_resp_content_type("application/activity+json")
-      |> put_view(UserView)
-      |> render("activity_collection.json", %{iri: "#{user.ap_id}/outbox"})
-    end
-  end
-
+  @doc """
+  POST /users/:nickname/inbox
+  """
   def inbox(%{assigns: %{valid_signature: true}} = conn, %{"nickname" => nickname} = params) do
     with %User{} = recipient <- User.get_cached_by_nickname(nickname),
          {:ok, %User{} = actor} <- User.get_or_fetch_by_ap_id(params["actor"]),
@@ -317,163 +271,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     |> represent_service_actor(conn)
   end
 
-  @doc "Returns the authenticated user's ActivityPub User object or a 404 Not Found if non-authenticated"
-  def whoami(%{assigns: %{user: %User{} = user}} = conn, _params) do
-    conn
-    |> put_resp_content_type("application/activity+json")
-    |> put_view(UserView)
-    |> render("user.json", %{user: user})
-  end
-
-  def read_inbox(
-        %{assigns: %{user: %User{nickname: nickname} = user}} = conn,
-        %{"nickname" => nickname, "page" => page?} = params
-      )
-      when page? in [true, "true"] do
-    params =
-      params
-      |> Map.drop(["nickname", "page"])
-      |> Map.put("blocking_user", user)
-      |> Map.put("user", user)
-      |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
-
-    activities =
-      [user.ap_id | User.following(user)]
-      |> ActivityPub.fetch_activities(params)
-      |> Enum.reverse()
-
-    conn
-    |> put_resp_content_type("application/activity+json")
-    |> put_view(UserView)
-    |> render("activity_collection_page.json", %{
-      activities: activities,
-      pagination: ControllerHelper.get_pagination_fields(conn, activities),
-      iri: "#{user.ap_id}/inbox"
-    })
-  end
-
-  def read_inbox(%{assigns: %{user: %User{nickname: nickname} = user}} = conn, %{
-        "nickname" => nickname
-      }) do
-    conn
-    |> put_resp_content_type("application/activity+json")
-    |> put_view(UserView)
-    |> render("activity_collection.json", %{iri: "#{user.ap_id}/inbox"})
-  end
-
-  def read_inbox(%{assigns: %{user: %User{nickname: as_nickname}}} = conn, %{
-        "nickname" => nickname
-      }) do
-    err =
-      dgettext("errors", "can't read inbox of %{nickname} as %{as_nickname}",
-        nickname: nickname,
-        as_nickname: as_nickname
-      )
-
-    conn
-    |> put_status(:forbidden)
-    |> json(err)
-  end
-
-  defp fix_user_message(%User{ap_id: actor}, %{"type" => "Create", "object" => object} = activity)
-       when is_map(object) do
-    length =
-      [object["content"], object["summary"], object["name"]]
-      |> Enum.filter(&is_binary(&1))
-      |> Enum.join("")
-      |> String.length()
-
-    limit = Pleroma.Config.get([:instance, :limit])
-
-    if length < limit do
-      object =
-        object
-        |> Transmogrifier.strip_internal_fields()
-        |> Map.put("attributedTo", actor)
-        |> Map.put("actor", actor)
-        |> Map.put("id", Utils.generate_object_id())
-
-      {:ok, Map.put(activity, "object", object)}
-    else
-      {:error,
-       dgettext(
-         "errors",
-         "Character limit (%{limit} characters) exceeded, contains %{length} characters",
-         limit: limit,
-         length: length
-       )}
-    end
-  end
-
-  defp fix_user_message(
-         %User{ap_id: actor} = user,
-         %{"type" => "Delete", "object" => object} = activity
-       ) do
-    with {_, %Object{data: object_data}} <- {:normalize, Object.normalize(object, fetch: false)},
-         {_, true} <- {:permission, user.is_moderator || actor == object_data["actor"]} do
-      {:ok, activity}
-    else
-      {:normalize, _} ->
-        {:error, "No such object found"}
-
-      {:permission, _} ->
-        {:forbidden, "You can't delete this object"}
-    end
-  end
-
-  defp fix_user_message(%User{}, activity) do
-    {:ok, activity}
-  end
-
-  def update_outbox(
-        %{assigns: %{user: %User{nickname: nickname, ap_id: actor} = user}} = conn,
-        %{"nickname" => nickname} = params
-      ) do
-    params =
-      params
-      |> Map.drop(["nickname"])
-      |> Map.put("id", Utils.generate_activity_id())
-      |> Map.put("actor", actor)
-
-    with {:ok, params} <- fix_user_message(user, params),
-         {:ok, activity, _} <- Pipeline.common_pipeline(params, local: true),
-         %Activity{data: activity_data} <- Activity.normalize(activity) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", activity_data["id"])
-      |> json(activity_data)
-    else
-      {:forbidden, message} ->
-        conn
-        |> put_status(:forbidden)
-        |> json(message)
-
-      {:error, message} ->
-        conn
-        |> put_status(:bad_request)
-        |> json(message)
-
-      e ->
-        Logger.warning(fn -> "AP C2S: #{inspect(e)}" end)
-
-        conn
-        |> put_status(:bad_request)
-        |> json("Bad Request")
-    end
-  end
-
-  def update_outbox(%{assigns: %{user: %User{} = user}} = conn, %{"nickname" => nickname}) do
-    err =
-      dgettext("errors", "can't update outbox of %{nickname} as %{as_nickname}",
-        nickname: nickname,
-        as_nickname: user.nickname
-      )
-
-    conn
-    |> put_status(:forbidden)
-    |> json(err)
-  end
-
   defp errors(conn, {:error, :not_found}) do
     conn
     |> put_status(:not_found)
@@ -495,21 +292,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     conn
   end
 
-  def upload_media(%{assigns: %{user: %User{} = user}} = conn, %{"file" => file} = data) do
-    with {:ok, object} <-
-           ActivityPub.upload(
-             file,
-             actor: User.ap_id(user),
-             description: Map.get(data, "description")
-           ) do
-      Logger.debug(inspect(object))
-
-      conn
-      |> put_status(:created)
-      |> json(object.data)
-    end
-  end
-
+  @doc """
+  GET /users/:nickname/collections/featured
+  """
   def pinned(conn, %{"nickname" => nickname}) do
     with %User{} = user <- User.get_cached_by_nickname(nickname) do
       conn

@@ -797,26 +797,15 @@ defmodule Pleroma.Web.Router do
     plug(:after_auth)
   end
 
-  scope "/", Pleroma.Web.ActivityPub do
-    pipe_through([:activitypub_client])
-
-    get("/api/ap/whoami", ActivityPubController, :whoami)
-    get("/users/:nickname/inbox", ActivityPubController, :read_inbox)
-
-    get("/users/:nickname/outbox", ActivityPubController, :outbox)
-    post("/users/:nickname/outbox", ActivityPubController, :update_outbox)
-    post("/api/ap/upload_media", ActivityPubController, :upload_media)
-
-    get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
-  end
 
   scope "/", Pleroma.Web.ActivityPub do
     # Note: html format is supported only if static FE is enabled
     pipe_through([:accepts_html_json, :static_fe, :activitypub_client])
 
-    # The following two are S2S as well, see `ActivityPub.fetch_follow_information_for_user/1`:
+    # The following two are used in both staticFE and AP S2S as well, see `ActivityPub.fetch_follow_information_for_user/1`:
     get("/users/:nickname/followers", ActivityPubController, :followers)
     get("/users/:nickname/following", ActivityPubController, :following)
+    get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
   end
 
   scope "/", Pleroma.Web.ActivityPub do
