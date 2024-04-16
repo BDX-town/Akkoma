@@ -14,7 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Fixed
 - Issue preventing fetching anything from IPv6-only instances
-- Issue allowing post content to leak via opengraph tags despite :estrict\_unauthenticated being set
+- Issue allowing post content to leak via opengraph tags despite :restrict\_unauthenticated being set
+
+## Removed
+- ActivityPub Client-To-Server routing; `GET` routes are still there, but writes are out.
 
 ## 2024.03
 
