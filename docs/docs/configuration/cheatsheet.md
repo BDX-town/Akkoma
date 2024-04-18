@@ -658,7 +658,8 @@ This filter replaces the declared filename (not the path) of an upload.
 
 This filter strips metadata with Exiftool leaving color profiles and orientation intact.
 
-No specific configuration.
+* `purge`: List of Exiftool tag names or tag group names to purge
+* `preserve`: List of Exiftool tag names or tag group names to preserve even if they occur in the purge list
 
 
 #### Pleroma.Upload.Filter.Exiftool.ReadDescription

@@ -13,7 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Changed
 - Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
-- Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripMetadata`
+- Uploadfilter `Pleroma.Upload.Filter.Exiftool` was replaced by `Pleroma.Upload.Filter.Exiftool.StripMetadata`;
+  the latter strips all non-essential metadata by default but can be configured.
+  To regain the old behaviour of only stripping GPS data set `purge: ["gps:all"]`.
 
 ## Fixed
 - Issue preventing fetching anything from IPv6-only instances
