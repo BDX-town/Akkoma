@@ -57,6 +57,9 @@ defmodule Pleroma.Object.FetcherTest do
           body: spoofed_object_with_ids("https://patch.cx/objects/spoof_content_type")
         }
 
+      %{method: :get, url: "https://octodon.social/users/cwebber/statuses/111647596861000656"} ->
+        %Tesla.Env{status: 403}
+
       # Spoof: mismatching ids
       # Variant 1: Non-exisitng fake id
       %{
@@ -203,8 +206,7 @@ defmodule Pleroma.Object.FetcherTest do
     test "it returns thread depth exceeded error if thread depth is exceeded" do
       clear_config([:instance, :federation_incoming_replies_max_depth], 0)
 
-      assert {:error, "Max thread distance exceeded."} =
-               Fetcher.fetch_object_from_id(@ap_id, depth: 1)
+      assert {:error, :allowed_depth} = Fetcher.fetch_object_from_id(@ap_id, depth: 1)
     end
 
     test "it fetches object if max thread depth is restricted to 0 and depth is not specified" do
@@ -250,12 +252,12 @@ defmodule Pleroma.Object.FetcherTest do
     end
 
     test "it does not fetch a spoofed object with id different from URL" do
-      assert {:error, "Object's ActivityPub id/url does not match final fetch URL"} =
+      assert {:error, :id_mismatch} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/media/03ca3c8b4ac3ddd08bf0f84be7885f2f88de0f709112131a22d83650819e36c2.json"
                )
 
-      assert {:error, "Object's ActivityPub id/url does not match final fetch URL"} =
+      assert {:error, :id_mismatch} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/media/spoof_stage1.json"
                )
@@ -285,14 +287,14 @@ defmodule Pleroma.Object.FetcherTest do
     end
 
     test "it does not fetch a spoofed object with a foreign actor" do
-      assert {:error, "Object containment failed."} =
+      assert {:error, _} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/objects/spoof_foreign_actor"
                )
     end
 
     test "it does not fetch from localhost" do
-      assert {:error, "Trying to fetch local resource"} =
+      assert {:error, :local_resource} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  Pleroma.Web.Endpoint.url() <> "/spoof_local"
                )
@@ -402,16 +404,14 @@ defmodule Pleroma.Object.FetcherTest do
     end
 
     test "handle HTTP 410 Gone response" do
-      assert {:error,
-              {"Object has been deleted", "https://mastodon.example.org/users/userisgone", 410}} ==
+      assert {:error, :not_found} ==
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://mastodon.example.org/users/userisgone"
                )
     end
 
     test "handle HTTP 404 response" do
-      assert {:error,
-              {"Object has been deleted", "https://mastodon.example.org/users/userisgone404", 404}} ==
+      assert {:error, :not_found} ==
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://mastodon.example.org/users/userisgone404"
                )
