@@ -324,16 +324,18 @@ defmodule Mix.Tasks.Pleroma.Instance do
   end
 
   defp upload_filters(filters) when is_map(filters) do
-    enabled_filters =
-      if filters.strip_metadata do
-        [Pleroma.Upload.Filter.Exiftool.StripMetadata]
-      else
-        []
-      end
+    enabled_filters = []
 
     enabled_filters =
       if filters.read_description do
         enabled_filters ++ [Pleroma.Upload.Filter.Exiftool.ReadDescription]
+      else
+        enabled_filters
+      end
+
+    enabled_filters =
+      if filters.strip_metadata do
+        enabled_filters ++ [Pleroma.Upload.Filter.Exiftool.StripMetadata]
       else
         enabled_filters
       end
