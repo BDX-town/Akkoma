@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Verified support for elixir 1.16
 
 ## Changed
+- Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
 
 ## Fixed
 - Issue preventing fetching anything from IPv6-only instances

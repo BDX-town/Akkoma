@@ -122,7 +122,7 @@ defmodule Pleroma.Object.Fetcher do
       {:ok, object}
     else
       {:local, true} -> {:ok, object}
-      {:id, false} -> {:error, "Object id changed on refetch"}
+      {:id, false} -> {:error, :id_mismatch}
       e -> {:error, e}
     end
   end
@@ -136,10 +136,13 @@ defmodule Pleroma.Object.Fetcher do
   def fetch_object_from_id(id, options \\ []) do
     with %URI{} = uri <- URI.parse(id),
          # let's check the URI is even vaguely valid first
-         {:scheme, true} <- {:scheme, uri.scheme == "http" or uri.scheme == "https"},
+         {:valid_uri_scheme, true} <-
+           {:valid_uri_scheme, uri.scheme == "http" or uri.scheme == "https"},
          # If we have instance restrictions, apply them here to prevent fetching from unwanted instances
-         {:ok, nil} <- Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri),
-         {:ok, _} <- Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri),
+         {:mrf_reject_check, {:ok, nil}} <-
+           {:mrf_reject_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri)},
+         {:mrf_accept_check, {:ok, _}} <-
+           {:mrf_accept_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri)},
          {_, nil} <- {:fetch_object, Object.get_cached_by_ap_id(id)},
          {_, true} <- {:allowed_depth, Federator.allowed_thread_distance?(options[:depth])},
          {_, {:ok, data}} <- {:fetch, fetch_and_contain_remote_object_from_id(id)},
@@ -151,20 +154,37 @@ defmodule Pleroma.Object.Fetcher do
            {:object, data, Object.normalize(activity, fetch: false)} do
       {:ok, object}
     else
-      {:allowed_depth, false} ->
-        {:error, "Max thread distance exceeded."}
+      {:allowed_depth, false} = e ->
+        log_fetch_error(id, e)
+        {:error, :allowed_depth}
 
-      {:scheme, false} ->
-        {:error, "URI Scheme Invalid"}
+      {:valid_uri_scheme, _} = e ->
+        log_fetch_error(id, e)
+        {:error, :invalid_uri_scheme}
 
-      {:transmogrifier, {:error, {:reject, e}}} ->
-        {:reject, e}
+      {:mrf_reject_check, _} = e ->
+        log_fetch_error(id, e)
+        {:reject, :mrf}
 
-      {:transmogrifier, {:reject, e}} ->
-        {:reject, e}
+      {:mrf_accept_check, _} = e ->
+        log_fetch_error(id, e)
+        {:reject, :mrf}
 
-      {:transmogrifier, _} = e ->
-        {:error, e}
+      {:containment, reason} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
+
+      {:transmogrifier, {:error, {:reject, reason}}} = e ->
+        log_fetch_error(id, e)
+        {:reject, reason}
+
+      {:transmogrifier, {:reject, reason}} = e ->
+        log_fetch_error(id, e)
+        {:reject, reason}
+
+      {:transmogrifier, reason} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
 
       {:object, data, nil} ->
         reinject_object(%Object{}, data)
@@ -175,15 +195,19 @@ defmodule Pleroma.Object.Fetcher do
       {:fetch_object, %Object{} = object} ->
         {:ok, object}
 
-      {:fetch, {:error, error}} ->
-        {:error, error}
-
-      {:reject, reason} ->
-        {:reject, reason}
+      {:fetch, {:error, reason}} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
 
       e ->
-        e
+        log_fetch_error(id, e)
+        {:error, e}
     end
+  end
+
+  defp log_fetch_error(id, error) do
+    Logger.metadata(object: id)
+    Logger.error("Object rejected while fetching #{id} #{inspect(error)}")
   end
 
   defp prepare_activity_params(data) do
@@ -197,27 +221,6 @@ defmodule Pleroma.Object.Fetcher do
     |> Maps.put_if_present("cc", data["cc"])
     |> Maps.put_if_present("bto", data["bto"])
     |> Maps.put_if_present("bcc", data["bcc"])
-  end
-
-  @doc "Identical to `fetch_object_from_id/2` but just directly returns the object or on error `nil`"
-  def fetch_object_from_id!(id, options \\ []) do
-    with {:ok, object} <- fetch_object_from_id(id, options) do
-      object
-    else
-      {:error, %Tesla.Mock.Error{}} ->
-        nil
-
-      {:error, {"Object has been deleted", _id, _code}} ->
-        nil
-
-      {:reject, reason} ->
-        Logger.debug("Rejected #{id} while fetching: #{inspect(reason)}")
-        nil
-
-      e ->
-        Logger.error("Error while fetching #{id}: #{inspect(e)}")
-        nil
-    end
   end
 
   defp make_signature(id, date) do
@@ -259,8 +262,13 @@ defmodule Pleroma.Object.Fetcher do
   def fetch_and_contain_remote_object_from_id(id) when is_binary(id) do
     Logger.debug("Fetching object #{id} via AP")
 
-    with {:scheme, true} <- {:scheme, String.starts_with?(id, "http")},
-         {_, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
+    with {:valid_uri_scheme, true} <- {:valid_uri_scheme, String.starts_with?(id, "http")},
+         %URI{} = uri <- URI.parse(id),
+         {:mrf_reject_check, {:ok, nil}} <-
+           {:mrf_reject_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri)},
+         {:mrf_accept_check, {:ok, _}} <-
+           {:mrf_accept_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri)},
+         {:local_fetch, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
          {:ok, final_id, body} <- get_object(id),
          {:ok, data} <- safe_json_decode(body),
          {_, :ok} <- {:strict_id, Containment.contain_id_to_fetch(final_id, data)},
@@ -271,17 +279,29 @@ defmodule Pleroma.Object.Fetcher do
 
       {:ok, data}
     else
-      {:strict_id, _} ->
-        {:error, "Object's ActivityPub id/url does not match final fetch URL"}
+      {:strict_id, _} = e ->
+        log_fetch_error(id, e)
+        {:error, :id_mismatch}
 
-      {:scheme, _} ->
-        {:error, "Unsupported URI scheme"}
+      {:mrf_reject_check, _} = e ->
+        log_fetch_error(id, e)
+        {:reject, :mrf}
 
-      {:local_fetch, _} ->
-        {:error, "Trying to fetch local resource"}
+      {:mrf_accept_check, _} = e ->
+        log_fetch_error(id, e)
+        {:reject, :mrf}
 
-      {:containment, _} ->
-        {:error, "Object containment failed."}
+      {:valid_uri_scheme, _} = e ->
+        log_fetch_error(id, e)
+        {:error, :invalid_uri_scheme}
+
+      {:local_fetch, _} = e ->
+        log_fetch_error(id, e)
+        {:error, :local_resource}
+
+      {:containment, reason} ->
+        log_fetch_error(id, reason)
+        {:error, reason}
 
       {:error, e} ->
         {:error, e}
@@ -292,7 +312,7 @@ defmodule Pleroma.Object.Fetcher do
   end
 
   def fetch_and_contain_remote_object_from_id(_id),
-    do: {:error, "id must be a string"}
+    do: {:error, :invalid_id}
 
   defp check_crossdomain_redirect(final_host, original_url)
 
@@ -356,8 +376,11 @@ defmodule Pleroma.Object.Fetcher do
           {:error, {:content_type, content_type}}
       end
     else
+      {:ok, %{status: code}} when code in [401, 403] ->
+        {:error, :forbidden}
+
       {:ok, %{status: code}} when code in [404, 410] ->
-        {:error, {"Object has been deleted", id, code}}
+        {:error, :not_found}
 
       {:error, e} ->
         {:error, e}
