@@ -1028,6 +1028,33 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert Activity.get_by_ap_id(data["id"])
     end
 
+    test "it rejects reads from other users", %{conn: conn} do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      conn =
+        conn
+        |> assign(:user, other_user)
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/inbox")
+
+      assert json_response(conn, 403)
+    end
+
+    test "it returns a note activity in a collection", %{conn: conn} do
+      note_activity = insert(:direct_note_activity)
+      note_object = Object.normalize(note_activity, fetch: false)
+      user = User.get_cached_by_ap_id(hd(note_activity.data["to"]))
+
+      conn =
+        conn
+        |> assign(:user, user)
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/inbox?page=true")
+
+      assert response(conn, 200) =~ note_object.data["content"]
+    end
+
     test "it clears `unreachable` federation status of the sender", %{conn: conn, data: data} do
       user = insert(:user)
       data = Map.put(data, "bcc", [user.ap_id])
@@ -1096,6 +1123,20 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       refute recipient.follower_address in activity.data["to"]
     end
 
+    test "it requires authentication", %{conn: conn} do
+      user = insert(:user)
+      conn = put_req_header(conn, "accept", "application/activity+json")
+
+      ret_conn = get(conn, "/users/#{user.nickname}/inbox")
+      assert json_response(ret_conn, 403)
+
+      ret_conn =
+        conn
+        |> assign(:user, user)
+        |> get("/users/#{user.nickname}/inbox")
+
+      assert json_response(ret_conn, 200)
+    end
 
     @tag capture_log: true
     test "forwarded report", %{conn: conn} do
@@ -1232,6 +1273,148 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         to: {admin.name, admin.email},
         html_body: ~r/#{note.data["object"]}/i
       )
+    end
+  end
+
+  describe "GET /users/:nickname/outbox" do
+    test "it paginates correctly", %{conn: conn} do
+      user = insert(:user)
+      conn = assign(conn, :user, user)
+      outbox_endpoint = user.ap_id <> "/outbox"
+
+      _posts =
+        for i <- 0..25 do
+          {:ok, activity} = CommonAPI.post(user, %{status: "post #{i}"})
+          activity
+        end
+
+      result =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get(outbox_endpoint <> "?page=true")
+        |> json_response(200)
+
+      result_ids = Enum.map(result["orderedItems"], fn x -> x["id"] end)
+      assert length(result["orderedItems"]) == 20
+      assert length(result_ids) == 20
+      assert result["next"]
+      assert String.starts_with?(result["next"], outbox_endpoint)
+
+      result_next =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get(result["next"])
+        |> json_response(200)
+
+      result_next_ids = Enum.map(result_next["orderedItems"], fn x -> x["id"] end)
+      assert length(result_next["orderedItems"]) == 6
+      assert length(result_next_ids) == 6
+      refute Enum.find(result_next_ids, fn x -> x in result_ids end)
+      refute Enum.find(result_ids, fn x -> x in result_next_ids end)
+      assert String.starts_with?(result["id"], outbox_endpoint)
+
+      result_next_again =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get(result_next["id"])
+        |> json_response(200)
+
+      assert result_next == result_next_again
+    end
+
+    test "it returns 200 even if there're no activities", %{conn: conn} do
+      user = insert(:user)
+      outbox_endpoint = user.ap_id <> "/outbox"
+
+      conn =
+        conn
+        |> assign(:user, user)
+        |> put_req_header("accept", "application/activity+json")
+        |> get(outbox_endpoint)
+
+      result = json_response(conn, 200)
+      assert outbox_endpoint == result["id"]
+    end
+
+    test "it returns a local note activity when authenticated as local user", %{conn: conn} do
+      user = insert(:user)
+      reader = insert(:user)
+      {:ok, note_activity} = CommonAPI.post(user, %{status: "mew mew", visibility: "local"})
+      ap_id = note_activity.data["id"]
+
+      resp =
+        conn
+        |> assign(:user, reader)
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/outbox?page=true")
+        |> json_response(200)
+
+      assert %{"orderedItems" => [%{"id" => ^ap_id}]} = resp
+    end
+
+    test "it does not return a local note activity when unauthenticated", %{conn: conn} do
+      user = insert(:user)
+      {:ok, _note_activity} = CommonAPI.post(user, %{status: "mew mew", visibility: "local"})
+
+      resp =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/outbox?page=true")
+        |> json_response(200)
+
+      assert %{"orderedItems" => []} = resp
+    end
+
+    test "it returns a note activity in a collection", %{conn: conn} do
+      note_activity = insert(:note_activity)
+      note_object = Object.normalize(note_activity, fetch: false)
+      user = User.get_cached_by_ap_id(note_activity.data["actor"])
+
+      conn =
+        conn
+        |> assign(:user, user)
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/outbox?page=true")
+
+      assert response(conn, 200) =~ note_object.data["content"]
+    end
+
+    test "it returns an announce activity in a collection", %{conn: conn} do
+      announce_activity = insert(:announce_activity)
+      user = User.get_cached_by_ap_id(announce_activity.data["actor"])
+
+      conn =
+        conn
+        |> assign(:user, user)
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/users/#{user.nickname}/outbox?page=true")
+
+      assert response(conn, 200) =~ announce_activity.data["object"]
+    end
+
+    test "It returns poll Answers when authenticated", %{conn: conn} do
+      poller = insert(:user)
+      voter = insert(:user)
+
+      {:ok, activity} =
+        CommonAPI.post(poller, %{
+          status: "suya...",
+          poll: %{options: ["suya", "suya.", "suya.."], expires_in: 10}
+        })
+
+      assert question = Object.normalize(activity, fetch: false)
+
+      {:ok, [activity], _object} = CommonAPI.vote(voter, question, [1])
+
+      assert outbox_get =
+               conn
+               |> assign(:user, voter)
+               |> put_req_header("accept", "application/activity+json")
+               |> get(voter.ap_id <> "/outbox?page=true")
+               |> json_response(200)
+
+      assert [answer_outbox] = outbox_get["orderedItems"]
+      assert answer_outbox["id"] == activity.data["id"]
     end
   end
 

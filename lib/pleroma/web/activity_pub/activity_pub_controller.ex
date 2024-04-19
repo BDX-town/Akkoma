@@ -9,12 +9,14 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   alias Pleroma.Delivery
   alias Pleroma.Object
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.Web.ActivityPub.InternalFetchActor
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Relay
   alias Pleroma.Web.ActivityPub.UserView
   alias Pleroma.Web.ActivityPub.Utils
   alias Pleroma.Web.ActivityPub.Visibility
+  alias Pleroma.Web.ControllerHelper
   alias Pleroma.Web.Endpoint
   alias Pleroma.Web.Federator
   alias Pleroma.Web.Plugs.EnsureAuthenticatedPlug
@@ -31,6 +33,12 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   plug(
     EnsureAuthenticatedPlug,
     [unless_func: &FederatingPlug.federating?/1] when action not in @federating_only_actions
+  )
+
+  # Note: :following and :followers must be served even without authentication (as via :api)
+  plug(
+    EnsureAuthenticatedPlug
+    when action in [:read_inbox]
   )
 
   plug(
@@ -148,7 +156,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     end
   end
 
-  # GET /relay/following
+  @doc """
+  GET /relay/following
+  """
   def relay_following(conn, _params) do
     with %{halted: false} = conn <- FederatingPlug.call(conn, []) do
       conn
@@ -185,7 +195,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     end
   end
 
-  # GET /relay/followers
+  @doc """
+  GET /relay/followers
+  """
   def relay_followers(conn, _params) do
     with %{halted: false} = conn <- FederatingPlug.call(conn, []) do
       conn
@@ -222,9 +234,43 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     end
   end
 
-  @doc """
-  POST /users/:nickname/inbox
-  """
+  def outbox(
+        %{assigns: %{user: for_user}} = conn,
+        %{"nickname" => nickname, "page" => page?} = params
+      )
+      when page? in [true, "true"] do
+    with %User{} = user <- User.get_cached_by_nickname(nickname) do
+      # "include_poll_votes" is a hack because postgres generates inefficient
+      # queries when filtering by 'Answer', poll votes will be hidden by the
+      # visibility filter in this case anyway
+      params =
+        params
+        |> Map.drop(["nickname", "page"])
+        |> Map.put("include_poll_votes", true)
+        |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
+
+      activities = ActivityPub.fetch_user_activities(user, for_user, params)
+
+      conn
+      |> put_resp_content_type("application/activity+json")
+      |> put_view(UserView)
+      |> render("activity_collection_page.json", %{
+        activities: activities,
+        pagination: ControllerHelper.get_pagination_fields(conn, activities),
+        iri: "#{user.ap_id}/outbox"
+      })
+    end
+  end
+
+  def outbox(conn, %{"nickname" => nickname}) do
+    with %User{} = user <- User.get_cached_by_nickname(nickname) do
+      conn
+      |> put_resp_content_type("application/activity+json")
+      |> put_view(UserView)
+      |> render("activity_collection.json", %{iri: "#{user.ap_id}/outbox"})
+    end
+  end
+
   def inbox(%{assigns: %{valid_signature: true}} = conn, %{"nickname" => nickname} = params) do
     with %User{} = recipient <- User.get_cached_by_nickname(nickname),
          {:ok, %User{} = actor} <- User.get_or_fetch_by_ap_id(params["actor"]),
@@ -271,6 +317,56 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     |> represent_service_actor(conn)
   end
 
+  def read_inbox(
+        %{assigns: %{user: %User{nickname: nickname} = user}} = conn,
+        %{"nickname" => nickname, "page" => page?} = params
+      )
+      when page? in [true, "true"] do
+    params =
+      params
+      |> Map.drop(["nickname", "page"])
+      |> Map.put("blocking_user", user)
+      |> Map.put("user", user)
+      |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
+
+    activities =
+      [user.ap_id | User.following(user)]
+      |> ActivityPub.fetch_activities(params)
+      |> Enum.reverse()
+
+    conn
+    |> put_resp_content_type("application/activity+json")
+    |> put_view(UserView)
+    |> render("activity_collection_page.json", %{
+      activities: activities,
+      pagination: ControllerHelper.get_pagination_fields(conn, activities),
+      iri: "#{user.ap_id}/inbox"
+    })
+  end
+
+  def read_inbox(%{assigns: %{user: %User{nickname: nickname} = user}} = conn, %{
+        "nickname" => nickname
+      }) do
+    conn
+    |> put_resp_content_type("application/activity+json")
+    |> put_view(UserView)
+    |> render("activity_collection.json", %{iri: "#{user.ap_id}/inbox"})
+  end
+
+  def read_inbox(%{assigns: %{user: %User{nickname: as_nickname}}} = conn, %{
+        "nickname" => nickname
+      }) do
+    err =
+      dgettext("errors", "can't read inbox of %{nickname} as %{as_nickname}",
+        nickname: nickname,
+        as_nickname: as_nickname
+      )
+
+    conn
+    |> put_status(:forbidden)
+    |> json(err)
+  end
+
   defp errors(conn, {:error, :not_found}) do
     conn
     |> put_status(:not_found)
@@ -292,9 +388,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     conn
   end
 
-  @doc """
-  GET /users/:nickname/collections/featured
-  """
   def pinned(conn, %{"nickname" => nickname}) do
     with %User{} = user <- User.get_cached_by_nickname(nickname) do
       conn
