@@ -7,7 +7,7 @@ defmodule Pleroma.Workers.RemoteFetcherWorker do
 
   use Pleroma.Workers.WorkerHelper,
     queue: "remote_fetcher",
-    unique: [period: 300, states: Oban.Job.states()]
+    unique: [period: 300, states: Oban.Job.states(), keys: [:op, :id]]
 
   @impl Oban.Worker
   def perform(%Job{args: %{"op" => "fetch_remote", "id" => id} = args}) do
