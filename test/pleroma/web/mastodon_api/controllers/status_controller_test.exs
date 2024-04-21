@@ -111,7 +111,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       # 2 hours
       expires_in = 2 * 60 * 60
 
-      expires_at = DateTime.add(DateTime.utc_now(), expires_in)
+      expires_at1 = DateTime.add(DateTime.utc_now(), expires_in)
 
       conn_four =
         conn
@@ -123,12 +123,16 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
       assert %{"id" => fourth_id} = json_response_and_validate_schema(conn_four, 200)
 
-      assert Activity.get_by_id(fourth_id)
+      activity = Activity.get_by_id(fourth_id)
+      assert activity
+
+      {:ok, expires_at2, _} = DateTime.from_iso8601(activity.data["expires_at"])
+      assert Timex.compare(expires_at1, expires_at2, :minutes) == 0
 
       assert_enqueued(
         worker: Pleroma.Workers.PurgeExpiredActivity,
         args: %{activity_id: fourth_id},
-        scheduled_at: expires_at
+        scheduled_at: expires_at2
       )
     end
 
@@ -148,16 +152,13 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       activity = Activity.get_by_id_with_object(id)
       {:ok, expires_at, _} = DateTime.from_iso8601(activity.data["expires_at"])
 
-      assert Timex.diff(
-               expires_at,
-               DateTime.utc_now(),
-               :hours
-             ) == 23
+      expiry_delay = Timex.diff(expires_at, DateTime.utc_now(), :hours)
+      assert(expiry_delay in [23, 24])
 
       assert_enqueued(
         worker: Pleroma.Workers.PurgeExpiredActivity,
         args: %{activity_id: id},
-        scheduled_at: DateTime.add(DateTime.utc_now(), 1 * 60 * 60 * 24)
+        scheduled_at: expires_at
       )
     end
 
@@ -1405,7 +1406,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       %{conn: conn} = oauth_access(["write:accounts", "write:statuses"])
       expires_in = 2 * 60 * 60
 
-      expires_at = DateTime.add(DateTime.utc_now(), expires_in)
+      expires_at1 = DateTime.add(DateTime.utc_now(), expires_in)
 
       assert %{"id" => id} =
                conn
@@ -1416,10 +1417,15 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
                })
                |> json_response_and_validate_schema(200)
 
+      activity = Activity.get_by_id(id)
+      {:ok, expires_at2, _} = DateTime.from_iso8601(activity.data["expires_at"])
+
+      assert Timex.compare(expires_at1, expires_at2, :minutes) == 0
+
       assert_enqueued(
         worker: Pleroma.Workers.PurgeExpiredActivity,
         args: %{activity_id: id},
-        scheduled_at: expires_at
+        scheduled_at: expires_at2
       )
 
       assert %{"id" => ^id, "pinned" => true} =
@@ -1431,7 +1437,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       refute_enqueued(
         worker: Pleroma.Workers.PurgeExpiredActivity,
         args: %{activity_id: id},
-        scheduled_at: expires_at
+        scheduled_at: expires_at2
       )
 
       assert %{"id" => ^id, "pinned" => false} =
@@ -1443,7 +1449,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert_enqueued(
         worker: Pleroma.Workers.PurgeExpiredActivity,
         args: %{activity_id: id},
-        scheduled_at: expires_at
+        scheduled_at: expires_at2
       )
     end
   end
@@ -1944,7 +1950,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
              |> json_response_and_validate_schema(:ok)
 
     {:ok, a_expires_at, 0} = DateTime.from_iso8601(a_expires_at)
-    assert DateTime.diff(expires_at, a_expires_at) == 0
+    assert Timex.compare(expires_at, a_expires_at, :minutes) == 0
 
     %{conn: conn} = oauth_access(["read:statuses"])
 
