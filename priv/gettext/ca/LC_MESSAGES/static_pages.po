@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-07-28 09:15+0000\n"
-"PO-Revision-Date: 2022-07-30 21:58+0000\n"
-"Last-Translator: sola <spla@mastodont.cat>\n"
+"PO-Revision-Date: 2024-04-13 22:55+0000\n"
+"Last-Translator: fadelkon <fadelkon@posteo.net>\n"
 "Language-Team: Catalan <http://translate.akkoma.dev/projects/akkoma/"
 "akkoma-backend-static-pages/ca/>\n"
 "Language: ca\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.13.1\n"
+"X-Generator: Weblate 4.18.2\n"
 
 ## This file is a PO Template file.
 ##
@@ -531,25 +531,25 @@ msgid "Welcome to %{instance_name}!"
 msgstr "Benvingut a %{instance_name}!"
 
 #: lib/pleroma/emails/user_email.ex:368
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgctxt "account archive email body - admin requested"
 msgid "<p>Admin @%{admin_nickname} requested a full backup of your Akkoma account. It's ready for download:</p>\n<p><a href=\"%{download_url}\">%{download_url}</a></p>\n"
 msgstr ""
-"<p>L'Administrador @%{admin_nickname} ha sol·licitat una copia de seguretat "
-"completa del teu compte Akkoma. Està preparat per a descarrega:</p>\n"
+"<p>L'Administrador @%{admin_nickname} ha sol·licitat una còpia de seguretat "
+"completa del teu compte Akkoma. Està preparada per descarregar:</p>\n"
 "<p><a href=\"%{download_url}\">%{download_url}</a></p>\n"
 
 #: lib/pleroma/emails/user_email.ex:356
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgctxt "account archive email body - self-requested"
 msgid "<p>You requested a full backup of your Akkoma account. It's ready for download:</p>\n<p><a href=\"%{download_url}\">%{download_url}</a></p>\n"
 msgstr ""
-"<p>Has sol·licitat una copia de seguretat completa del teu compte Akkoma. "
-"Està llest per a descarrega:</p>\n"
+"<p>Has sol·licitat una còpia de seguretat completa del teu compte Akkoma. Ja "
+"la pots descarregar:</p>\n"
 "<p><a href=\"%{download_url}\">%{download_url}</a></p>\n"
 
 #: lib/pleroma/web/templates/o_auth/o_auth/show.html.eex:41
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgctxt "oauth register page title"
 msgid "This is your first visit! Please enter your Akkoma handle."
 msgstr ""
@@ -560,22 +560,22 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgctxt "remote follow error message - unknown error"
 msgid "Something went wrong."
-msgstr ""
+msgstr "Hi ha hagut algun problema."
 
 #: lib/pleroma/web/twitter_api/controllers/util_controller.ex:67
 #, elixir-autogen, elixir-format
 msgctxt "remote follow error message - user not found"
 msgid "Could not find user"
-msgstr ""
+msgstr "No s'ha trobat l'usuari/a/ï"
 
 #: lib/pleroma/web/templates/twitter_api/util/status_interact.html.eex:8
 #, elixir-autogen, elixir-format
 msgctxt "status interact authorization button"
 msgid "Interact"
-msgstr ""
+msgstr "Interacciona"
 
 #: lib/pleroma/web/templates/twitter_api/util/status_interact.html.eex:2
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgctxt "status interact error"
 msgid "Error: %{error}"
 msgstr "Error: %{error}"
@@ -584,33 +584,33 @@ msgstr "Error: %{error}"
 #, elixir-autogen, elixir-format
 msgctxt "status interact error message - status not found"
 msgid "Could not find status"
-msgstr ""
+msgstr "No s'ha trobat l'estat"
 
 #: lib/pleroma/web/twitter_api/controllers/util_controller.ex:144
 #, elixir-autogen, elixir-format
 msgctxt "status interact error message - unknown error"
 msgid "Something went wrong."
-msgstr ""
+msgstr "Hi ha hagut algun problema."
 
 #: lib/pleroma/web/templates/twitter_api/util/status_interact.html.eex:4
 #, elixir-autogen, elixir-format
 msgctxt "status interact header"
 msgid "Interacting with %{nickname}'s %{status_link}"
-msgstr ""
+msgstr "S'està interactuant amb %{status_link} de %{nickname}"
 
 #: lib/pleroma/web/templates/twitter_api/util/status_interact.html.eex:4
 #, elixir-autogen, elixir-format
 msgctxt "status interact header - status link text"
 msgid "status"
-msgstr ""
+msgstr "estat"
 
 #: lib/pleroma/emails/user_email.ex:119
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgctxt "user invitation email body"
 msgid "<h3>You are invited to %{instance_name}</h3>\n<p>%{inviter_name} invites you to join %{instance_name}, an instance of Akkoma federated social networking platform.</p>\n<p>Click the following link to register: <a href=\"%{registration_url}\">accept invitation</a>.</p>\n"
 msgstr ""
-"<h3>Has estat invitat a %{instance_name}</h3>\n"
-"<p>%{inviter_name} t'invita a unir-te a %{instance_name}, una instància de "
-"la plataforma de xarxa social federada Akkoma.</p>\n"
+"<h3>T'han convidat a %{instance_name}</h3>\n"
+"<p>%{inviter_name} t'anima a unir-te a %{instance_name}, una instància de la "
+"plataforma de xarxa social federada Akkoma.</p>\n"
 "<p>Clica el següent enllaç per a registrar-te: <a href=\"%{registration_url}"
-"\">accepta invitació</a>.</p>\n"
+"\">accepta la invitació</a>.</p>\n"
