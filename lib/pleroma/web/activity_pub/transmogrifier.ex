@@ -25,8 +25,8 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   import Ecto.Query
 
-  require Logger
   require Pleroma.Constants
+  require Logger
 
   @doc """
   Modifies an incoming AP object (mastodon format) to our internal format.
@@ -135,8 +135,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
         |> Map.put("context", replied_object.data["context"] || object["conversation"])
         |> Map.drop(["conversation", "inReplyToAtomUri"])
       else
-        e ->
-          Logger.warning("Couldn't fetch reply@#{inspect(in_reply_to_id)}, error: #{inspect(e)}")
+        _ ->
           object
       end
     else
@@ -833,8 +832,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
            relative_object do
       Map.put(data, "object", external_url)
     else
-      {:fetch, e} ->
-        Logger.error("Couldn't fetch fixed_object@#{object} #{inspect(e)}")
+      {:fetch, _} ->
         data
 
       _ ->
