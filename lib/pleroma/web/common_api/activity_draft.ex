@@ -41,7 +41,7 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
             preview?: false,
             changes: %{}
 
-  def new(user, params) do
+  defp new(user, params) do
     %__MODULE__{user: user}
     |> put_params(params)
   end
