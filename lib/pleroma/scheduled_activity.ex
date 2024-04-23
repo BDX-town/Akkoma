@@ -28,7 +28,7 @@ defmodule Pleroma.ScheduledActivity do
     timestamps()
   end
 
-  def changeset(%ScheduledActivity{} = scheduled_activity, attrs) do
+  defp changeset(%ScheduledActivity{} = scheduled_activity, attrs) do
     scheduled_activity
     |> cast(attrs, [:scheduled_at, :params])
     |> validate_required([:scheduled_at, :params])
@@ -52,14 +52,14 @@ defmodule Pleroma.ScheduledActivity do
 
   defp with_media_attachments(changeset), do: changeset
 
-  def update_changeset(%ScheduledActivity{} = scheduled_activity, attrs) do
+  defp update_changeset(%ScheduledActivity{} = scheduled_activity, attrs) do
     scheduled_activity
     |> cast(attrs, [:scheduled_at])
     |> validate_required([:scheduled_at])
     |> validate_scheduled_at()
   end
 
-  def validate_scheduled_at(changeset) do
+  defp validate_scheduled_at(changeset) do
     validate_change(changeset, :scheduled_at, fn _, scheduled_at ->
       cond do
         not far_enough?(scheduled_at) ->
@@ -77,7 +77,7 @@ defmodule Pleroma.ScheduledActivity do
     end)
   end
 
-  def exceeds_daily_user_limit?(user_id, scheduled_at) do
+  defp exceeds_daily_user_limit?(user_id, scheduled_at) do
     ScheduledActivity
     |> where(user_id: ^user_id)
     |> where([sa], type(sa.scheduled_at, :date) == type(^scheduled_at, :date))
@@ -86,7 +86,7 @@ defmodule Pleroma.ScheduledActivity do
     |> Kernel.>=(Config.get([ScheduledActivity, :daily_user_limit]))
   end
 
-  def exceeds_total_user_limit?(user_id) do
+  defp exceeds_total_user_limit?(user_id) do
     ScheduledActivity
     |> where(user_id: ^user_id)
     |> select([sa], count(sa.id))
@@ -108,7 +108,7 @@ defmodule Pleroma.ScheduledActivity do
     diff > @min_offset
   end
 
-  def new(%User{} = user, attrs) do
+  defp new(%User{} = user, attrs) do
     changeset(%ScheduledActivity{user_id: user.id}, attrs)
   end
 
@@ -187,17 +187,7 @@ defmodule Pleroma.ScheduledActivity do
     |> where(user_id: ^user.id)
   end
 
-  def due_activities(offset \\ 0) do
-    naive_datetime =
-      NaiveDateTime.utc_now()
-      |> NaiveDateTime.add(offset, :millisecond)
-
-    ScheduledActivity
-    |> where([sa], sa.scheduled_at < ^naive_datetime)
-    |> Repo.all()
-  end
-
-  def job_query(scheduled_activity_id) do
+  defp job_query(scheduled_activity_id) do
     from(j in Oban.Job,
       where: j.queue == "scheduled_activities",
       where: fragment("args ->> 'activity_id' = ?::text", ^to_string(scheduled_activity_id))
