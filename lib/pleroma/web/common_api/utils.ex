@@ -22,19 +22,13 @@ defmodule Pleroma.Web.CommonAPI.Utils do
   require Logger
   require Pleroma.Constants
 
-  def attachments_from_ids(%{media_ids: ids, descriptions: desc}) do
-    attachments_from_ids_descs(ids, desc)
-  end
-
   def attachments_from_ids(%{media_ids: ids}) do
-    attachments_from_ids_no_descs(ids)
+    attachments_from_ids(ids)
   end
 
-  def attachments_from_ids(_), do: []
+  def attachments_from_ids([]), do: []
 
-  def attachments_from_ids_no_descs([]), do: []
-
-  def attachments_from_ids_no_descs(ids) do
+  def attachments_from_ids(ids) when is_list(ids) do
     Enum.map(ids, fn media_id ->
       case get_attachment(media_id) do
         %Object{data: data} -> data
@@ -44,18 +38,7 @@ defmodule Pleroma.Web.CommonAPI.Utils do
     |> Enum.reject(&is_nil/1)
   end
 
-  def attachments_from_ids_descs([], _), do: []
-
-  def attachments_from_ids_descs(ids, descs_str) do
-    {_, descs} = Jason.decode(descs_str)
-
-    Enum.map(ids, fn media_id ->
-      with %Object{data: data} <- get_attachment(media_id) do
-        Map.put(data, "name", descs[media_id])
-      end
-    end)
-    |> Enum.reject(&is_nil/1)
-  end
+  def attachments_from_ids(_), do: []
 
   defp get_attachment(media_id) do
     Repo.get(Object, media_id)

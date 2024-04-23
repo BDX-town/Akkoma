@@ -590,34 +590,7 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
     end
   end
 
-  describe "attachments_from_ids_descs/2" do
-    test "returns [] when attachment ids is empty" do
-      assert Utils.attachments_from_ids_descs([], "{}") == []
-    end
-
-    test "returns list attachments with desc" do
-      object = insert(:note)
-      desc = Jason.encode!(%{object.id => "test-desc"})
-
-      assert Utils.attachments_from_ids_descs(["#{object.id}", "34"], desc) == [
-               Map.merge(object.data, %{"name" => "test-desc"})
-             ]
-    end
-  end
-
   describe "attachments_from_ids/1" do
-    test "returns attachments with descs" do
-      object = insert(:note)
-      desc = Jason.encode!(%{object.id => "test-desc"})
-
-      assert Utils.attachments_from_ids(%{
-               media_ids: ["#{object.id}"],
-               descriptions: desc
-             }) == [
-               Map.merge(object.data, %{"name" => "test-desc"})
-             ]
-    end
-
     test "returns attachments without descs" do
       object = insert(:note)
       assert Utils.attachments_from_ids(%{media_ids: ["#{object.id}"]}) == [object.data]
