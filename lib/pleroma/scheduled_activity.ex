@@ -40,19 +40,29 @@ defmodule Pleroma.ScheduledActivity do
          %{changes: %{params: %{"media_ids" => media_ids} = params}} = changeset
        )
        when is_list(media_ids) do
-    media_attachments = Utils.attachments_from_ids(%{media_ids: media_ids})
+    user = User.get_by_id(changeset.data.user_id)
 
-    params =
-      params
-      |> Map.put("media_attachments", media_attachments)
-      |> Map.put("media_ids", media_ids)
+    case Utils.attachments_from_ids(user, %{media_ids: media_ids}) do
+      media_attachments when is_list(media_attachments) ->
+        params =
+          params
+          |> Map.put("media_attachments", media_attachments)
+          |> Map.put("media_ids", media_ids)
 
-    put_change(changeset, :params, params)
+        put_change(changeset, :params, params)
+
+      {:error, _} = e ->
+        e
+
+      e ->
+        {:error, e}
+    end
   end
 
   defp with_media_attachments(changeset), do: changeset
 
   defp update_changeset(%ScheduledActivity{} = scheduled_activity, attrs) do
+    # note: should this ever allow swapping media attachments, make sure ownership is checked
     scheduled_activity
     |> cast(attrs, [:scheduled_at])
     |> validate_required([:scheduled_at])
@@ -115,13 +125,22 @@ defmodule Pleroma.ScheduledActivity do
   @doc """
   Creates ScheduledActivity and add to queue to perform at scheduled_at date
   """
-  @spec create(User.t(), map()) :: {:ok, ScheduledActivity.t()} | {:error, Ecto.Changeset.t()}
+  @spec create(User.t(), map()) :: {:ok, ScheduledActivity.t()} | {:error, any()}
   def create(%User{} = user, attrs) do
-    Multi.new()
-    |> Multi.insert(:scheduled_activity, new(user, attrs))
-    |> maybe_add_jobs(Config.get([ScheduledActivity, :enabled]))
-    |> Repo.transaction()
-    |> transaction_response
+    case new(user, attrs) do
+      %Ecto.Changeset{} = sched_data ->
+        Multi.new()
+        |> Multi.insert(:scheduled_activity, sched_data)
+        |> maybe_add_jobs(Config.get([ScheduledActivity, :enabled]))
+        |> Repo.transaction()
+        |> transaction_response
+
+      {:error, _} = e ->
+        e
+
+      e ->
+        {:error, e}
+    end
   end
 
   defp maybe_add_jobs(multi, true) do

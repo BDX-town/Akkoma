@@ -22,23 +22,23 @@ defmodule Pleroma.Web.CommonAPI.Utils do
   require Logger
   require Pleroma.Constants
 
-  def attachments_from_ids(%{media_ids: ids}) do
-    attachments_from_ids(ids)
+  def attachments_from_ids(user, %{media_ids: ids}) do
+    attachments_from_ids(user, ids, [])
   end
 
-  def attachments_from_ids([]), do: []
+  def attachments_from_ids(_, _), do: []
 
-  def attachments_from_ids(ids) when is_list(ids) do
-    Enum.map(ids, fn media_id ->
-      case get_attachment(media_id) do
-        %Object{data: data} -> data
-        _ -> nil
-      end
-    end)
-    |> Enum.reject(&is_nil/1)
+  defp attachments_from_ids(_user, [], acc), do: Enum.reverse(acc)
+
+  defp attachments_from_ids(user, [media_id | ids], acc) do
+    with {_, %Object{} = object} <- {:get, get_attachment(media_id)},
+         :ok <- Object.authorize_access(object, user) do
+      attachments_from_ids(user, ids, [object.data | acc])
+    else
+      {:get, _} -> attachments_from_ids(user, ids, acc)
+      {:error, reason} -> {:error, reason}
+    end
   end
-
-  def attachments_from_ids(_), do: []
 
   defp get_attachment(media_id) do
     Repo.get(Object, media_id)

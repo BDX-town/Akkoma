@@ -220,6 +220,28 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       assert json_response_and_validate_schema(conn, 200)
     end
 
+    test "refuses to post non-owned media", %{conn: conn} do
+      other_user = insert(:user)
+
+      file = %Plug.Upload{
+        content_type: "image/jpeg",
+        path: Path.absname("test/fixtures/image.jpg"),
+        filename: "an_image.jpg"
+      }
+
+      {:ok, upload} = ActivityPub.upload(file, actor: other_user.ap_id)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "mew",
+          "media_ids" => [to_string(upload.id)]
+        })
+
+      assert json_response(conn, 422) == %{"error" => "forbidden"}
+    end
+
     test "posting a status with an invalid language", %{conn: conn} do
       conn =
         conn
@@ -567,6 +589,29 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
                json_response_and_validate_schema(conn, 200)
 
       assert %{"type" => "image"} = media_attachment
+    end
+
+    test "refuses to schedule post with non-owned media", %{conn: conn} do
+      other_user = insert(:user)
+
+      file = %Plug.Upload{
+        content_type: "image/jpeg",
+        path: Path.absname("test/fixtures/image.jpg"),
+        filename: "an_image.jpg"
+      }
+
+      {:ok, upload} = ActivityPub.upload(file, actor: other_user.ap_id)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "mew",
+          "scheduled_at" => DateTime.add(DateTime.utc_now(), 6, :minute),
+          "media_ids" => [to_string(upload.id)]
+        })
+
+      assert json_response(conn, 403) == %{"error" => "Access denied"}
     end
 
     test "skips the scheduling and creates the activity if scheduled_at is earlier than 5 minutes from now",
@@ -2404,6 +2449,25 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
         |> json_response_and_validate_schema(200)
 
       assert [%{"id" => ^attachment_id}] = response["media_attachments"]
+    end
+
+    test "it does not update to non-owned attachments", %{conn: conn, user: user} do
+      other_user = insert(:user)
+      attachment = insert(:attachment, user: other_user)
+      attachment_id = to_string(attachment.id)
+
+      {:ok, activity} = CommonAPI.post(user, %{status: "mew mew #abc", spoiler_text: "#def"})
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> put("/api/v1/statuses/#{activity.id}", %{
+          "status" => "mew mew #abc",
+          "spoiler_text" => "#def",
+          "media_ids" => [attachment_id]
+        })
+
+      assert json_response(conn, 400) == %{"error" => "internal_server_error"}
     end
 
     test "it does not update visibility", %{conn: conn, user: user} do
