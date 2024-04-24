@@ -9,7 +9,7 @@ This guide covers a installation using an OTP release. To install Akkoma from so
 * For installing OTP releases on RedHat-based distros like Fedora and Centos Stream, please follow [this guide](./otp_redhat_en.md) instead.
 * A (sub)domain pointed to the machine
 
-You will be running commands as root. If you aren't root already, please elevate your priviledges by executing `sudo su`/`su`.
+You will be running commands as root. If you aren't root already, please elevate your priviledges by executing `sudo -i`/`su`.
 
 While in theory OTP releases are possbile to install on any compatible machine, for the sake of simplicity this guide focuses only on Debian/Ubuntu and Alpine.
 
@@ -176,11 +176,6 @@ su akkoma -s $SHELL -lc "./bin/pleroma stop"
 
 ### Setting up nginx and getting Let's Encrypt SSL certificaties
 
-#### Get a Let's Encrypt certificate
-```sh
-certbot certonly --standalone --preferred-challenges http -d yourinstance.tld
-```
-
 #### Copy Akkoma nginx configuration to the nginx folder
 
 The location of nginx configs is dependent on the distro
@@ -209,6 +204,14 @@ $EDITOR path-to-nginx-config
 # Verify that the config is valid
 nginx -t
 ```
+
+#### Get a Let's Encrypt certificate
+```sh
+certbot --nginx -d yourinstance.tld -d media.yourinstance.tld
+```
+
+If that doesn't work the first time, add `--dry-run` to further attempts to avoid being ratelimited as you identify the issue, and do not remove it until the dry run succeeds. A common source of problems are nginx config syntax errors; this can be checked for by running `nginx -t`.
+
 #### Start nginx
 
 === "Alpine"
@@ -252,32 +255,19 @@ If everything worked, you should see Akkoma-FE when visiting your domain. If tha
 ## Post installation
 
 ### Setting up auto-renew of the Let's Encrypt certificate
-```sh
-# Create the directory for webroot challenges
-mkdir -p /var/lib/letsencrypt
-
-# Uncomment the webroot method
-$EDITOR path-to-nginx-config
-
-# Verify that the config is valid
-nginx -t
-```
 
 === "Alpine"
     ```
-    # Restart nginx
-    rc-service nginx restart
-
     # Start the cron daemon and make it start on boot
     rc-service crond start
     rc-update add crond
 
     # Ensure the webroot menthod and post hook is working
-    certbot renew --cert-name yourinstance.tld --webroot -w /var/lib/letsencrypt/ --dry-run --post-hook 'rc-service nginx reload'
+    certbot renew --cert-name yourinstance.tld --nginx --dry-run
 
     # Add it to the daily cron
     echo '#!/bin/sh
-    certbot renew --cert-name yourinstance.tld --webroot -w /var/lib/letsencrypt/ --post-hook "rc-service nginx reload"
+    certbot renew --cert-name yourinstance.tld --nginx
     ' > /etc/periodic/daily/renew-akkoma-cert
     chmod +x /etc/periodic/daily/renew-akkoma-cert
 
@@ -286,22 +276,7 @@ nginx -t
     ```
 
 === "Debian/Ubuntu"
-    ```
-    # Restart nginx
-    systemctl restart nginx
-
-    # Ensure the webroot menthod and post hook is working
-    certbot renew --cert-name yourinstance.tld --webroot -w /var/lib/letsencrypt/ --dry-run --post-hook 'systemctl reload nginx'
-
-    # Add it to the daily cron
-    echo '#!/bin/sh
-    certbot renew --cert-name yourinstance.tld --webroot -w /var/lib/letsencrypt/ --post-hook "systemctl reload nginx"
-    ' > /etc/cron.daily/renew-akkoma-cert
-    chmod +x /etc/cron.daily/renew-akkoma-cert
-
-    # If everything worked the output should contain /etc/cron.daily/renew-akkoma-cert
-    run-parts --test /etc/cron.daily
-    ```
+    This should be automatically enabled with the `certbot-renew.timer` systemd unit.
 
 ## Create your first user and set as admin
 ```sh
