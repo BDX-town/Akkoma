@@ -69,7 +69,9 @@ defmodule Mix.Tasks.Pleroma.InstanceTest do
         "test/uploads",
         "--static-dir",
         "./test/../test/instance/static/",
-        "--strip-uploads",
+        "--strip-uploads-metadata",
+        "y",
+        "--read-uploads-description",
         "y",
         "--anonymize-uploads",
         "n"
@@ -91,7 +93,10 @@ defmodule Mix.Tasks.Pleroma.InstanceTest do
     assert generated_config =~ "password: \"dbpass\""
     assert generated_config =~ "configurable_from_database: true"
     assert generated_config =~ "http: [ip: {127, 0, 0, 1}, port: 4000]"
-    assert generated_config =~ "filters: [Pleroma.Upload.Filter.Exiftool]"
+
+    assert generated_config =~
+             "filters: [Pleroma.Upload.Filter.Exiftool.ReadDescription, Pleroma.Upload.Filter.Exiftool.StripMetadata]"
+
     assert generated_config =~ "base_url: \"https://media.pleroma.social/media\""
     assert File.read!(tmp_path() <> "setup.psql") == generated_setup_psql()
     assert File.exists?(Path.expand("./test/instance/static/robots.txt"))

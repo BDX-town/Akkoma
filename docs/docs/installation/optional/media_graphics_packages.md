@@ -29,4 +29,5 @@ It is required for the following Akkoma features:
 `exiftool` is media files metadata reader/writer.
 
 It is required for the following Akkoma features:
-  * `Pleroma.Upload.Filters.Exiftool` upload filter (related config: `Plaroma.Upload/filters` in `config/config.exs`)
+  * `Pleroma.Upload.Filters.Exiftool.StripMetadata` upload filter (related config: `Plaroma.Upload/filters` in `config/config.exs`)
+  * `Pleroma.Upload.Filters.Exiftool.ReadDescription` upload filter (related config: `Plaroma.Upload/filters` in `config/config.exs`)
