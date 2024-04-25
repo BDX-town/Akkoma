@@ -13,7 +13,6 @@ defmodule Pleroma.Upload do
   * `:uploader`: override uploader
   * `:filters`: override filters
   * `:size_limit`: override size limit
-  * `:activity_type`: override activity type
 
   The `%Pleroma.Upload{}` struct: all documented fields are meant to be overwritten in filters:
 
@@ -48,7 +47,6 @@ defmodule Pleroma.Upload do
   @type option ::
           {:type, :avatar | :banner | :background}
           | {:description, String.t()}
-          | {:activity_type, String.t()}
           | {:size_limit, nil | non_neg_integer()}
           | {:uploader, module()}
           | {:filters, [module()]}
@@ -143,7 +141,7 @@ defmodule Pleroma.Upload do
       end
 
     %{
-      activity_type: Keyword.get(opts, :activity_type, activity_type),
+      activity_type: activity_type,
       size_limit: Keyword.get(opts, :size_limit, size_limit),
       uploader: Keyword.get(opts, :uploader, Pleroma.Config.get([__MODULE__, :uploader])),
       filters:
