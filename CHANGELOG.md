@@ -14,10 +14,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Changed
 - Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripMetadata`
+- MRF.InlineQuotePolicy now prefers to insert display URLs instead of ActivityPub IDs
+- Old accounts are no longer listed in WebFinger as aliases; this was breaking spec
 
 ## Fixed
 - Issue preventing fetching anything from IPv6-only instances
 - Issue allowing post content to leak via opengraph tags despite :estrict\_unauthenticated being set
+- Move activities no longer operate on stale user data
+- Missing definitions in our JSON-LD context
+- Issue mangling newlines in code blocks for RSS/Atom feeds
+- static_fe squeezing non-square avatars and emoji
+- Issue leading to properly JSON-LD compacted emoji reactions being rejected
+- We now use a standard-compliant Accept header when fetching ActivityPub objects
+- /api/pleroma/notification_settings was rejecting body parameters;
+  this also broke changing this setting via akkoma-fe
+- Issue leading to Mastodon bot accounts being rejected
+
+## Removed
+- ActivityPub Client-To-Server write API endpoints have been disabled;
+  read endpoints are planned to be removed next release unless a clear need is demonstrated
 
 ## 2024.03
 
