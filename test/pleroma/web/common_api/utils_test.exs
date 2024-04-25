@@ -593,8 +593,14 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
   describe "attachments_from_ids/1" do
     test "returns attachments without descs" do
       user = insert(:user)
-      object = insert(:note, user: user)
+      object = insert(:attachment, user: user)
       assert Utils.attachments_from_ids(user, %{media_ids: ["#{object.id}"]}) == [object.data]
+    end
+
+    test "returns [] when passed non-media object ids" do
+      user = insert(:user)
+      object = insert(:note, user: user)
+      assert Utils.attachments_from_ids(user, %{media_ids: ["#{object.id}"]}) == []
     end
 
     test "returns [] when not pass media_ids" do

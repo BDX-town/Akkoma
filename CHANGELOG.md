@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Fixed
 - Issue allowing non-owners to use media objects in posts
+- Issue allowing use of non-media objects as attachments and crashing timeline rendering
 
 ## 2024.04
 

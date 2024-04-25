@@ -64,4 +64,7 @@ defmodule Pleroma.Constants do
       "Service"
     ]
   )
+
+  # Internally used as top-level types for media attachments and user images
+  const(attachment_types, do: ["Document", "Image"])
 end
