@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) (proxy objects)
 - Verified support for elixir 1.16
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool.ReadDescription` returns description values to the FE so they can pre fill the image description field
+  NOTE: this filter MUST be placed before `Exiftool.StripMetadata` to work
 
 ## Changed
 - Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
