@@ -1,12 +1,15 @@
 # Akkoma Clients
-Note: Additional clients may work, but these are known to work with Akkoma.
-Apps listed here might not support all of Akkoma's features.
+This is a list of clients that are known to work with Akkoma.
+
+!!! warning
+    **Clients listed here are not officially supported by the Akkoma project.**
+    Some Akkoma features may be unsupported by these clients.
 
 ## Multiplatform
 ### Kaiteki
 - Homepage: <https://kaiteki.app/>
 - Source Code: <https://github.com/Kaiteki-Fedi/Kaiteki>
-- Contact: [@kaiteki@fedi.software](https://fedi.software/@Kaiteki)
+- Contact: [@kaiteki@social.kaiteki.app](https://social.kaiteki.app/@kaiteki)
 - Platforms: Web, Windows, Linux, Android
 - Features: MastoAPI, Supports multiple backends
 
@@ -38,18 +41,18 @@ Apps listed here might not support all of Akkoma's features.
 - Platforms: Android
 - Features: MastoAPI, No Streaming, Emoji Reactions, Text Formatting, FE Stickers
 
-### Fedi
-- Homepage: <https://www.fediapp.com/>
-- Source Code: Proprietary, but gratis
-- Platforms: iOS, Android
-- Features: MastoAPI, Pleroma-specific features like Reactions
-
 ### Tusky
 - Homepage: <https://tuskyapp.github.io/>
 - Source Code: <https://github.com/tuskyapp/Tusky>
 - Contact: [@ConnyDuck@mastodon.social](https://mastodon.social/users/ConnyDuck)
 - Platforms: Android
 - Features: MastoAPI, No Streaming
+
+### Subway Tooter
+- Source Code: <https://github.com/tateisu/SubwayTooter/>
+- Contact: [@SubwayTooter@mastodon.juggler.jp](https://mastodon.juggler.jp/@SubwayTooter)
+- Platforms: Android
+- Features: MastoAPI, Editing, Emoji Reactions (including custom emoji)
 
 ## Alternative Web Interfaces
 ### Pinafore
