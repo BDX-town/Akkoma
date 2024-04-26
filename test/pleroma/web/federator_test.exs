@@ -137,6 +137,37 @@ defmodule Pleroma.Web.FederatorTest do
       assert {:error, :already_present} = ObanHelpers.perform(job)
     end
 
+    test "successfully normalises public scope descriptors" do
+      params = %{
+        "@context" => "https://www.w3.org/ns/activitystreams",
+        "actor" => "http://mastodon.example.org/users/admin",
+        "type" => "Create",
+        "id" => "http://mastodon.example.org/users/admin/activities/1",
+        "object" => %{
+          "type" => "Note",
+          "content" => "hi world!",
+          "id" => "http://mastodon.example.org/users/admin/objects/1",
+          "attributedTo" => "http://mastodon.example.org/users/admin",
+          "to" => ["Public"]
+        },
+        "to" => ["as:Public"]
+      }
+
+      assert {:ok, job} = Federator.incoming_ap_doc(params)
+      assert {:ok, activity} = ObanHelpers.perform(job)
+      assert activity.data["to"] == ["https://www.w3.org/ns/activitystreams#Public"]
+
+      object =
+        from(
+          object in Pleroma.Object,
+          where: fragment("(?)->>'id' = ?", object.data, ^activity.data["object"]),
+          limit: 1
+        )
+        |> Repo.one()
+
+      assert object.data["to"] == ["https://www.w3.org/ns/activitystreams#Public"]
+    end
+
     test "rejects incoming AP docs with incorrect origin" do
       params = %{
         "@context" => "https://www.w3.org/ns/activitystreams",

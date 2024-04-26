@@ -10,9 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) (proxy objects)
 - Verified support for elixir 1.16
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool.ReadDescription` returns description values to the FE so they can pre fill the image description field
+  NOTE: this filter MUST be placed before `Exiftool.StripMetadata` to work
 
 ## Changed
 - Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
+- Uploadfilter `Pleroma.Upload.Filter.Exiftool` was replaced by `Pleroma.Upload.Filter.Exiftool.StripMetadata`;
+  the latter strips all non-essential metadata by default but can be configured.
+  To regain the old behaviour of only stripping GPS data set `purge: ["gps:all"]`.
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool` has been renamed to `Pleroma.Upload.Filter.Exiftool.StripMetadata`
 - MRF.InlineQuotePolicy now prefers to insert display URLs instead of ActivityPub IDs
 - Old accounts are no longer listed in WebFinger as aliases; this was breaking spec
@@ -23,12 +27,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move activities no longer operate on stale user data
 - Missing definitions in our JSON-LD context
 - Issue mangling newlines in code blocks for RSS/Atom feeds
-- static_fe squeezing non-square avatars and emoji
+- static\_fe squeezing non-square avatars and emoji
 - Issue leading to properly JSON-LD compacted emoji reactions being rejected
 - We now use a standard-compliant Accept header when fetching ActivityPub objects
-- /api/pleroma/notification_settings was rejecting body parameters;
+- /api/pleroma/notification\_settings was rejecting body parameters;
   this also broke changing this setting via akkoma-fe
 - Issue leading to Mastodon bot accounts being rejected
+- Scope misdetection of remote posts resulting from not recognising
+  JSON-LD-compacted forms of public scope; affected e.g. federation with bovine
 
 ## Removed
 - ActivityPub Client-To-Server write API endpoints have been disabled;
