@@ -55,11 +55,11 @@ This is a list of clients that are known to work with Akkoma.
 - Features: MastoAPI, Editing, Emoji Reactions (including custom emoji)
 
 ## Alternative Web Interfaces
-### Pinafore
-- Note: Pinafore is unmaintained (See [the author's original article](https://nolanlawson.com/2023/01/09/retiring-pinafore/) for details)
-- Homepage: <https://pinafore.social/>
-- Source Code: <https://github.com/nolanlawson/pinafore>
-- Contact: [@pinafore@mastodon.technology](https://mastodon.technology/users/pinafore)
+### Enafore
+- An actively developed fork of Pinafore with improved Akkoma support
+- Homepage: <https://enafore.social/>
+- Source Code: <https://github.com/enafore/enafore>
+- Contact: [@enfore@enafore.social](https://meta.enafore.social/@enafore)
 - Features: MastoAPI, No Streaming
 
 ### Sengi
