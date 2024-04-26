@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Issue leading to Mastodon bot accounts being rejected
 - Scope misdetection of remote posts resulting from not recognising
   JSON-LD-compacted forms of public scope; affected e.g. federation with bovine
+- Ratelimits encountered when fetching objects are now respected; 429 responses will cause a backoff when we get one.
 
 ## Removed
 - ActivityPub Client-To-Server write API endpoints have been disabled;
