@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - /api/pleroma/notification\_settings was rejecting body parameters;
   this also broke changing this setting via akkoma-fe
 - Issue leading to Mastodon bot accounts being rejected
+- Scope misdetection of remote posts resulting from not recognising
+  JSON-LD-compacted forms of public scope; affected e.g. federation with bovine
 
 ## Removed
 - ActivityPub Client-To-Server write API endpoints have been disabled;
