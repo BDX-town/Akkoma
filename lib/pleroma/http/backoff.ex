@@ -15,7 +15,10 @@ defmodule Pleroma.HTTP.Backoff do
 
     case Enum.find_value(headers, fn {"x-ratelimit-reset", value} -> value end) do
       nil ->
-        Logger.error("Rate limited, but couldn't find timestamp! Using default 5 minute backoff until #{default_5_minute_backoff}")
+        Logger.error(
+          "Rate limited, but couldn't find timestamp! Using default 5 minute backoff until #{default_5_minute_backoff}"
+        )
+
         default_5_minute_backoff
 
       value ->
@@ -24,7 +27,10 @@ defmodule Pleroma.HTTP.Backoff do
           stamp
         else
           _ ->
-            Logger.error("Rate limited, but couldn't parse timestamp! Using default 5 minute backoff until #{default_5_minute_backoff}")
+            Logger.error(
+              "Rate limited, but couldn't parse timestamp! Using default 5 minute backoff until #{default_5_minute_backoff}"
+            )
+
             default_5_minute_backoff
         end
     end
