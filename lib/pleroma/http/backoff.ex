@@ -49,7 +49,7 @@ defmodule Pleroma.HTTP.Backoff do
                 timestamp = next_backoff_timestamp(env)
                 ttl = Timex.diff(timestamp, DateTime.utc_now(), :seconds)
                 # we will cache the host for 5 minutes
-                @cachex.put(@backoff_cache, host, true, ttl)
+                @cachex.put(@backoff_cache, host, true, ttl: ttl)
                 {:error, :ratelimit}
 
               _ ->

@@ -17,8 +17,7 @@ defmodule Pleroma.HTTP.BackoffTest do
     test "should return {:error, env} when rate limited" do
       # Shove a value into the cache to simulate a rate limit
       Cachex.put(@backoff_cache, "akkoma.dev", true)
-      assert {:error, env} = Backoff.get("https://akkoma.dev/api/v1/instance")
-      assert env.status == 429
+      assert {:error, :ratelimit} = Backoff.get("https://akkoma.dev/api/v1/instance")
     end
 
     test "should insert a value into the cache when rate limited" do
@@ -27,8 +26,7 @@ defmodule Pleroma.HTTP.BackoffTest do
           {:ok, %Tesla.Env{status: 429, body: "Rate limited"}}
       end)
 
-      assert {:error, env} = Backoff.get("https://ratelimited.dev/api/v1/instance")
-      assert env.status == 429
+      assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
       assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
     end
 
@@ -46,8 +44,7 @@ defmodule Pleroma.HTTP.BackoffTest do
            }}
       end)
 
-      assert {:error, env} = Backoff.get("https://ratelimited.dev/api/v1/instance")
-      assert env.status == 429
+      assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
       assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
     end
   end
