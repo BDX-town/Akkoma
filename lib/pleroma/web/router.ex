@@ -800,13 +800,9 @@ defmodule Pleroma.Web.Router do
   scope "/", Pleroma.Web.ActivityPub do
     pipe_through([:activitypub_client])
 
-    get("/api/ap/whoami", ActivityPubController, :whoami)
     get("/users/:nickname/inbox", ActivityPubController, :read_inbox)
 
     get("/users/:nickname/outbox", ActivityPubController, :outbox)
-    post("/users/:nickname/outbox", ActivityPubController, :update_outbox)
-    post("/api/ap/upload_media", ActivityPubController, :upload_media)
-
     get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
   end
 

@@ -46,8 +46,7 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
     assert response["subject"] == "acct:#{user.nickname}@localhost"
 
     assert response["aliases"] == [
-             "https://hyrule.world/users/zelda",
-             "https://mushroom.kingdom/users/toad"
+             "https://hyrule.world/users/zelda"
            ]
   end
 
@@ -104,7 +103,6 @@ defmodule Pleroma.Web.WebFinger.WebFingerControllerTest do
       |> response(200)
 
     assert response =~ "<Alias>https://hyrule.world/users/zelda</Alias>"
-    assert response =~ "<Alias>https://mushroom.kingdom/users/toad</Alias>"
   end
 
   test "it returns 404 when user isn't found (XML)" do

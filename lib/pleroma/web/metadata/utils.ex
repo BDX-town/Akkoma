@@ -7,6 +7,15 @@ defmodule Pleroma.Web.Metadata.Utils do
   alias Pleroma.Emoji
   alias Pleroma.Formatter
   alias Pleroma.HTML
+  alias Pleroma.Web.ActivityPub.Visibility
+
+  def visible?(%Pleroma.User{} = object) do
+    Visibility.restrict_unauthenticated_access?(object) == :visible
+  end
+
+  def visible?(object) do
+    Visibility.visible_for_user?(object, nil)
+  end
 
   defp scrub_html_and_truncate_object_field(field, object) do
     field

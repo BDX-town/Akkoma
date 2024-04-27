@@ -26,8 +26,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "oauthAuthorizationEndpoint" => url(~p"/oauth/authorize"),
       "oauthRegistrationEndpoint" => url(~p"/api/v1/apps"),
       "oauthTokenEndpoint" => url(~p"/oauth/token"),
-      "sharedInbox" => url(~p"/inbox"),
-      "uploadMedia" => url(~p"/api/ap/upload_media")
+      "sharedInbox" => url(~p"/inbox")
     }
   end
 

@@ -559,16 +559,15 @@ defmodule Pleroma.Factory do
     like_activity = attrs[:like_activity] || insert(:like_activity)
     attrs = Map.drop(attrs, [:like_activity])
 
-    data =
-      %{
-        "id" => Pleroma.Web.ActivityPub.Utils.generate_activity_id(),
-        "type" => "Undo",
-        "actor" => like_activity.data["actor"],
-        "to" => like_activity.data["to"],
-        "object" => like_activity.data["id"],
-        "published" => DateTime.utc_now() |> DateTime.to_iso8601(),
-        "context" => like_activity.data["context"]
-      }
+    data = %{
+      "id" => Pleroma.Web.ActivityPub.Utils.generate_activity_id(),
+      "type" => "Undo",
+      "actor" => like_activity.data["actor"],
+      "to" => like_activity.data["to"],
+      "object" => like_activity.data["id"],
+      "published" => DateTime.utc_now() |> DateTime.to_iso8601(),
+      "context" => like_activity.data["context"]
+    }
 
     %Pleroma.Activity{
       data: data,

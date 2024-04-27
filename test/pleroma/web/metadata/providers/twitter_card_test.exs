@@ -14,6 +14,8 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCardTest do
   alias Pleroma.Web.Metadata.Utils
 
   setup do: clear_config([Pleroma.Web.Metadata, :unfurl_nsfw])
+  setup do: clear_config([:restrict_unauthenticated, :profiles, :local])
+  setup do: clear_config([:restrict_unauthenticated, :activities, :local])
 
   test "it renders twitter card for user info" do
     user = insert(:user, name: "Jimmy Hendriks", bio: "born 19 March 1994")
@@ -26,6 +28,14 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCardTest do
              {:meta, [name: "twitter:image", content: avatar_url], []},
              {:meta, [name: "twitter:card", content: "summary"], []}
            ]
+  end
+
+  test "it does not render twitter card for user info if it is restricted" do
+    clear_config([:restrict_unauthenticated, :profiles, :local], true)
+    user = insert(:user, name: "Jimmy Hendriks", bio: "born 19 March 1994")
+    res = TwitterCard.build_tags(%{user: user})
+
+    assert Enum.empty?(res)
   end
 
   test "it uses summary twittercard if post has no attachment" do
@@ -52,6 +62,16 @@ defmodule Pleroma.Web.Metadata.Providers.TwitterCardTest do
               []},
              {:meta, [name: "twitter:card", content: "summary"], []}
            ] == result
+  end
+
+  test "it does not summarise activities if they are marked as restricted" do
+    clear_config([:restrict_unauthenticated, :activities, :local], true)
+    user = insert(:user)
+    note = insert(:note, data: %{"actor" => user.ap_id})
+
+    result = TwitterCard.build_tags(%{object: note, activity_id: note.data["id"], user: user})
+
+    assert {:meta, [name: "twitter:description", content: "Content cannot be displayed."], []} in result
   end
 
   test "it uses summary as description if post has one" do

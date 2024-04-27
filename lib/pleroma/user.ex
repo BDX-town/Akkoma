@@ -969,15 +969,16 @@ defmodule Pleroma.User do
 
   defp maybe_send_registration_email(_), do: {:ok, :noop}
 
-  def needs_update?(%User{local: true}), do: false
+  def needs_update?(user, options \\ [])
+  def needs_update?(%User{local: true}, _options), do: false
+  def needs_update?(%User{local: false, last_refreshed_at: nil}, _options), do: true
 
-  def needs_update?(%User{local: false, last_refreshed_at: nil}), do: true
-
-  def needs_update?(%User{local: false} = user) do
-    NaiveDateTime.diff(NaiveDateTime.utc_now(), user.last_refreshed_at) >= 86_400
+  def needs_update?(%User{local: false} = user, options) do
+    NaiveDateTime.diff(NaiveDateTime.utc_now(), user.last_refreshed_at) >=
+      Keyword.get(options, :maximum_age, 86_400)
   end
 
-  def needs_update?(_), do: true
+  def needs_update?(_, _options), do: true
 
   # "Locked" (self-locked) users demand explicit authorization of follow requests
   @spec can_direct_follow_local(User.t(), User.t()) :: true | false
@@ -1980,10 +1981,10 @@ defmodule Pleroma.User do
 
   def fetch_by_ap_id(ap_id), do: ActivityPub.make_user_from_ap_id(ap_id)
 
-  def get_or_fetch_by_ap_id(ap_id) do
+  def get_or_fetch_by_ap_id(ap_id, options \\ []) do
     cached_user = get_cached_by_ap_id(ap_id)
 
-    maybe_fetched_user = needs_update?(cached_user) && fetch_by_ap_id(ap_id)
+    maybe_fetched_user = needs_update?(cached_user, options) && fetch_by_ap_id(ap_id)
 
     case {cached_user, maybe_fetched_user} do
       {_, {:ok, %User{} = user}} ->

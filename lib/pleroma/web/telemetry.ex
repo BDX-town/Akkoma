@@ -151,41 +151,40 @@ defmodule Pleroma.Web.Telemetry do
     #   phoenix.router_dispatch.stop.duration
     #   pleroma.repo.query.total_time
     #   pleroma.repo.query.queue_time
-    dist_metrics =
-      [
-        distribution("phoenix.endpoint.stop.duration.fdist",
-          event_name: [:phoenix, :endpoint, :stop],
-          measurement: :duration,
-          unit: {:native, :millisecond},
-          reporter_options: [
-            buckets: simple_buckets
-          ]
-        ),
-        distribution("pleroma.repo.query.decode_time.fdist",
-          event_name: [:pleroma, :repo, :query],
-          measurement: :decode_time,
-          unit: {:native, :millisecond},
-          reporter_options: [
-            buckets: simple_buckets_quick
-          ]
-        ),
-        distribution("pleroma.repo.query.query_time.fdist",
-          event_name: [:pleroma, :repo, :query],
-          measurement: :query_time,
-          unit: {:native, :millisecond},
-          reporter_options: [
-            buckets: simple_buckets
-          ]
-        ),
-        distribution("pleroma.repo.query.idle_time.fdist",
-          event_name: [:pleroma, :repo, :query],
-          measurement: :idle_time,
-          unit: {:native, :millisecond},
-          reporter_options: [
-            buckets: simple_buckets
-          ]
-        )
-      ]
+    dist_metrics = [
+      distribution("phoenix.endpoint.stop.duration.fdist",
+        event_name: [:phoenix, :endpoint, :stop],
+        measurement: :duration,
+        unit: {:native, :millisecond},
+        reporter_options: [
+          buckets: simple_buckets
+        ]
+      ),
+      distribution("pleroma.repo.query.decode_time.fdist",
+        event_name: [:pleroma, :repo, :query],
+        measurement: :decode_time,
+        unit: {:native, :millisecond},
+        reporter_options: [
+          buckets: simple_buckets_quick
+        ]
+      ),
+      distribution("pleroma.repo.query.query_time.fdist",
+        event_name: [:pleroma, :repo, :query],
+        measurement: :query_time,
+        unit: {:native, :millisecond},
+        reporter_options: [
+          buckets: simple_buckets
+        ]
+      ),
+      distribution("pleroma.repo.query.idle_time.fdist",
+        event_name: [:pleroma, :repo, :query],
+        measurement: :idle_time,
+        unit: {:native, :millisecond},
+        reporter_options: [
+          buckets: simple_buckets
+        ]
+      )
+    ]
 
     vm_metrics =
       sum_counter_pair("vm.memory.total",

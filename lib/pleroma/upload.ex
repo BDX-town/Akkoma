@@ -39,8 +39,6 @@ defmodule Pleroma.Upload do
   alias Pleroma.Web.ActivityPub.Utils
   require Logger
 
-  @mix_env Mix.env()
-
   @type source ::
           Plug.Upload.t()
           | (data_uri_string :: String.t())
@@ -63,12 +61,23 @@ defmodule Pleroma.Upload do
           width: integer(),
           height: integer(),
           blurhash: String.t(),
+          description: String.t(),
           path: String.t()
         }
 
   @always_enabled_filters [Pleroma.Upload.Filter.Dedupe]
 
-  defstruct [:id, :name, :tempfile, :content_type, :width, :height, :blurhash, :path]
+  defstruct [
+    :id,
+    :name,
+    :tempfile,
+    :content_type,
+    :width,
+    :height,
+    :blurhash,
+    :description,
+    :path
+  ]
 
   @spec store(source, options :: [option()]) :: {:ok, Map.t()} | {:error, any()}
   @doc "Store a file. If using a `Plug.Upload{}` as the source, be sure to use `Majic.Plug` to ensure its content_type and filename is correct."
@@ -78,7 +87,7 @@ defmodule Pleroma.Upload do
     with {:ok, upload} <- prepare_upload(upload, opts),
          upload = %__MODULE__{upload | path: upload.path || "#{upload.id}/#{upload.name}"},
          {:ok, upload} <- Pleroma.Upload.Filter.filter(opts.filters, upload),
-         description = Map.get(opts, :description) || "",
+         description = Map.get(upload, :description) || "",
          {_, true} <-
            {:description_limit,
             String.length(description) <= Pleroma.Config.get([:instance, :description_limit])},
@@ -154,7 +163,8 @@ defmodule Pleroma.Upload do
          id: UUID.generate(),
          name: file.filename,
          tempfile: file.path,
-         content_type: file.content_type
+         content_type: file.content_type,
+         description: opts.description
        }}
     end
   end
@@ -174,7 +184,8 @@ defmodule Pleroma.Upload do
          id: UUID.generate(),
          name: hash <> "." <> ext,
          tempfile: tmp_path,
-         content_type: content_type
+         content_type: content_type,
+         description: opts.description
        }}
     end
   end
@@ -230,13 +241,6 @@ defmodule Pleroma.Upload do
 
   defp url_from_spec(_upload, _base_url, {:url, url}), do: url
 
-  if @mix_env == :test do
-    defp choose_base_url(prim, sec \\ nil),
-      do: prim || sec || Pleroma.Web.Endpoint.url() <> "/media/"
-  else
-    defp choose_base_url(prim, sec \\ nil), do: prim || sec
-  end
-
   def base_url do
     uploader = Config.get([Pleroma.Upload, :uploader])
     upload_base_url = Config.get([Pleroma.Upload, :base_url])
@@ -244,7 +248,7 @@ defmodule Pleroma.Upload do
 
     case uploader do
       Pleroma.Uploaders.Local ->
-        choose_base_url(upload_base_url)
+        upload_base_url
 
       Pleroma.Uploaders.S3 ->
         bucket = Config.get([Pleroma.Uploaders.S3, :bucket])
@@ -270,7 +274,7 @@ defmodule Pleroma.Upload do
         end
 
       _ ->
-        choose_base_url(public_endpoint, upload_base_url)
+        public_endpoint || upload_base_url
     end
   end
 end

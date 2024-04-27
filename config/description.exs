@@ -224,6 +224,26 @@ config :pleroma, :config_description, [
   },
   %{
     group: :pleroma,
+    key: Pleroma.Upload.Filter.Exiftool.StripMetadata,
+    type: :group,
+    description: "Strip specified metadata from image uploads",
+    children: [
+      %{
+        key: :purge,
+        description: "Metadata fields or groups to strip",
+        type: {:list, :string},
+        suggestions: ["all", "CommonIFD0"]
+      },
+      %{
+        key: :preserve,
+        description: "Metadata fields or groups to preserve (takes precedence over stripping)",
+        type: {:list, :string},
+        suggestions: ["ColorSpaces", "Orientation"]
+      }
+    ]
+  },
+  %{
+    group: :pleroma,
     key: Pleroma.Emails.Mailer,
     type: :group,
     description: "Mailer-related settings",

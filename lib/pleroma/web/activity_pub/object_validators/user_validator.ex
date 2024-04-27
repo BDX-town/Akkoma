@@ -16,11 +16,13 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   alias Pleroma.Object.Containment
   alias Pleroma.Signature
 
+  require Pleroma.Constants
+
   @impl true
   def validate(object, meta)
 
   def validate(%{"type" => type, "id" => _id} = data, meta)
-      when type in ["Person", "Organization", "Group", "Application"] do
+      when type in Pleroma.Constants.actor_types() do
     with :ok <- validate_pubkey(data),
          :ok <- validate_inbox(data),
          :ok <- contain_collection_origin(data) do

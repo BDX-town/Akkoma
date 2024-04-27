@@ -654,9 +654,17 @@ This filter replaces the declared filename (not the path) of an upload.
 
 * `text`: Text to replace filenames in links. If empty, `{random}.extension` will be used. You can get the original filename extension by using `{extension}`, for example `custom-file-name.{extension}`.
 
-#### Pleroma.Upload.Filter.Exiftool
+#### Pleroma.Upload.Filter.Exiftool.StripMetadata
 
-This filter only strips the GPS and location metadata with Exiftool leaving color profiles and attributes intact.
+This filter strips metadata with Exiftool leaving color profiles and orientation intact.
+
+* `purge`: List of Exiftool tag names or tag group names to purge
+* `preserve`: List of Exiftool tag names or tag group names to preserve even if they occur in the purge list
+
+
+#### Pleroma.Upload.Filter.Exiftool.ReadDescription
+
+This filter reads the ImageDescription and iptc:Caption-Abstract fields with Exiftool so clients can prefill the media description field.
 
 No specific configuration.
 
