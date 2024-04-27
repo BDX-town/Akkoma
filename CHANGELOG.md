@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## 2024.04
+
 ## Added
 - Support for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) (proxy objects)
 - Verified support for elixir 1.16
