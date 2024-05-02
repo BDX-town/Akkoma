@@ -100,8 +100,8 @@ defmodule Pleroma.Application do
         {:ok, data}
 
       e ->
-        Logger.error("Failed to start!")
-        Logger.error("#{inspect(e)}")
+        Logger.critical("Failed to start!")
+        Logger.critical("#{inspect(e)}")
         e
     end
   end
