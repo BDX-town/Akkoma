@@ -5,7 +5,6 @@ defmodule Pleroma.Search.Meilisearch do
   alias Pleroma.Activity
 
   import Pleroma.Search.DatabaseSearch
-  import Ecto.Query
 
   @behaviour Pleroma.Search.SearchBackend
 
@@ -91,14 +90,13 @@ defmodule Pleroma.Search.Meilisearch do
 
       try do
         hits
-        |> Activity.create_by_object_ap_id()
+        |> Activity.get_presorted_create_by_object_ap_id()
         |> Activity.with_preloaded_object()
         |> Activity.restrict_deactivated_users()
         |> maybe_restrict_local(user)
         |> maybe_restrict_author(author)
         |> maybe_restrict_blocked(user)
         |> maybe_fetch(user, query)
-        |> order_by([object: obj], desc: obj.data["published"])
         |> Pleroma.Repo.all()
       rescue
         _ -> maybe_fetch([], user, query)
