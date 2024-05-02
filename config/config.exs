@@ -813,8 +813,10 @@ config :pleroma, :modules, runtime_dir: "instance/modules"
 config :pleroma, configurable_from_database: false
 
 config :pleroma, Pleroma.Repo,
-  parameters: [gin_fuzzy_search_limit: "500"],
-  prepare: :unnamed
+  parameters: [
+    gin_fuzzy_search_limit: "500",
+    plan_cache_mode: "force_custom_plan"
+  ]
 
 config :pleroma, :majic_pool, size: 2
 
