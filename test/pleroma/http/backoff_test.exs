@@ -3,6 +3,10 @@ defmodule Pleroma.HTTP.BackoffTest do
   use Pleroma.DataCase, async: false
   alias Pleroma.HTTP.Backoff
 
+  defp within_tolerance?(ttl, expected) do
+    ttl > expected - 10 and ttl < expected + 10
+  end
+
   describe "get/3" do
     test "should return {:ok, env} when not rate limited" do
       Tesla.Mock.mock_global(fn
@@ -46,6 +50,46 @@ defmodule Pleroma.HTTP.BackoffTest do
 
       assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
       assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
+      {:ok, ttl} = Cachex.ttl(@backoff_cache, "ratelimited.dev")
+      assert within_tolerance?(ttl, 600)
+    end
+
+    test "should parse the value of retry-after when it's a timestamp" do
+      ten_minutes_from_now =
+        DateTime.utc_now() |> Timex.shift(minutes: 10) |> DateTime.to_iso8601()
+
+      Tesla.Mock.mock_global(fn
+        %Tesla.Env{url: "https://ratelimited.dev/api/v1/instance"} ->
+          {:ok,
+           %Tesla.Env{
+             status: 429,
+             body: "Rate limited",
+             headers: [{"retry-after", ten_minutes_from_now}]
+           }}
+      end)
+
+      assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
+      assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
+      {:ok, ttl} = Cachex.ttl(@backoff_cache, "ratelimited.dev")
+      assert within_tolerance?(ttl, 600)
+    end
+
+    test "should parse the value of retry-after when it's a number of seconds" do
+      Tesla.Mock.mock_global(fn
+        %Tesla.Env{url: "https://ratelimited.dev/api/v1/instance"} ->
+          {:ok,
+           %Tesla.Env{
+             status: 429,
+             body: "Rate limited",
+             headers: [{"retry-after", "600"}]
+           }}
+      end)
+
+      assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
+      assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
+      # assert that the value is 10 minutes from now
+      {:ok, ttl} = Cachex.ttl(@backoff_cache, "ratelimited.dev")
+      assert within_tolerance?(ttl, 600)
     end
   end
 end
