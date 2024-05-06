@@ -34,6 +34,16 @@ defmodule Pleroma.HTTP.BackoffTest do
       assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
     end
 
+    test "should insert a value into the cache when rate limited with a 503 response" do
+      Tesla.Mock.mock_global(fn
+        %Tesla.Env{url: "https://ratelimited.dev/api/v1/instance"} ->
+          {:ok, %Tesla.Env{status: 503, body: "Rate limited"}}
+      end)
+
+      assert {:error, :ratelimit} = Backoff.get("https://ratelimited.dev/api/v1/instance")
+      assert {:ok, true} = Cachex.get(@backoff_cache, "ratelimited.dev")
+    end
+
     test "should parse the value of x-ratelimit-reset, if present" do
       ten_minutes_from_now =
         DateTime.utc_now() |> Timex.shift(minutes: 10) |> DateTime.to_iso8601()
