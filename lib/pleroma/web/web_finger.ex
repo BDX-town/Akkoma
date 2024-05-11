@@ -160,7 +160,8 @@ defmodule Pleroma.Web.WebFinger do
     # WebFinger is restricted to HTTPS - https://tools.ietf.org/html/rfc7033#section-9.1
     meta_url = "https://#{domain}/.well-known/host-meta"
 
-    with {:ok, %{status: status, body: body}} when status in 200..299 <- HTTP.get(meta_url) do
+    with {:ok, %{status: status, body: body}} when status in 200..299 <-
+           HTTP.Backoff.get(meta_url) do
       get_template_from_xml(body)
     else
       error ->
@@ -197,7 +198,7 @@ defmodule Pleroma.Web.WebFinger do
 
     with address when is_binary(address) <- get_address_from_domain(domain, encoded_account),
          {:ok, %{status: status, body: body, headers: headers}} when status in 200..299 <-
-           HTTP.get(
+           HTTP.Backoff.get(
              address,
              [{"accept", "application/xrd+xml,application/jrd+json"}]
            ) do
