@@ -50,7 +50,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     # deleting useful activities should more types be added, keep typeof for singles.
 
     # Prune activities who link to a single object
-    {:ok, %{:num_rows => del_single}} =
+    %{:num_rows => del_single} =
       """
       delete from public.activities
       where id in (
@@ -66,12 +66,12 @@ defmodule Mix.Tasks.Pleroma.Database do
         #{limit_arg}
       )
       """
-      |> Repo.query([], timeout: :infinity)
+      |> Repo.query!([], timeout: :infinity)
 
     Logger.info("Prune activity singles: deleted #{del_single} rows...")
 
     # Prune activities who link to an array of objects
-    {:ok, %{:num_rows => del_array}} =
+    %{:num_rows => del_array} =
       """
       delete from public.activities
       where id in (
@@ -88,7 +88,7 @@ defmodule Mix.Tasks.Pleroma.Database do
         #{limit_arg}
       )
       """
-      |> Repo.query([], timeout: :infinity)
+      |> Repo.query!([], timeout: :infinity)
 
     Logger.info("Prune activity arrays: deleted #{del_array} rows...")
 
@@ -298,7 +298,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     if !Keyword.get(options, :keep_threads) do
       # Without the --keep-threads option, it's possible that bookmarked
       # objects have been deleted. We remove the corresponding bookmarks.
-      {:ok, %{:num_rows => del_bookmarks}} =
+      %{:num_rows => del_bookmarks} =
         """
         delete from public.bookmarks
         where id in (
@@ -308,7 +308,7 @@ defmodule Mix.Tasks.Pleroma.Database do
           where o.id is null
         )
         """
-        |> Repo.query([], timeout: :infinity)
+        |> Repo.query!([], timeout: :infinity)
 
       Logger.info("Deleted #{del_bookmarks} orphaned bookmarks...")
     end
@@ -318,14 +318,14 @@ defmodule Mix.Tasks.Pleroma.Database do
       Logger.info("Deleted #{del_activities} orphaned activities...")
     end
 
-    {:ok, %{:num_rows => del_hashtags}} =
+    %{:num_rows => del_hashtags} =
       """
       DELETE FROM hashtags AS ht
       WHERE NOT EXISTS (
         SELECT 1 FROM hashtags_objects hto
         WHERE ht.id = hto.hashtag_id)
       """
-      |> Repo.query()
+      |> Repo.query!()
 
     Logger.info("Deleted #{del_hashtags} no longer used hashtags...")
 
