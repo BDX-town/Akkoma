@@ -478,6 +478,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       |> Map.merge(%{
         local: false,
         data: %{
+          "type" => "Flag",
           "id" => "remote_activity_existing_object",
           "object" => ["non_ existing_object", "existing_object"]
         }
@@ -488,6 +489,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       |> Map.merge(%{
         local: false,
         data: %{
+          "type" => "Flag",
           "id" => "remote_activity_existing_actor",
           "object" => ["non_ existing_object", "existing_actor"]
         }
@@ -498,6 +500,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       |> Map.merge(%{
         local: false,
         data: %{
+          "type" => "Flag",
           "id" => "remote_activity_existing_activity",
           "object" => ["non_ existing_object", "remote_activity_existing_actor"]
         }
@@ -508,6 +511,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       |> Map.merge(%{
         local: false,
         data: %{
+          "type" => "Flag",
           "id" => "remote_activity_without_existing_referenced_object",
           "object" => ["owo", "whats_this"]
         }
