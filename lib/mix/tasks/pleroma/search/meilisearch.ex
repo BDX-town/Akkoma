@@ -126,8 +126,12 @@ defmodule Mix.Tasks.Pleroma.Search.Meilisearch do
     decoded = Jason.decode!(result.body)
 
     if decoded["results"] do
-      Enum.each(decoded["results"], fn %{"description" => desc, "key" => key} ->
-        IO.puts("#{desc}: #{key}")
+      Enum.each(decoded["results"], fn
+        %{"name" => name, "key" => key} ->
+          IO.puts("#{name}: #{key}")
+
+        %{"description" => desc, "key" => key} ->
+          IO.puts("#{desc}: #{key}")
       end)
     else
       IO.puts("Error fetching the keys, check the master key is correct: #{inspect(decoded)}")
