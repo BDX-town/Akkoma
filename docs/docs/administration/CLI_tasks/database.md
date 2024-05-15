@@ -80,6 +80,8 @@ when all orphaned activities have been deleted.
 ### Options
 
 - `--limit n` - Only delete up to `n` activities in each query making up this job, i.e. if this job runs two queries at most `2n` activities will be deleted. Running this task repeatedly in limited batches can help maintain the instance’s responsiveness while still freeing up some space.
+- `--no-singles` - Do not delete activites referencing single objects
+- `--no-arrays` - Do not delete activites referencing an array of objects
 
 ## Create a conversation for all existing DMs
 

@@ -28,28 +28,15 @@ defmodule Mix.Tasks.Pleroma.Database do
     end
   end
 
-  def prune_orphaned_activities(limit \\ 0) when is_number(limit) do
-    limit_arg =
-      if limit > 0 do
-        "LIMIT #{limit}"
-      else
-        ""
-      end
+  defp limit_statement(limit) when is_number(limit) do
+    if limit > 0 do
+      "LIMIT #{limit}"
+    else
+      ""
+    end
+  end
 
-    # Activities can either refer to a single object id, and array of object ids
-    # or contain an inlined object (at least after going through our normalisation)
-    #
-    # Flag is the only type we support with an array (and always has arrays).
-    # Update the only one with inlined objects.
-    #
-    # We already regularly purge old Delete, Undo, Update and Remove and if
-    # rejected Follow requests anyway; no need to explicitly deal with those here.
-    #
-    # Since there’s an index on types and there are typically only few Flag
-    # activites, it’s _much_ faster to utilise the index. To avoid accidentally
-    # deleting useful activities should more types be added, keep typeof for singles.
-
-    # Prune activities who link to a single object
+  defp prune_orphaned_activities_singles(limit) do
     %{:num_rows => del_single} =
       """
       delete from public.activities
@@ -63,14 +50,16 @@ defmodule Mix.Tasks.Pleroma.Database do
         and o.id is null
         and a2.id is null
         and u.id is null
-        #{limit_arg}
+        #{limit_statement(limit)}
       )
       """
       |> Repo.query!([], timeout: :infinity)
 
     Logger.info("Prune activity singles: deleted #{del_single} rows...")
+    del_single
+  end
 
-    # Prune activities who link to an array of objects
+  defp prune_orphaned_activities_array(limit) do
     %{:num_rows => del_array} =
       """
       delete from public.activities
@@ -85,12 +74,44 @@ defmodule Mix.Tasks.Pleroma.Database do
         having max(o.data ->> 'id') is null
         and max(a2.data ->> 'id') is null
         and max(u.ap_id) is null
-        #{limit_arg}
+        #{limit_statement(limit)}
       )
       """
       |> Repo.query!([], timeout: :infinity)
 
     Logger.info("Prune activity arrays: deleted #{del_array} rows...")
+    del_array
+  end
+
+  def prune_orphaned_activities(limit \\ 0, opts \\ []) when is_number(limit) do
+    # Activities can either refer to a single object id, and array of object ids
+    # or contain an inlined object (at least after going through our normalisation)
+    #
+    # Flag is the only type we support with an array (and always has arrays).
+    # Update the only one with inlined objects.
+    #
+    # We already regularly purge old Delete, Undo, Update and Remove and if
+    # rejected Follow requests anyway; no need to explicitly deal with those here.
+    #
+    # Since there’s an index on types and there are typically only few Flag
+    # activites, it’s _much_ faster to utilise the index. To avoid accidentally
+    # deleting useful activities should more types be added, keep typeof for singles.
+
+    # Prune activities who link to a single object
+    del_single =
+      if Keyword.get(opts, :singles, true) do
+        prune_orphaned_activities_singles(limit)
+      else
+        0
+      end
+
+    # Prune activities who link to an array of objects
+    del_array =
+      if Keyword.get(opts, :arrays, true) do
+        prune_orphaned_activities_array(limit)
+      else
+        0
+      end
 
     del_single + del_array
   end
@@ -142,13 +163,15 @@ defmodule Mix.Tasks.Pleroma.Database do
       OptionParser.parse(
         args,
         strict: [
-          limit: :integer
+          limit: :integer,
+          singles: :boolean,
+          arrays: :boolean
         ]
       )
 
     start_pleroma()
 
-    limit = Keyword.get(options, :limit, 0)
+    {limit, options} = Keyword.pop(options, :limit, 0)
 
     log_message = "Pruning orphaned activities"
 
@@ -161,7 +184,7 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     Logger.info(log_message)
 
-    deleted = prune_orphaned_activities(limit)
+    deleted = prune_orphaned_activities(limit, options)
 
     Logger.info("Deleted #{deleted} rows")
   end
