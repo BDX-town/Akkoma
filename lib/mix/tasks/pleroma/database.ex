@@ -97,18 +97,18 @@ defmodule Mix.Tasks.Pleroma.Database do
     # activites, it’s _much_ faster to utilise the index. To avoid accidentally
     # deleting useful activities should more types be added, keep typeof for singles.
 
-    # Prune activities who link to a single object
-    del_single =
-      if Keyword.get(opts, :singles, true) do
-        prune_orphaned_activities_singles(limit)
-      else
-        0
-      end
-
     # Prune activities who link to an array of objects
     del_array =
       if Keyword.get(opts, :arrays, true) do
         prune_orphaned_activities_array(limit)
+      else
+        0
+      end
+
+    # Prune activities who link to a single object
+    del_single =
+      if Keyword.get(opts, :singles, true) do
+        prune_orphaned_activities_singles(limit)
       else
         0
       end
