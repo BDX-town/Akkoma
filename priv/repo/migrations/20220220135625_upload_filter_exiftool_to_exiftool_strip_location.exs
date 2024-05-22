@@ -1,37 +1,10 @@
 defmodule Pleroma.Repo.Migrations.UploadFilterExiftoolToExiftoolStripMetadata do
   use Ecto.Migration
 
-  alias Pleroma.ConfigDB
-
-  def up,
-    do:
-      ConfigDB.get_by_params(%{group: :pleroma, key: Pleroma.Upload})
-      |> update_filtername(
-        Pleroma.Upload.Filter.Exiftool,
-        Pleroma.Upload.Filter.Exiftool.StripMetadata
-      )
-
-  def down,
-    do:
-      ConfigDB.get_by_params(%{group: :pleroma, key: Pleroma.Upload})
-      |> update_filtername(
-        Pleroma.Upload.Filter.Exiftool.StripMetadata,
-        Pleroma.Upload.Filter.Exiftool
-      )
-
-  defp update_filtername(%{value: value}, from_filtername, to_filtername) do
-    new_value =
-      value
-      |> Keyword.update(:filters, [], fn filters ->
-        filters
-        |> Enum.map(fn
-          ^from_filtername -> to_filtername
-          filter -> filter
-        end)
-      end)
-
-    ConfigDB.update_or_create(%{group: :pleroma, key: Pleroma.Upload, value: new_value})
-  end
-
-  defp update_filtername(_, _, _), do: nil
+  # 20240425120000_upload_filter_exiftool_to_exiftool_strip_location.exs
+  # was originally committed with the id used in this file, but this breaks
+  # rollback order. Thus it was moved to 20240425120000 and this stub just prevents
+  # errors during large-scale rollbacks for anyone who already applied the old id
+  def up, do: :ok
+  def down, do: :ok
 end

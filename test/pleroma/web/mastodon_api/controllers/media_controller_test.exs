@@ -6,6 +6,7 @@ defmodule Pleroma.Web.MastodonAPI.MediaControllerTest do
   use Pleroma.Web.ConnCase, async: false
 
   import ExUnit.CaptureLog
+  import Pleroma.Factory
 
   alias Pleroma.Object
   alias Pleroma.User
@@ -174,6 +175,18 @@ defmodule Pleroma.Web.MastodonAPI.MediaControllerTest do
       assert media["description"] == "test-media"
       assert refresh_record(object).data["name"] == "test-media"
     end
+
+    test "won't update non-media", %{conn: conn, user: user} do
+      object = insert(:note, user: user)
+
+      response =
+        conn
+        |> put_req_header("content-type", "multipart/form-data")
+        |> put("/api/v1/media/#{object.id}", %{"description" => "test-media"})
+        |> json_response(404)
+
+      assert response == %{"error" => "Record not found"}
+    end
   end
 
   describe "Get media by id (/api/v1/media/:id)" do
@@ -205,6 +218,17 @@ defmodule Pleroma.Web.MastodonAPI.MediaControllerTest do
       assert media["description"] == "test-media"
       assert media["type"] == "image"
       assert media["id"]
+    end
+
+    test "it returns 404 when requesting non-media object", %{conn: conn, user: user} do
+      object = insert(:note, user: user)
+
+      response =
+        conn
+        |> get("/api/v1/media/#{object.id}")
+        |> json_response(404)
+
+      assert response == %{"error" => "Record not found"}
     end
 
     test "it returns 403 if media object requested by non-owner", %{object: object, user: user} do
