@@ -190,4 +190,20 @@ defmodule Pleroma.Web.WebFingerTest do
     end
 
   end
+
+  @tag capture_log: true
+  test "prevents forgeries" do
+    Tesla.Mock.mock(fn
+      %{url: "https://bad.com/.well-known/webfinger?resource=acct:meanie@bad.com"} ->
+        fake_webfinger =
+          File.read!("test/fixtures/webfinger/imposter-webfinger.json") |> Jason.decode!()
+
+        Tesla.Mock.json(fake_webfinger)
+
+      %{url: "https://bad.com/.well-known/host-meta"} ->
+        {:ok, %Tesla.Env{status: 404}}
+    end)
+
+    assert {:error, {:webfinger_invalid, _, _}} = WebFinger.finger("meanie@bad.com")
+  end
 end
