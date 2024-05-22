@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## 2024.04.1 (Security)
 
 ## Fixed
 - Issue allowing non-owners to use media objects in posts
 - Issue allowing use of non-media objects as attachments and crashing timeline rendering
+- Issue allowing webfinger spoofing in certain situations
 
 ## 2024.04
 
