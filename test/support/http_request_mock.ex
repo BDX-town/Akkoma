@@ -1464,15 +1464,6 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("https://misskey.io/notes/8vs6wxufd0", _, _, _) do
-    {:ok,
-     %Tesla.Env{
-       status: 200,
-       body: File.read!("test/fixtures/tesla_mock/misskey.io_8vs6wxufd0.json"),
-       headers: activitypub_object_headers()
-     }}
-  end
-
   def get("https://google.com/", _, _, _) do
     {:ok, %Tesla.Env{status: 200, body: File.read!("test/fixtures/rich_media/google.html")}}
   end

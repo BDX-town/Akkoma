@@ -9,7 +9,7 @@ defmodule Pleroma.Web.WebFingerTest do
   import Tesla.Mock
 
   setup do
-    mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
+    mock_global(fn env -> apply(HttpRequestMock, :request, [env]) end)
     :ok
   end
 
