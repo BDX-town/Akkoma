@@ -1545,10 +1545,15 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   defp normalize_also_known_as(aka) when is_binary(aka), do: [aka]
   defp normalize_also_known_as(nil), do: []
 
+  defp normalize_attachment(%{} = attachment), do: [attachment]
+  defp normalize_attachment(attachment) when is_list(attachment), do: attachment
+  defp normalize_attachment(_), do: []
+
   defp object_to_user_data(data, additional) do
     fields =
       data
       |> Map.get("attachment", [])
+      |> normalize_attachment()
       |> Enum.filter(fn %{"type" => t} -> t == "PropertyValue" end)
       |> Enum.map(fn fields -> Map.take(fields, ["name", "value"]) end)
 
