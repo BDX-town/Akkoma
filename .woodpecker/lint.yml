@@ -44,7 +44,7 @@ variables:
 
 steps:
   lint:
-    image: akkoma/ci-base:1.15-otp26
+    image: akkoma/ci-base:1.16-otp26
     <<: *on-pr-open
     environment:
       MIX_ENV: test
