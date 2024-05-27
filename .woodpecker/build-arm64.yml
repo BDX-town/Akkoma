@@ -1,4 +1,5 @@
-platform: linux/arm64
+labels:
+  platform: linux/arm64
 
 depends_on:
   - test
@@ -34,7 +35,7 @@ variables:
   - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
   - &mix-clean "mix deps.clean --all && mix clean"
 
-pipeline:
+steps:
   # Canonical arm64
   debian-bookworm:
     image: hexpm/elixir:1.15.4-erlang-26.0.2-debian-bookworm-20230612
