@@ -1,4 +1,5 @@
-platform: linux/amd64
+labels:
+  platform: linux/amd64
 
 depends_on:
   - test
@@ -45,7 +46,7 @@ variables:
   - &clean "(rm -rf release || true) && (rm -rf _build || true) && (rm -rf /root/.mix)"
   - &mix-clean "mix deps.clean --all && mix clean"
 
-pipeline:
+steps:
   docs:
     <<: *on-point-release
     secrets:

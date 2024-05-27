@@ -1,4 +1,5 @@
-platform: linux/amd64
+labels:
+  platform: linux/amd64
 
 depends_on:
   - lint
@@ -12,12 +13,6 @@ matrix:
     - 25
     - 26
   include:
-    - ELIXIR_VERSION: 1.14
-      OTP_VERSION: 25
-    - ELIXIR_VERSION: 1.15
-      OTP_VERSION: 25
-    - ELIXIR_VERSION: 1.15
-      OTP_VERSION: 26
     - ELIXIR_VERSION: 1.16
       OTP_VERSION: 26
 
@@ -73,7 +68,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
-pipeline:
+steps:
   test:
     image: akkoma/ci-base:${ELIXIR_VERSION}-otp${OTP_VERSION}
     <<: *on-pr-open
