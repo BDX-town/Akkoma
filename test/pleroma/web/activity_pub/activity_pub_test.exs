@@ -233,6 +233,48 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
              }
     end
 
+    test "works for takahe actors" do
+      user_id = "https://fedi.vision/@vote@fedi.vision/"
+
+      Tesla.Mock.mock(fn
+        %{method: :get, url: ^user_id} ->
+          %Tesla.Env{
+            status: 200,
+            body: File.read!("test/fixtures/users_mock/takahe_user.json"),
+            headers: [{"content-type", "application/activity+json"}]
+          }
+      end)
+
+      {:ok, user} = ActivityPub.make_user_from_ap_id(user_id)
+
+      assert user.actor_type == "Person"
+
+      assert [
+               %{
+                 "name" => "More details"
+               }
+             ] = user.fields
+    end
+
+    test "works for actors with malformed attachment fields" do
+      user_id = "https://fedi.vision/@vote@fedi.vision/"
+
+      Tesla.Mock.mock(fn
+        %{method: :get, url: ^user_id} ->
+          %Tesla.Env{
+            status: 200,
+            body: File.read!("test/fixtures/users_mock/nonsense_attachment_user.json"),
+            headers: [{"content-type", "application/activity+json"}]
+          }
+      end)
+
+      {:ok, user} = ActivityPub.make_user_from_ap_id(user_id)
+
+      assert user.actor_type == "Person"
+
+      assert [] = user.fields
+    end
+
     test "fetches user featured collection" do
       ap_id = "https://example.com/users/lain"
 
