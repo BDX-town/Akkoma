@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Mix.Tasks.Pleroma.AppTest do
-  use Pleroma.DataCase, async: true
+  use Pleroma.DataCase, async: false
 
   setup_all do
     Mix.shell(Mix.Shell.Process)
