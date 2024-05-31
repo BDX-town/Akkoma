@@ -17,6 +17,13 @@ defmodule Mix.Tasks.Pleroma.Diagnostics do
     |> IO.inspect()
   end
 
+  def run(["fetch_object", url]) do
+    start_pleroma()
+
+    Pleroma.Object.Fetcher.fetch_object_from_id(url)
+    |> IO.inspect()
+  end
+
   def run(["home_timeline", nickname]) do
     start_pleroma()
     user = Repo.get_by!(User, nickname: nickname)
