@@ -1845,8 +1845,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       Transmogrifier.upgrade_user_from_ap_id(ap_id)
     else
       with {:ok, data} <- fetch_and_prepare_user_from_ap_id(ap_id, additional) do
-        enqueue_pin_fetches(data)
-
         user =
           if data.ap_id != ap_id do
             User.get_cached_by_ap_id(data.ap_id)
@@ -1858,6 +1856,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
           user
           |> User.remote_user_changeset(data)
           |> User.update_and_set_cache()
+          |> tap(fn _ -> enqueue_pin_fetches(data) end)
         else
           maybe_handle_clashing_nickname(data)
 
@@ -1865,6 +1864,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
           |> User.remote_user_changeset()
           |> Repo.insert()
           |> User.set_cache()
+          |> tap(fn _ -> enqueue_pin_fetches(data) end)
         end
       end
     end
