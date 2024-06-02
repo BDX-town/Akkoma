@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Fixed
 - Media proxy no longer attempts to proxy embedded images
+- Fix significant uneccessary overhead of attachment cleanup;
+  it no longer attempts to cleanup attachments of deleted remote posts
 
 ## 3.13.3 
 
