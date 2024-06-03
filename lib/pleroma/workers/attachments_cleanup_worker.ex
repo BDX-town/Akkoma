@@ -23,7 +23,11 @@ defmodule Pleroma.Workers.AttachmentsCleanupWorker do
     with true <- Config.get([:instance, :cleanup_attachments]),
          true <- URI.parse(actor).host == Pleroma.Web.Endpoint.host(),
          [_ | _] <- attachments do
-      enqueue("cleanup_attachments", %{"actor" => actor, "attachments" => attachments})
+      enqueue(
+        "cleanup_attachments",
+        %{"actor" => actor, "attachments" => attachments},
+        schedule_in: Config.get!([:instance, :cleanup_attachments_delay])
+      )
     else
       _ -> {:ok, :skip}
     end

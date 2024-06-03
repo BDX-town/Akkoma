@@ -8,7 +8,9 @@ defmodule Pleroma.Workers.AttachmentsCleanupWorkerTest do
 
   import Pleroma.Factory
 
+  alias Pleroma.Object
   alias Pleroma.Workers.AttachmentsCleanupWorker
+  alias Pleroma.Tests.ObanHelpers
 
   setup do
     clear_config([:instance, :cleanup_attachments], true)
@@ -56,5 +58,29 @@ defmodule Pleroma.Workers.AttachmentsCleanupWorkerTest do
     }
 
     assert {:ok, %Oban.Job{}} = AttachmentsCleanupWorker.enqueue_if_needed(local_data)
+  end
+
+  test "doesn't delete immediately", %{attachment: attachment, user: user} do
+    delay = 6000
+    clear_config([:instance, :cleanup_attachments_delay], delay)
+
+    note = insert(:note, %{user: user, data: %{"attachment" => [attachment.data]}})
+
+    uploads_dir = Pleroma.Config.get!([Pleroma.Uploaders.Local, :uploads])
+    %{"url" => [%{"href" => href}]} = attachment.data
+    path = "#{uploads_dir}/#{Path.basename(href)}"
+
+    assert File.exists?(path)
+
+    Object.delete(note)
+    Process.sleep(2000)
+
+    assert File.exists?(path)
+
+    ObanHelpers.perform(all_enqueued(worker: Pleroma.Workers.AttachmentsCleanupWorker))
+
+    assert Object.get_by_id(note.id).data["deleted"]
+    assert Object.get_by_id(attachment.id) == nil
+    refute File.exists?(path)
   end
 end
