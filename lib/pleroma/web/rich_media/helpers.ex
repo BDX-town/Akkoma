@@ -99,10 +99,6 @@ defmodule Pleroma.Web.RichMedia.Helpers do
       end
 
     with :ok <- head_check, do: Pleroma.HTTP.get(url, headers, @options)
-  rescue
-    e ->
-      Logger.error("Failed to fetch rich media: #{inspect(e)}")
-      {:error, :fetch_error}
   end
 
   defp check_content_type(headers) do
