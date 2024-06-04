@@ -84,6 +84,8 @@ defmodule Pleroma.Web.RichMedia.HelpersTest do
 
   test "catches errors in fetching" do
     Tesla.Mock.mock(fn _ -> raise ArgumentError end)
-    assert {:error, :fetch_error} == Helpers.rich_media_get("wp-json/oembed/1.0/embed?url=http:%252F%252F")
+
+    assert {:error, :fetch_error} ==
+             Helpers.rich_media_get("wp-json/oembed/1.0/embed?url=http:%252F%252F")
   end
 end
