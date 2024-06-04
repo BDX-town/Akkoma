@@ -9,6 +9,8 @@ defmodule Pleroma.Web.RichMedia.Helpers do
   alias Pleroma.Object
   alias Pleroma.Web.RichMedia.Parser
 
+  require Logger
+
   @options [
     max_body: 2_000_000,
     receive_timeout: 2_000
