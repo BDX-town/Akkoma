@@ -110,7 +110,7 @@ defmodule Pleroma.SignatureTest do
 
       headers = %{
         host: "test.test",
-        "content-length": 100
+        "content-length": "100"
       }
 
       assert_signature_equal(
@@ -127,7 +127,7 @@ defmodule Pleroma.SignatureTest do
 
       assert Signature.sign(
                user,
-               %{host: "test.test", "content-length": 100}
+               %{host: "test.test", "content-length": "100"}
              ) == {:error, []}
     end
   end
