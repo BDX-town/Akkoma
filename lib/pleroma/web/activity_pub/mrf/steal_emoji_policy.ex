@@ -181,7 +181,7 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
               description: <<_::272, _::_*256>>,
               key: :hosts | :rejected_shortcodes | :size_limit,
               suggestions: [any(), ...],
-              type: {:list, :string} | {:list, :string} | :integer
+              type: {:list, :string} | {:list, :string} | :integer | :boolean
             },
             ...
           ],
@@ -218,6 +218,12 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
           type: :integer,
           description: "File size limit (in bytes), checked before an emoji is saved to the disk",
           suggestions: ["100000"]
+        },
+        %{
+          key: :download_unknown_size,
+          type: :boolean,
+          description: "Whether to download emoji if size can't be determined ahead of time",
+          suggestions: [false, true]
         }
       ]
     }
