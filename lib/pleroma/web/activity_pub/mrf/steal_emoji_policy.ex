@@ -101,10 +101,19 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
     end
   end
 
+  defp get_int_header(headers, header_name, default \\ nil) do
+    with rawval when rawval != :undefined <- :proplists.get_value(header_name, headers),
+         {int, ""} <- Integer.parse(rawval) do
+      int
+    else
+      _ -> default
+    end
+  end
+
   defp is_remote_size_within_limit?(url) do
     with {:ok, %{status: status, headers: headers} = _response} when status in 200..299 <-
            Pleroma.HTTP.request(:head, url, nil, [], []) do
-      content_length = :proplists.get_value("content-length", headers, nil)
+      content_length = get_int_header(headers, "content-length")
       size_limit = Config.get([:mrf_steal_emoji, :size_limit], @size_limit)
 
       accept_unknown =
