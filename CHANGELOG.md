@@ -4,21 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## UNRELEASED
+
+## BREAKING
+- Minimum PostgreSQL version is raised to 12
+
+## Added
+- Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
+- Meilisearch: it is now possible to use separate keys for search and admin actions
+
+## Fixed
+- Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
+
 ## 2024.04.1 (Security)
 
 ## Fixed
 - Issue allowing non-owners to use media objects in posts
 - Issue allowing use of non-media objects as attachments and crashing timeline rendering
 - Issue allowing webfinger spoofing in certain situations
-
-## Added
-- Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
-
-## Added
-- Meilisearch: it is now possible to use separate keys for search and admin actions
-
-## Fixed
-- Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
 
 ## 2024.04
 
