@@ -31,6 +31,7 @@ defmodule Pleroma.Web.RichMedia.Parser do
          {:ok, html} <- Floki.parse_document(html) do
       html
       |> maybe_parse()
+      |> IO.inspect()
       |> clean_parsed_data()
       |> check_parsed_data()
     end

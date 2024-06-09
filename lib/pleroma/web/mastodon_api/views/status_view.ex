@@ -534,25 +534,25 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
 
     page_url = page_url_data |> to_string
 
-    image_url_data =
-      if is_binary(rich_media["image"]) do
-        URI.parse(rich_media["image"])
-      else
-        nil
-      end
-
-    image_url = build_image_url(image_url_data, page_url_data)
+    image_url = proxied_url(rich_media["image"], page_url_data)
+    audio_url = proxied_url(rich_media["audio"], page_url_data)
+    video_url = proxied_url(rich_media["video"], page_url_data)
 
     %{
       type: "link",
       provider_name: page_url_data.host,
       provider_url: page_url_data.scheme <> "://" <> page_url_data.host,
       url: page_url,
-      image: image_url |> MediaProxy.url(),
+      image: image_url,
+      image_description: rich_media["image:alt"] || "",
       title: rich_media["title"] || "",
       description: rich_media["description"] || "",
       pleroma: %{
-        opengraph: rich_media
+        opengraph:
+          rich_media
+          |> Maps.put_if_present("image", image_url)
+          |> Maps.put_if_present("audio", audio_url)
+          |> Maps.put_if_present("video", video_url)
       }
     }
   end
@@ -628,6 +628,14 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
       ancestors: render("index.json", for: user, activities: ancestors, as: :activity),
       descendants: render("index.json", for: user, activities: descendants, as: :activity)
     }
+  end
+
+  defp proxied_url(url, page_url_data) do
+    if is_binary(url) do
+      build_image_url(URI.parse(url), page_url_data) |> MediaProxy.url()
+    else
+      nil
+    end
   end
 
   def get_reply_to(activity, %{replied_to_activities: replied_to_activities}) do
@@ -734,19 +742,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
 
   defp build_application(_), do: nil
 
-  # Workaround for Elixir issue #10771
-  # Avoid applying URI.merge unless necessary
-  # TODO: revert to always attempting URI.merge(image_url_data, page_url_data)
-  # when Elixir 1.12 is the minimum supported version
   @spec build_image_url(struct() | nil, struct()) :: String.t() | nil
-  defp build_image_url(
-         %URI{scheme: image_scheme, host: image_host} = image_url_data,
-         %URI{} = _page_url_data
-       )
-       when not is_nil(image_scheme) and not is_nil(image_host) do
-    image_url_data |> to_string
-  end
-
   defp build_image_url(%URI{} = image_url_data, %URI{} = page_url_data) do
     URI.merge(page_url_data, image_url_data) |> to_string
   end
