@@ -264,7 +264,7 @@ defmodule Pleroma.Application do
   defp http_children do
     proxy_url = Config.get([:http, :proxy_url])
     proxy = Pleroma.HTTP.AdapterHelper.format_proxy(proxy_url)
-    pool_size = Config.get([:http, :pool_size])
+    pool_size = Config.get([:http, :pool_size], 10)
     pool_timeout = Config.get([:http, :pool_timeout], 60_000)
     connection_timeout = Config.get([:http, :conn_max_idle_time], 10_000)
 

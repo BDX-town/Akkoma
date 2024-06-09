@@ -192,8 +192,7 @@ config :pleroma, :http,
   pool_size: 10,
   adapter: [],
   # see: https://hexdocs.pm/finch/Finch.html#start_link/1
-  pool_max_idle_time: :timer.seconds(30),
-  conn_max_idle_time: :timer.seconds(15)
+  pool_max_idle_time: :timer.seconds(30)
 
 config :pleroma, :instance,
   name: "Akkoma",
