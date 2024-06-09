@@ -48,7 +48,6 @@ defmodule Pleroma.Web.MediaProxy do
     else
       url
     end
-    |> IO.inspect()
   end
 
   @spec url_proxiable?(String.t()) :: boolean()
