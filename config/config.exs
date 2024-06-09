@@ -189,8 +189,11 @@ config :pleroma, :http,
   receive_timeout: :timer.seconds(15),
   proxy_url: nil,
   user_agent: :default,
-  pool_size: 50,
-  adapter: []
+  pool_size: 10,
+  adapter: [],
+  # see: https://hexdocs.pm/finch/Finch.html#start_link/1
+  pool_max_idle_time: :timer.seconds(30),
+  conn_max_idle_time: :timer.seconds(15)
 
 config :pleroma, :instance,
   name: "Akkoma",
