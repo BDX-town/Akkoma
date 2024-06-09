@@ -1,5 +1,5 @@
 # Pleroma: A lightweight social networking server
-# Copyright © 2017-2021 Pleroma Authors <https://pleroma.social/>
+# Copyright © 2017-2022 Pleroma Authors <https://pleroma.social/>
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrlTest do
@@ -10,6 +10,7 @@ defmodule Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrlTest do
 
   alias Pleroma.UnstubbedConfigMock, as: ConfigMock
   alias Pleroma.Web.RichMedia.Card
+  alias Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl
 
   setup do
     ConfigMock
@@ -36,7 +37,7 @@ defmodule Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrlTest do
     expire_time =
       Timex.parse!(timestamp, "{ISO:Basic:Z}") |> Timex.to_unix() |> Kernel.+(valid_till)
 
-    assert {:ok, expire_time} == Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl.ttl(metadata, url)
+    assert expire_time == Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl.ttl(metadata, url)
   end
 
   test "s3 signed url is parsed and correct ttl is set for rich media" do
@@ -80,6 +81,12 @@ defmodule Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrlTest do
     timestamp_dt = Timex.parse!(timestamp, "{ISO:Basic:Z}")
 
     assert DateTime.diff(scheduled_at, timestamp_dt) == valid_till
+  end
+
+  test "AWS URL for an image without expiration works" do
+    og_data = %{"image" => "https://amazonaws.com/image.png"}
+
+    assert is_nil(AwsSignedUrl.ttl(og_data, ""))
   end
 
   defp construct_s3_url(timestamp, valid_till) do
