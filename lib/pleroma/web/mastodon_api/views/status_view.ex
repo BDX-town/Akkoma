@@ -298,83 +298,83 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
         object
         |> render_content()
 
-    quote_post =
-      if visible_for_user?(quote_activity, opts[:for]) and opts[:show_quote] != false do
-        quote_rendering_opts = Map.merge(opts, %{activity: quote_activity, show_quote: false})
-        render("show.json", quote_rendering_opts)
-      else
-        nil
-      end
-
-    content =
-      object
-      |> render_content()
-
-    content_html =
-      content
-      |> Activity.HTML.get_cached_scrubbed_html_for_activity(
-        User.html_filter_policy(opts[:for]),
-        activity,
-        "mastoapi:content:#{chrono_order}"
-      )
-
-    content_plaintext =
-      content
-      |> Activity.HTML.get_cached_stripped_html_for_activity(
-        activity,
-        "mastoapi:content:#{chrono_order}"
-      )
-
-    summary = object.data["summary"] || ""
-
-    card =
-      case Card.get_by_activity(activity) do
-        %Card{} = result -> render("card.json", result)
-        _ -> nil
-      end
-
-    url =
-      if user.local do
-        Pleroma.Web.Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :notice, activity)
-      else
-        object.data["url"] || object.data["external_url"] || object.data["id"]
-      end
-
-    direct_conversation_id =
-      with {_, nil} <- {:direct_conversation_id, opts[:direct_conversation_id]},
-           {_, true} <- {:include_id, opts[:with_direct_conversation_id]},
-           {_, %User{} = for_user} <- {:for_user, opts[:for]} do
-        Activity.direct_conversation_id(activity, for_user)
-      else
-        {:direct_conversation_id, participation_id} when is_integer(participation_id) ->
-          participation_id
-
-        _e ->
+      quote_post =
+        if visible_for_user?(quote_activity, opts[:for]) and opts[:show_quote] != false do
+          quote_rendering_opts = Map.merge(opts, %{activity: quote_activity, show_quote: false})
+          render("show.json", quote_rendering_opts)
+        else
           nil
-      end
+        end
 
-    emoji_reactions =
-      object
-      |> Object.get_emoji_reactions()
-      |> EmojiReactionController.filter_allowed_users(
-        opts[:for],
-        Map.get(opts, :with_muted, false)
-      )
-      |> Stream.map(fn {emoji, users, url} ->
-        build_emoji_map(emoji, users, url, opts[:for])
-      end)
-      |> Enum.to_list()
+      content =
+        object
+        |> render_content()
 
-    # Status muted state (would do 1 request per status unless user mutes are preloaded)
-    muted =
-      thread_muted? ||
-        UserRelationship.exists?(
-          get_in(opts, [:relationships, :user_relationships]),
-          :mute,
-          opts[:for],
-          user,
-          fn for_user, user -> User.mutes?(for_user, user) end
+      content_html =
+        content
+        |> Activity.HTML.get_cached_scrubbed_html_for_activity(
+          User.html_filter_policy(opts[:for]),
+          activity,
+          "mastoapi:content:#{chrono_order}"
         )
+
+      content_plaintext =
+        content
+        |> Activity.HTML.get_cached_stripped_html_for_activity(
+          activity,
+          "mastoapi:content:#{chrono_order}"
+        )
+
+      summary = object.data["summary"] || ""
+
+      card =
+        case Card.get_by_activity(activity) do
+          %Card{} = result -> render("card.json", result)
+          _ -> nil
+        end
+
+      url =
+        if user.local do
+          Pleroma.Web.Router.Helpers.o_status_url(Pleroma.Web.Endpoint, :notice, activity)
+        else
+          object.data["url"] || object.data["external_url"] || object.data["id"]
+        end
+
+      direct_conversation_id =
+        with {_, nil} <- {:direct_conversation_id, opts[:direct_conversation_id]},
+             {_, true} <- {:include_id, opts[:with_direct_conversation_id]},
+             {_, %User{} = for_user} <- {:for_user, opts[:for]} do
+          Activity.direct_conversation_id(activity, for_user)
+        else
+          {:direct_conversation_id, participation_id} when is_integer(participation_id) ->
+            participation_id
+
+          _e ->
+            nil
+        end
+
+      emoji_reactions =
+        object
+        |> Object.get_emoji_reactions()
+        |> EmojiReactionController.filter_allowed_users(
+          opts[:for],
+          Map.get(opts, :with_muted, false)
+        )
+        |> Stream.map(fn {emoji, users, url} ->
+          build_emoji_map(emoji, users, url, opts[:for])
+        end)
+        |> Enum.to_list()
+
+      # Status muted state (would do 1 request per status unless user mutes are preloaded)
+      muted =
+        thread_muted? ||
+          UserRelationship.exists?(
+            get_in(opts, [:relationships, :user_relationships]),
+            :mute,
+            opts[:for],
+            user,
+            fn for_user, user -> User.mutes?(for_user, user) end
+          )
 
       content_plaintext =
         content
