@@ -1,5 +1,5 @@
 # Pleroma: A lightweight social networking server
-# Copyright © 2017-2021 Pleroma Authors <https://pleroma.social/>
+# Copyright © 2017-2022 Pleroma Authors <https://pleroma.social/>
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.RichMedia.Parser do
@@ -15,10 +15,14 @@ defmodule Pleroma.Web.RichMedia.Parser do
 
   @spec parse(String.t()) :: {:ok, map()} | {:error, any()}
   def parse(url) do
-    with :ok <- validate_page_url(url),
+    with {_, true} <- {:config, @config_impl.get([:rich_media, :enabled])},
+         :ok <- validate_page_url(url),
          {:ok, data} <- parse_url(url) do
       data = Map.put(data, "url", url)
       {:ok, data}
+    else
+      {:config, _} -> {:error, :rich_media_disabled}
+      e -> e
     end
   end
 
@@ -29,21 +33,6 @@ defmodule Pleroma.Web.RichMedia.Parser do
       |> maybe_parse()
       |> clean_parsed_data()
       |> check_parsed_data()
-    end
-  end
-
-  def parse_with_timeout(url) do
-    try do
-      task =
-        Task.Supervisor.async_nolink(Pleroma.TaskSupervisor, fn ->
-          parse_url(url)
-        end)
-
-      Task.await(task, 5000)
-    catch
-      :exit, {:timeout, _} ->
-        Logger.warning("Timeout while fetching rich media for #{url}")
-        {:error, :timeout}
     end
   end
 
@@ -71,5 +60,47 @@ defmodule Pleroma.Web.RichMedia.Parser do
       not match?({:ok, _}, Jason.encode(%{key => val}))
     end)
     |> Map.new()
+  end
+
+  @spec validate_page_url(URI.t() | binary()) :: :ok | :error
+  defp validate_page_url(page_url) when is_binary(page_url) do
+    validate_tld = @config_impl.get([Pleroma.Formatter, :validate_tld])
+
+    page_url
+    |> Linkify.Parser.url?(validate_tld: validate_tld)
+    |> parse_uri(page_url)
+  end
+
+  defp validate_page_url(%URI{host: host, scheme: "https"}) do
+    cond do
+      Linkify.Parser.ip?(host) ->
+        :error
+
+      host in @config_impl.get([:rich_media, :ignore_hosts], []) ->
+        :error
+
+      get_tld(host) in @config_impl.get([:rich_media, :ignore_tld], []) ->
+        :error
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_page_url(_), do: :error
+
+  defp parse_uri(true, url) do
+    url
+    |> URI.parse()
+    |> validate_page_url
+  end
+
+  defp parse_uri(_, _), do: :error
+
+  defp get_tld(host) do
+    host
+    |> String.split(".")
+    |> Enum.reverse()
+    |> hd
   end
 end

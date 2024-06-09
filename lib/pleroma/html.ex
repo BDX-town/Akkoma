@@ -6,8 +6,6 @@ defmodule Pleroma.HTML do
   # Scrubbers are compiled on boot so they can be configured in OTP releases
   #  @on_load :compile_scrubbers
 
-  @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
-
   def compile_scrubbers do
     dir = Path.join(:code.priv_dir(:pleroma), "scrubbers")
 

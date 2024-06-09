@@ -17,10 +17,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
   alias Pleroma.Web.MastodonAPI.AccountView
   alias Pleroma.Web.MastodonAPI.StatusView
   alias Pleroma.Web.RichMedia.Card
+  alias Pleroma.UnstubbedConfigMock, as: ConfigMock
 
   import Pleroma.Factory
   import Tesla.Mock
   import OpenApiSpex.TestAssertions
+  import Mox
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
