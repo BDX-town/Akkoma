@@ -583,6 +583,7 @@ config :pleroma, Oban,
     search_indexing: 10,
     nodeinfo_fetcher: 1,
     database_prune: 1,
+    rich_media_backfill: 2,
     rich_media_expiration: 2
   ],
   plugins: [
@@ -599,7 +600,8 @@ config :pleroma, :workers,
   retries: [
     federator_incoming: 5,
     federator_outgoing: 5,
-    search_indexing: 2
+    search_indexing: 2,
+    rich_media_backfill: 3
   ],
   timeout: [
     activity_expiration: :timer.seconds(5),
@@ -621,7 +623,8 @@ config :pleroma, :workers,
     mute_expire: :timer.seconds(5),
     search_indexing: :timer.seconds(5),
     nodeinfo_fetcher: :timer.seconds(10),
-    database_prune: :timer.minutes(10)
+    database_prune: :timer.minutes(10),
+    rich_media_backfill: :timer.seconds(30)
   ]
 
 config :pleroma, Pleroma.Formatter,

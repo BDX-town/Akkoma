@@ -78,7 +78,8 @@ defmodule Pleroma.Mixfile do
         :comeonin,
         :fast_sanitize,
         :os_mon,
-        :ssl
+        :ssl,
+        :recon
       ],
       included_applications: [:ex_syslogger]
     ]
@@ -158,9 +159,7 @@ defmodule Pleroma.Mixfile do
       {:timex, "~> 3.7"},
       {:ueberauth, "== 0.10.5"},
       {:linkify, "~> 0.5.3"},
-      {:http_signatures,
-       git: "https://akkoma.dev/AkkomaGang/http_signatures.git",
-       ref: "6640ce7d24c783ac2ef56e27d00d12e8dc85f396"},
+      {:http_signatures, "~> 0.1.2"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},

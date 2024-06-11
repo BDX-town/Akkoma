@@ -73,6 +73,8 @@ defmodule Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrlTest do
     end)
 
     Card.get_or_backfill_by_url(url)
+    # wait for oban
+    Pleroma.Tests.ObanHelpers.perform_all()
 
     assert_enqueued(worker: Pleroma.Workers.RichMediaExpirationWorker, args: %{"url" => url})
 
