@@ -93,14 +93,6 @@ defmodule Pleroma.Web.RichMedia.Card do
     end
   end
 
-  @spec get_by_object(Object.t()) :: t() | nil | :error
-  def get_by_object(object) do
-    case HTML.extract_first_external_url_from_object(object) do
-      nil -> nil
-      url -> get_or_backfill_by_url(url)
-    end
-  end
-
   @spec get_by_activity(Activity.t()) :: t() | nil | :error
   # Fake/Draft activity
   def get_by_activity(%Activity{id: "pleroma:fakeid"} = activity) do

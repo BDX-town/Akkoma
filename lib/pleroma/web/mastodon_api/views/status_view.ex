@@ -26,12 +26,9 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
 
   import Pleroma.Web.ActivityPub.Visibility, only: [get_visibility: 1, visible_for_user?: 2]
 
-  # This is a naive way to do this, just spawning a process per activity
-  # to fetch the preview. However it should be fine considering
-  # pagination is restricted to 40 activities at a time
   defp fetch_rich_media_for_activities(activities) do
     Enum.each(activities, fn activity ->
-      spawn(fn -> Card.get_by_activity(activity) end)
+      Card.get_by_activity(activity)
     end)
   end
 
