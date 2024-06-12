@@ -78,7 +78,8 @@ defmodule Pleroma.Mixfile do
         :comeonin,
         :fast_sanitize,
         :os_mon,
-        :ssl
+        :ssl,
+        :recon
       ],
       included_applications: [:ex_syslogger]
     ]
@@ -136,7 +137,7 @@ defmodule Pleroma.Mixfile do
       {:tesla, "~> 1.7"},
       {:castore, "~> 1.0"},
       {:cowlib, "~> 2.12"},
-      {:finch, "~> 0.16.0"},
+      {:finch, "~> 0.18.0"},
       {:jason, "~> 1.4"},
       {:trailing_format_plug, "~> 0.0.7"},
       {:mogrify, "~> 0.9"},
@@ -157,10 +158,8 @@ defmodule Pleroma.Mixfile do
       {:floki, "~> 0.34"},
       {:timex, "~> 3.7"},
       {:ueberauth, "== 0.10.5"},
-      {:linkify, git: "https://akkoma.dev/AkkomaGang/linkify.git"},
-      {:http_signatures,
-       git: "https://akkoma.dev/AkkomaGang/http_signatures.git",
-       ref: "6640ce7d24c783ac2ef56e27d00d12e8dc85f396"},
+      {:linkify, "~> 0.5.3"},
+      {:http_signatures, "~> 0.1.2"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},

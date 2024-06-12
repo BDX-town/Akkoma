@@ -398,6 +398,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
                ["push_subscriptions"],
                ["registrations"],
                ["report_notes"],
+               ["rich_media_card"],
                ["scheduled_activities"],
                ["schema_migrations"],
                ["thread_mutes"],

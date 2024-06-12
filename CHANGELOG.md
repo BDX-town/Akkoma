@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Fixed
 - Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
 
+## Changed
+- Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.
+
 ## 2024.04.1 (Security)
 
 ## Fixed

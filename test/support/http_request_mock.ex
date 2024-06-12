@@ -1708,12 +1708,39 @@ defmodule HttpRequestMock do
 
   # Most of the rich media mocks are missing HEAD requests, so we just return 404.
   @rich_media_mocks [
+    "https://example.com/empty",
+    "https://example.com/error",
+    "https://example.com/malformed",
+    "https://example.com/non-ogp",
+    "https://example.com/oembed",
+    "https://example.com/oembed.json",
     "https://example.com/ogp",
     "https://example.com/ogp-missing-data",
-    "https://example.com/twitter-card"
+    "https://example.com/ogp-missing-title",
+    "https://example.com/twitter-card",
+    "https://google.com/",
+    "https://pleroma.local/notice/9kCP7V",
+    "https://yahoo.com/"
   ]
+
   def head(url, _query, _body, _headers) when url in @rich_media_mocks do
     {:ok, %Tesla.Env{status: 404, body: ""}}
+  end
+
+  def head("https://example.com/pdf-file", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       headers: [{"content-length", "1000000"}, {"content-type", "application/pdf"}]
+     }}
+  end
+
+  def head("https://example.com/huge-page", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       headers: [{"content-length", "2000001"}, {"content-type", "text/html"}]
+     }}
   end
 
   def head(url, query, body, headers) do
