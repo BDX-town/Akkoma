@@ -1629,9 +1629,8 @@ defmodule Pleroma.User do
   end
 
   def blocks_domain?(%User{} = user, url) when is_binary(url) do
-    domain_blocks = Pleroma.Web.ActivityPub.MRF.subdomains_regex(user.domain_blocks)
-    %{host: host} = URI.parse(url)
-    Pleroma.Web.ActivityPub.MRF.subdomain_match?(domain_blocks, host)
+    %{host: host} = URI.parse(target.ap_id)
+    Enum.member?(user.domain_blocks, host)
   end
 
   def blocks_domain?(_, _), do: false

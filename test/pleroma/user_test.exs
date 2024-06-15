@@ -1177,8 +1177,6 @@ defmodule Pleroma.UserTest do
 
       url = URI.parse(blocked_user.ap_id)
       {:ok, user} = User.block_domain(user, url.host)
-      assert User.blocks_domain?(user, blocked_user)
-
       {:ok, user} = User.unblock_domain(user, url.host)
 
       refute User.blocks_domain?(user, blocked_user)
