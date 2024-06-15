@@ -63,7 +63,6 @@ config :pleroma, Pleroma.Upload,
   uploader: Pleroma.Uploaders.Local,
   filters: [],
   link_name: false,
-  proxy_remote: false,
   filename_display_max_length: 30,
   base_url: nil,
   allowed_mime_types: ["image", "audio", "video"]
