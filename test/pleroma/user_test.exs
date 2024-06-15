@@ -1149,6 +1149,18 @@ defmodule Pleroma.UserTest do
       assert User.blocks?(user, blocked_user)
     end
 
+    test "it blocks domains" do
+      user = insert(:user)
+      blocked_user = insert(:user)
+
+      refute User.blocks_domain?(user, blocked_user)
+
+      url = URI.parse(blocked_user.ap_id)
+      {:ok, user} = User.block_domain(user, url.host)
+
+      assert User.blocks_domain?(user, blocked_user)
+    end
+
     test "it unblocks users" do
       user = insert(:user)
       blocked_user = insert(:user)
@@ -1157,6 +1169,19 @@ defmodule Pleroma.UserTest do
       {:ok, _user_block} = User.unblock(user, blocked_user)
 
       refute User.blocks?(user, blocked_user)
+    end
+
+    test "it unblocks domains" do
+      user = insert(:user)
+      blocked_user = insert(:user)
+
+      url = URI.parse(blocked_user.ap_id)
+      {:ok, user} = User.block_domain(user, url.host)
+      assert User.blocks_domain?(user, blocked_user)
+
+      {:ok, user} = User.unblock_domain(user, url.host)
+
+      refute User.blocks_domain?(user, blocked_user)
     end
 
     test "blocks tear down cyclical follow relationships" do
