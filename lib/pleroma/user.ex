@@ -1629,7 +1629,7 @@ defmodule Pleroma.User do
   end
 
   def blocks_domain?(%User{} = user, url) when is_binary(url) do
-    %{host: host} = URI.parse(target.ap_id)
+    %{host: host} = URI.parse(url)
     Enum.member?(user.domain_blocks, host)
   end
 
