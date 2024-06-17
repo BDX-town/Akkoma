@@ -54,6 +54,16 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     end
   end
 
+  def maybe_put_expires_psudoheader(conn) do
+    case HTTPSignatures.signature_for_conn(conn) do
+      %{"expires" => expires} ->
+        put_req_header(conn, "(expires)", expires)
+
+      _ ->
+        conn
+    end
+  end
+
   defp assign_valid_signature_on_route_aliases(conn, []), do: conn
 
   defp assign_valid_signature_on_route_aliases(%{assigns: %{valid_signature: true}} = conn, _),
@@ -66,6 +76,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       conn
       |> put_req_header("(request-target)", request_target)
       |> maybe_put_created_psudoheader()
+      |> maybe_put_expires_psudoheader()
       |> case do
         %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
         conn -> conn
