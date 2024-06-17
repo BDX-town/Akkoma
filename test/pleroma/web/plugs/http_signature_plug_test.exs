@@ -18,7 +18,11 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     {HTTPSignatures, [],
      [
        signature_for_conn: fn _ ->
-         %{"keyId" => "http://mastodon.example.org/users/admin#main-key"}
+         %{
+           "keyId" => "http://mastodon.example.org/users/admin#main-key",
+           "created" => "1234567890",
+           "expires" => "1234567890"
+         }
        end,
        validate_conn: fn conn ->
          Map.get(conn.assigns, :valid_signature, true)
@@ -140,5 +144,19 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
     assert ["/notice/#{act.id}", "/notice/#{act.id}?actor=someparam"] ==
              HTTPSignaturePlug.route_aliases(conn)
+  end
+
+  test "(created) psudoheader", _ do
+    conn = build_conn(:get, "/doesntmattter")
+    conn = HTTPSignaturePlug.maybe_put_created_psudoheader(conn)
+    created_header = List.keyfind(conn.req_headers, "(created)", 0)
+    assert {_, "1234567890"} = created_header
+  end
+
+  test "(expires) psudoheader", _ do
+    conn = build_conn(:get, "/doesntmattter")
+    conn = HTTPSignaturePlug.maybe_put_expires_psudoheader(conn)
+    expires_header = List.keyfind(conn.req_headers, "(expires)", 0)
+    assert {_, "1234567890"} = expires_header
   end
 end
