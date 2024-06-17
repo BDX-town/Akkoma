@@ -605,7 +605,6 @@ the source code is here: [kocaptcha](https://github.com/koto-bank/kocaptcha). Th
 * `link_name`: When enabled Akkoma will add a `name` parameter to the url of the upload, for example `https://instance.tld/media/corndog.png?name=corndog.png`. This is needed to provide the correct filename in Content-Disposition headers
 * `base_url`: The base URL to access a user-uploaded file; MUST be configured explicitly.
   Using a (sub)domain distinct from the instance endpoint is **strongly** recommended. A good value might be `https://media.myakkoma.instance/media/`. 
-* `proxy_remote`: If you're using a remote uploader, Akkoma will proxy media requests instead of redirecting to it.
 * `proxy_opts`: Proxy options, see `Pleroma.ReverseProxy` documentation.
 * `filename_display_max_length`: Set max length of a filename to display. 0 = no limit. Default: 30.
 

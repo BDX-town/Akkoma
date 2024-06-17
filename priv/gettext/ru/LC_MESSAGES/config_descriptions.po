@@ -2901,15 +2901,6 @@ msgstr ""
 
 #: lib/pleroma/docs/translator.ex:5
 #, elixir-autogen, elixir-format, fuzzy
-msgctxt "config description at :pleroma-Pleroma.Upload > :proxy_remote"
-msgid "Proxy requests to the remote uploader.\n\nUseful if media upload endpoint is not internet accessible.\n"
-msgstr ""
-"Proxy requests to the remote uploader.\n"
-"\n"
-"Useful if media upload endpoint is not internet accessible.\n"
-
-#: lib/pleroma/docs/translator.ex:5
-#, elixir-autogen, elixir-format, fuzzy
 msgctxt "config description at :pleroma-Pleroma.Upload > :uploader"
 msgid "Module which will be used for uploads"
 msgstr "Module which will be used for uploads"
@@ -5213,12 +5204,6 @@ msgstr "Filters"
 msgctxt "config label at :pleroma-Pleroma.Upload > :link_name"
 msgid "Link name"
 msgstr "Link name"
-
-#: lib/pleroma/docs/translator.ex:5
-#, elixir-autogen, elixir-format, fuzzy
-msgctxt "config label at :pleroma-Pleroma.Upload > :proxy_remote"
-msgid "Proxy remote"
-msgstr "Proxy remote"
 
 #: lib/pleroma/docs/translator.ex:5
 #, elixir-autogen, elixir-format, fuzzy
