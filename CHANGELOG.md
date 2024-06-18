@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Added
 - Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
 - Meilisearch: it is now possible to use separate keys for search and admin actions
+- New standalone `prune_orphaned_activities` mix task with configurable batch limit
+- The `prune_objects` mix task now accepts a `--limit` parameter for initial object pruning
 
 ## Fixed
 - Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
@@ -112,8 +114,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Akkoma API is now documented
 - ability to auto-approve follow requests from users you are already following
 - The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
-- New standalone `prune_orphaned_activities` mix task with configurable batch limit
-- The `prune_objects` mix task now accepts a `--limit` parameter for initial object pruning
 
 ## Changed
 - OTP builds are now built on erlang OTP26
