@@ -573,7 +573,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert Activity.get_by_ap_id(data["id"])
     end
 
-    @tag capture_log: true
     test "it inserts an incoming activity into the database" <>
            "even if we can't fetch the user but have it in our db",
          %{conn: conn} do
@@ -1074,7 +1073,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert Instances.reachable?(sender_host)
     end
 
-    @tag capture_log: true
     test "it removes all follower collections but actor's", %{conn: conn} do
       [actor, recipient] = insert_pair(:user)
 
@@ -1138,7 +1136,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert json_response(ret_conn, 200)
     end
 
-    @tag capture_log: true
     test "forwarded report", %{conn: conn} do
       admin = insert(:user, is_admin: true)
       actor = insert(:user, local: false)
@@ -1215,7 +1212,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       )
     end
 
-    @tag capture_log: true
     test "forwarded report from mastodon", %{conn: conn} do
       admin = insert(:user, is_admin: true)
       actor = insert(:user, local: false)
