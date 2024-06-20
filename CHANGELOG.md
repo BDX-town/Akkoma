@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## BREAKING
 - Minimum PostgreSQL version is raised to 12
+- Swagger UI moved from `/akkoma/swaggerui/` to `/pleroma/swaggerui/`
 
 ## Added
 - Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)

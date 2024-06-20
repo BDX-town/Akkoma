@@ -338,7 +338,7 @@ config :pleroma, :frontends,
 
 * `:primary` - The frontend that will be served at `/`
 * `:admin` - The frontend that will be served at `/pleroma/admin`
-* `:swagger` - Config for developers to act as an API reference to be served at `/akkoma/swaggerui/` (trailing slash _needed_). Disabled by default.
+* `:swagger` - Config for developers to act as an API reference to be served at `/pleroma/swaggerui/` (trailing slash _needed_). Disabled by default.
 * `:mastodon` - The mastodon-fe configuration. This shouldn't need to be changed. This is served at `/web` when installed.
 
 ### :static\_fe
