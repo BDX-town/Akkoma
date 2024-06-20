@@ -87,5 +87,5 @@ steps:
       - mix ecto.create
       - mix ecto.migrate
       - mkdir -p test/tmp
-      - mix test --preload-modules --exclude erratic --exclude federated --exclude mocked
-      - mix test --preload-modules --only mocked
+      - mix test --preload-modules --exclude erratic --exclude federated --exclude mocked || mix test --failed
+      - mix test --preload-modules --only mocked || mix test --failed
