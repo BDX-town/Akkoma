@@ -10,7 +10,7 @@ defmodule Pleroma.Signature do
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.ActivityPub
 
-  @known_suffixes ["/publickey", "/main-key", "#key"]
+  @known_suffixes ["/publickey", "/main-key"]
 
   def key_id_to_actor_id(key_id) do
     uri =
