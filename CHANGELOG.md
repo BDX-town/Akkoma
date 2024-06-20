@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Fixed
 - Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
 - AP objects with additional JSON-LD profiles beyond ActivityStreams can now be fetched
+- Single-selection polls no longer expose the voter_count; MastoAPI demands it be null
+  and this confused some clients leading to vote distributions >100%
 
 ## Changed
 - Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.
