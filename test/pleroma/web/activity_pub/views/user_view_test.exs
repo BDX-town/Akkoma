@@ -43,7 +43,7 @@ defmodule Pleroma.Web.ActivityPub.UserViewTest do
              "tag" => [
                %{
                  "icon" => %{"type" => "Image", "url" => "/test"},
-                 "id" => "/test",
+                 "id" => nil,
                  "name" => ":bib:",
                  "type" => "Emoji",
                  "updated" => "1970-01-01T00:00:00Z"

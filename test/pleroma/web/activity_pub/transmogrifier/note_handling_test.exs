@@ -700,7 +700,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
     assert Transmogrifier.take_emoji_tags(user) == [
              %{
                "icon" => %{"type" => "Image", "url" => "https://example.org/firefox.png"},
-               "id" => "https://example.org/firefox.png",
+               "id" => nil,
                "name" => ":firefox:",
                "type" => "Emoji",
                "updated" => "1970-01-01T00:00:00Z"
