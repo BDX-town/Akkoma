@@ -58,6 +58,7 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlugTest do
 
     # extract domain from user.ap_id
     url = URI.parse(user.ap_id)
+
     clear_config([:mrf_simple, :reject], [
       {url.host, "anime is banned"}
     ])
@@ -80,6 +81,7 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlugTest do
     clear_config([:activitypub, :authorized_fetch_mode], true)
 
     url = URI.parse(user.ap_id)
+
     clear_config([:mrf_simple, :accept], [
       {url.host, "anime is allowed"}
     ])

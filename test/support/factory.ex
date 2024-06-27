@@ -88,25 +88,28 @@ defmodule Pleroma.Factory do
       end
 
     attrs = Map.delete(attrs, :domain)
-    signing_key = insert(:signing_key, %{key_id: urls[:ap_id] <> "#main-key"})
-
     user
     |> Map.put(:raw_bio, user.bio)
-    |> Map.put(:signing_key, signing_key)
     |> Map.merge(urls)
     |> merge_attributes(attrs)
   end
 
+  def with_signing_key(%User{} = user) do
+    signing_key = build(:signing_key, %{user: user, key_id: "#{user.ap_id}#main-key"})
+    insert(signing_key)
+    %{user | signing_key: signing_key}
+  end
+
   def signing_key_factory(attrs \\ %{}) do
     pem = Enum.random(@rsa_keys)
+    user = attrs[:user] || insert(:user)
     {:ok, public_key} = Pleroma.User.SigningKey.private_pem_to_public_pem(pem)
-
     %Pleroma.User.SigningKey{
+      user_id: user.id,
       public_key: public_key,
       private_key: pem,
-      key_id: attrs[:key_id] || "https://example.com/key"
+      key_id: attrs[:key_id]
     }
-    |> merge_attributes(attrs)
   end
 
   def user_relationship_factory(attrs \\ %{}) do

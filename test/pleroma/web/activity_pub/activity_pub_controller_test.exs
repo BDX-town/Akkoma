@@ -584,6 +584,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
           local: false,
           last_refreshed_at: nil
         )
+        |> with_signing_key()
 
       data =
         File.read!("test/fixtures/mastodon-post-activity.json")
@@ -594,7 +595,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{user.ap_id}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{user.signing_key.key_id}\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/inbox", data)
 
@@ -609,6 +610,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       sender_url = data["actor"]
       sender = insert(:user, ap_id: data["actor"])
+      |> with_signing_key()
 
       Instances.set_consistently_unreachable(sender_url)
       refute Instances.reachable?(sender_url)
@@ -616,7 +618,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{sender.ap_id}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{sender.signing_key.key_id}\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/inbox", data)
 
@@ -784,6 +786,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
           ap_id: actor,
           featured_address: "https://example.com/users/lain/collections/featured"
         )
+        |> with_signing_key()
 
       Tesla.Mock.mock(fn
         %{
@@ -839,7 +842,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert "ok" ==
                conn
                |> assign(:valid_signature, true)
-               |> put_req_header("signature", "keyId=\"#{sender.ap_id}/main-key\"")
+               |> put_req_header("signature", "keyId=\"#{sender.signing_key.key_id}\"")
                |> put_req_header("content-type", "application/activity+json")
                |> post("/inbox", data)
                |> json_response(200)
@@ -974,6 +977,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       {:ok, post} = CommonAPI.post(user, %{status: "hey"})
       announcer = insert(:user, local: false)
+      |> with_signing_key()
 
       data = %{
         "@context" => "https://www.w3.org/ns/activitystreams",
@@ -988,7 +992,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{announcer.ap_id}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{announcer.signing_key.key_id}\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -1004,6 +1008,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     } do
       recipient = insert(:user)
       actor = insert(:user, %{ap_id: "http://mastodon.example.org/users/actor"})
+      |> with_signing_key()
 
       {:ok, recipient, actor} = User.follow(recipient, actor)
 
@@ -1019,7 +1024,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{actor.ap_id}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{actor.signing_key.key_id}\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{recipient.nickname}/inbox", data)
 
@@ -1057,6 +1062,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
     test "it clears `unreachable` federation status of the sender", %{conn: conn, data: data} do
       user = insert(:user)
+      |> with_signing_key()
       data = Map.put(data, "bcc", [user.ap_id])
 
       sender_host = URI.parse(data["actor"]).host
@@ -1066,7 +1072,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{data["actor"]}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{user.signing_key.key_id}\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -1077,6 +1083,8 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     @tag capture_log: true
     test "it removes all follower collections but actor's", %{conn: conn} do
       [actor, recipient] = insert_pair(:user)
+      actor = with_signing_key(actor)
+
 
       to = [
         recipient.ap_id,
@@ -1105,7 +1113,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:valid_signature, true)
-      |> put_req_header("signature", "keyId=\"#{actor.ap_id}/main-key\"")
+      |> put_req_header("signature", "keyId=\"#{actor.signing_key.key_id}\"")
       |> put_req_header("content-type", "application/activity+json")
       |> post("/users/#{recipient.nickname}/inbox", data)
       |> json_response(200)
@@ -1142,6 +1150,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "forwarded report", %{conn: conn} do
       admin = insert(:user, is_admin: true)
       actor = insert(:user, local: false)
+      |> with_signing_key()
       remote_domain = URI.parse(actor.ap_id).host
       reported_user = insert(:user)
 
@@ -1198,7 +1207,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:valid_signature, true)
-      |> put_req_header("signature", "keyId=\"#{actor.ap_id}/main-key\"")
+      |> put_req_header("signature", "keyId=\"#{actor.signing_key.key_id}\"")
       |> put_req_header("content-type", "application/activity+json")
       |> post("/users/#{reported_user.nickname}/inbox", data)
       |> json_response(200)

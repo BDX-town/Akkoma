@@ -18,6 +18,11 @@ defmodule Pleroma.User.SigningKey do
     timestamps()
   end
 
+  def load_key(%User{} = user) do
+    user
+    |> Repo.preload(:signing_key)
+  end
+
   def key_id_of_local_user(%User{local: true, signing_key: %__MODULE__{key_id: key_id}}),
     do: key_id
 

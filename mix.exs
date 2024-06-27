@@ -200,7 +200,7 @@ defmodule Pleroma.Mixfile do
 
       ## dev & test
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:ex_machina, "~> 2.7", only: :test},
+      {:ex_machina, "~> 2.8", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:mock, "~> 0.3.8", only: :test},
       {:excoveralls, "0.16.1", only: :test},
