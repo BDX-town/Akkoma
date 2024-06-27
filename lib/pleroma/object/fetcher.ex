@@ -343,7 +343,6 @@ defmodule Pleroma.Object.Fetcher do
     final_url
   end
 
-  @doc "Do NOT use; only public for use in tests"
   def get_object(id) do
     date = Pleroma.Signature.signed_date()
 

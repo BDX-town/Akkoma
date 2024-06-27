@@ -4,7 +4,6 @@
 
 defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlug do
   alias Pleroma.Helpers.AuthHelper
-  alias Pleroma.Signature
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.Utils
 
@@ -33,7 +32,7 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlug do
         |> assign(:valid_signature, false)
 
       # remove me once testsuite uses mapped capabilities instead of what we do now
-      {:user, nil} ->
+      {:user, _} ->
         Logger.debug("Failed to map identity from signature (lookup failure)")
         Logger.debug("key_id=#{inspect(key_id_from_conn(conn))}, actor=#{actor}")
 
@@ -93,22 +92,33 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlug do
   end
 
   defp key_id_from_conn(conn) do
-    with %{"keyId" => key_id} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, ap_id} <- Signature.key_id_to_actor_id(key_id) do
-      ap_id
-    else
+    case HTTPSignatures.signature_for_conn(conn) do
+      %{"keyId" => key_id} when is_binary(key_id) ->
+        key_id
+
       _ ->
         nil
     end
   end
 
   defp user_from_key_id(conn) do
-    with key_actor_id when is_binary(key_actor_id) <- key_id_from_conn(conn),
-         {:ok, %User{} = user} <- User.get_or_fetch_by_ap_id(key_actor_id) do
+    with {:key_id, key_id} when is_binary(key_id) <- {:key_id, key_id_from_conn(conn)},
+         {:mapped_ap_id, ap_id} when is_binary(ap_id) <-
+           {:mapped_ap_id, User.SigningKey.key_id_to_ap_id(key_id)},
+         {:user_fetch, {:ok, %User{} = user}} <- {:user_fetch, User.get_or_fetch_by_ap_id(ap_id)} do
       user
     else
-      _ ->
-        nil
+      {:key_id, nil} ->
+        Logger.debug("Failed to map identity from signature (no key ID)")
+        {:key_id, nil}
+
+      {:mapped_ap_id, nil} ->
+        Logger.debug("Failed to map identity from signature (could not map key ID to AP ID)")
+        {:mapped_ap_id, nil}
+
+      {:user_fetch, {:error, _}} ->
+        Logger.debug("Failed to map identity from signature (lookup failure)")
+        {:user_fetch, nil}
     end
   end
 

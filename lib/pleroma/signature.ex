@@ -5,44 +5,32 @@
 defmodule Pleroma.Signature do
   @behaviour HTTPSignatures.Adapter
 
-  alias Pleroma.EctoType.ActivityPub.ObjectValidators
-  alias Pleroma.Keys
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.ActivityPub
-
-  @known_suffixes ["/publickey", "/main-key", "#key"]
+  alias Pleroma.User.SigningKey
 
   def key_id_to_actor_id(key_id) do
-    uri =
-      key_id
-      |> URI.parse()
-      |> Map.put(:fragment, nil)
-      |> Map.put(:query, nil)
-      |> remove_suffix(@known_suffixes)
+    # Given the key ID, first attempt to look it up in the signing keys table.
+    # If it's not found, then attempt to look it up via request to the remote instance.
+    case SigningKey.key_id_to_ap_id(key_id) do
+      nil ->
+        # this requires us to look up the url!
+        request_key_id_from_remote_instance(key_id)
 
-    maybe_ap_id = URI.to_string(uri)
-
-    case ObjectValidators.ObjectID.cast(maybe_ap_id) do
-      {:ok, ap_id} ->
-        {:ok, ap_id}
-
-      _ ->
-        case Pleroma.Web.WebFinger.finger(maybe_ap_id) do
-          {:ok, %{"ap_id" => ap_id}} -> {:ok, ap_id}
-          _ -> {:error, maybe_ap_id}
-        end
+      key ->
+        {:ok, key}
     end
   end
 
-  defp remove_suffix(uri, [test | rest]) do
-    if not is_nil(uri.path) and String.ends_with?(uri.path, test) do
-      Map.put(uri, :path, String.replace(uri.path, test, ""))
-    else
-      remove_suffix(uri, rest)
+  def request_key_id_from_remote_instance(key_id) do
+    case SigningKey.fetch_remote_key(key_id) do
+      {:ok, key_id} ->
+        {:ok, key_id}
+
+      {:error, _} ->
+        {:error, "Key ID not found"}
     end
   end
-
-  defp remove_suffix(uri, []), do: uri
 
   def fetch_public_key(conn) do
     with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
@@ -67,8 +55,8 @@ defmodule Pleroma.Signature do
     end
   end
 
-  def sign(%User{keys: keys} = user, headers) do
-    with {:ok, private_key, _} <- Keys.keys_from_pem(keys) do
+  def sign(%User{} = user, headers) do
+    with {:ok, private_key} <- SigningKey.private_key(user) do
       HTTPSignatures.sign(private_key, user.ap_id <> "#main-key", headers)
     end
   end

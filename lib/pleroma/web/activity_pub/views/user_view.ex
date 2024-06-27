@@ -5,7 +5,6 @@
 defmodule Pleroma.Web.ActivityPub.UserView do
   use Pleroma.Web, :view
 
-  alias Pleroma.Keys
   alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
@@ -33,9 +32,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   def render("endpoints.json", _), do: %{}
 
   def render("service.json", %{user: user}) do
-    {:ok, _, public_key} = Keys.keys_from_pem(user.keys)
-    public_key = :public_key.pem_entry_encode(:SubjectPublicKeyInfo, public_key)
-    public_key = :public_key.pem_encode([public_key])
+    public_key = User.SigningKey.public_key_pem(user)
 
     endpoints = render("endpoints.json", %{user: user})
 
@@ -70,9 +67,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     do: render("service.json", %{user: user}) |> Map.put("preferredUsername", user.nickname)
 
   def render("user.json", %{user: user}) do
-    {:ok, _, public_key} = Keys.keys_from_pem(user.keys)
-    public_key = :public_key.pem_entry_encode(:SubjectPublicKeyInfo, public_key)
-    public_key = :public_key.pem_encode([public_key])
+    public_key = User.SigningKey.public_key_pem(user)
     user = User.sanitize_html(user)
 
     endpoints = render("endpoints.json", %{user: user})
@@ -113,6 +108,20 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     |> Map.merge(maybe_make_image(&User.banner_url/2, "image", user))
     # Yes, the key is named ...Url eventhough it is a whole 'Image' object
     |> Map.merge(maybe_insert_image("backgroundUrl", User.background_url(user)))
+    |> Map.merge(Utils.make_json_ld_header())
+  end
+
+  def render("keys.json", %{user: user}) do
+    public_key = User.SigningKey.public_key_pem(user)
+
+    %{
+      "id" => user.ap_id,
+      "publicKey" => %{
+        "id" => User.SigningKey.key_id_of_local_user(user),
+        "owner" => user.ap_id,
+        "publicKeyPem" => public_key
+      }
+    }
     |> Map.merge(Utils.make_json_ld_header())
   end
 
