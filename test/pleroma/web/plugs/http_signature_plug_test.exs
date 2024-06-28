@@ -14,6 +14,15 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   import Phoenix.Controller, only: [put_format: 2]
   import Mock
 
+  setup do
+    user =
+      :user
+      |> insert(%{ ap_id: "http://mastodon.example.org/users/admin" })
+      |> with_signing_key(%{ key_id: "http://mastodon.example.org/users/admin#main-key" })
+
+    {:ok, %{user: user}}
+  end
+
   setup_with_mocks([
     {HTTPSignatures, [],
      [
@@ -46,15 +55,15 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     |> HTTPSignaturePlug.call(%{})
   end
 
-  test "it call HTTPSignatures to check validity if the actor signed it" do
-    params = %{"actor" => "http://mastodon.example.org/users/admin"}
+  test "it call HTTPSignatures to check validity if the actor signed it", %{user: user} do
+    params = %{"actor" => user.ap_id}
     conn = build_conn(:get, "/doesntmattter", params)
 
     conn =
       conn
       |> put_req_header(
         "signature",
-        "keyId=\"http://mastodon.example.org/users/admin#main-key"
+        "keyId=\"#{user.signing_key.key_id}\""
       )
       |> put_format("activity+json")
       |> HTTPSignaturePlug.call(%{})

@@ -60,7 +60,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     end
   end
 
-
   @doc """
   Render the user's AP data
   WARNING: we cannot actually check if the request has a fragment! so let's play defensively

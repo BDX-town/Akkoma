@@ -609,8 +609,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       data = File.read!("test/fixtures/mastodon-post-activity.json") |> Jason.decode!()
 
       sender_url = data["actor"]
-      sender = insert(:user, ap_id: data["actor"])
-      |> with_signing_key()
+
+      sender =
+        insert(:user, ap_id: data["actor"])
+        |> with_signing_key()
 
       Instances.set_consistently_unreachable(sender_url)
       refute Instances.reachable?(sender_url)
@@ -976,8 +978,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       user = insert(:user)
 
       {:ok, post} = CommonAPI.post(user, %{status: "hey"})
-      announcer = insert(:user, local: false)
-      |> with_signing_key()
+
+      announcer =
+        insert(:user, local: false)
+        |> with_signing_key()
 
       data = %{
         "@context" => "https://www.w3.org/ns/activitystreams",
@@ -1007,8 +1011,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       data: data
     } do
       recipient = insert(:user)
-      actor = insert(:user, %{ap_id: "http://mastodon.example.org/users/actor"})
-      |> with_signing_key()
+
+      actor =
+        insert(:user, %{ap_id: "http://mastodon.example.org/users/actor"})
+        |> with_signing_key()
 
       {:ok, recipient, actor} = User.follow(recipient, actor)
 
@@ -1061,8 +1067,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
 
     test "it clears `unreachable` federation status of the sender", %{conn: conn, data: data} do
-      user = insert(:user)
-      |> with_signing_key()
+      user =
+        insert(:user)
+        |> with_signing_key()
+
       data = Map.put(data, "bcc", [user.ap_id])
 
       sender_host = URI.parse(data["actor"]).host
@@ -1084,7 +1092,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "it removes all follower collections but actor's", %{conn: conn} do
       [actor, recipient] = insert_pair(:user)
       actor = with_signing_key(actor)
-
 
       to = [
         recipient.ap_id,
@@ -1149,8 +1156,11 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     @tag capture_log: true
     test "forwarded report", %{conn: conn} do
       admin = insert(:user, is_admin: true)
-      actor = insert(:user, local: false)
-      |> with_signing_key()
+
+      actor =
+        insert(:user, local: false)
+        |> with_signing_key()
+
       remote_domain = URI.parse(actor.ap_id).host
       reported_user = insert(:user)
 
