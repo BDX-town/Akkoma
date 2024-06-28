@@ -23,8 +23,12 @@ defmodule Pleroma.User.SigningKey do
     |> Repo.preload(:signing_key)
   end
 
-  def key_id_of_local_user(%User{local: true, signing_key: %__MODULE__{key_id: key_id}}),
-    do: key_id
+  def key_id_of_local_user(%User{local: true} = user) do
+    case Repo.preload(user, :signing_key) do
+      %User{signing_key: %__MODULE__{key_id: key_id}} -> key_id
+      _ -> nil
+    end
+  end
 
   @spec remote_changeset(__MODULE__, map) :: Changeset.t()
   def remote_changeset(%__MODULE__{} = signing_key, attrs) do
@@ -119,9 +123,16 @@ defmodule Pleroma.User.SigningKey do
 
   def public_key(_), do: {:error, "key not found"}
 
-  def public_key_pem(%User{signing_key: %__MODULE__{public_key: public_key_pem}}),
-    do: public_key_pem
+  def public_key_pem(%User{} = user) do
+    case Repo.preload(user, :signing_key) do
+      %User{signing_key: %__MODULE__{public_key: public_key_pem}} -> {:ok, public_key_pem}
+      _ -> {:error, "key not found"}
+    end
+  end
 
+  def public_key_pem(e) do
+    {:error, "key not found"}
+  end
   @spec private_key(User.t()) :: {:ok, binary()} | {:error, String.t()}
   @doc """
   Given a user, return the private key for that user in binary format.
@@ -146,7 +157,8 @@ defmodule Pleroma.User.SigningKey do
   So if we're rejected, we should probably just give up.
   """
   def fetch_remote_key(key_id) do
-    resp = HTTP.Backoff.get(key_id)
+    # we should probably sign this, just in case
+    resp = Pleroma.Object.Fetcher.get_object(key_id)
 
     case handle_signature_response(resp) do
       {:ok, ap_id, public_key_pem} ->

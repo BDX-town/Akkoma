@@ -32,7 +32,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   def render("endpoints.json", _), do: %{}
 
   def render("service.json", %{user: user}) do
-    public_key = User.SigningKey.public_key_pem(user)
+    {:ok, public_key} = User.SigningKey.public_key_pem(user)
 
     endpoints = render("endpoints.json", %{user: user})
 
@@ -67,7 +67,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     do: render("service.json", %{user: user}) |> Map.put("preferredUsername", user.nickname)
 
   def render("user.json", %{user: user}) do
-    public_key = User.SigningKey.public_key_pem(user)
+    {:ok, public_key} = User.SigningKey.public_key_pem(user)
     user = User.sanitize_html(user)
 
     endpoints = render("endpoints.json", %{user: user})
@@ -112,7 +112,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   end
 
   def render("keys.json", %{user: user}) do
-    public_key = User.SigningKey.public_key_pem(user)
+    {:ok, public_key} = User.SigningKey.public_key_pem(user)
 
     %{
       "id" => user.ap_id,
