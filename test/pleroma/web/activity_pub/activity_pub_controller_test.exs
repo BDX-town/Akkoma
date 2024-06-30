@@ -645,7 +645,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert "ok" ==
                conn
                |> assign(:valid_signature, true)
-               |> put_req_header("signature", "keyId=\"#{followed_relay.ap_id}/main-key\"")
+               |> put_req_header("signature", "keyId=\"#{followed_relay.ap_id}#main-key\"")
                |> put_req_header("content-type", "application/activity+json")
                |> post("/inbox", accept)
                |> json_response(200)
@@ -682,6 +682,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> String.replace("{{nickname}}", "lain")
 
       actor = "https://example.com/users/lain"
+      key_id = "#{actor}/main-key"
 
       insert(:user,
         ap_id: actor,
@@ -708,6 +709,16 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
             body: user,
             headers: [{"content-type", "application/activity+json"}]
           }
+
+          %{
+            method: :get,
+            url: ^key_id
+          } ->
+            %Tesla.Env{
+              status: 200,
+              body: user,
+              headers: [{"content-type", "application/activity+json"}]
+            }
 
         %{method: :get, url: "https://example.com/users/lain/collections/featured"} ->
           %Tesla.Env{
@@ -782,6 +793,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> String.replace("{{nickname}}", "lain")
 
       actor = "https://example.com/users/lain"
+      key_id = "#{actor}/main-key"
 
       sender =
         insert(:user,
@@ -811,6 +823,15 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
             headers: [{"content-type", "application/activity+json"}]
           }
 
+          %{
+            method: :get,
+            url: ^key_id
+          } ->
+            %Tesla.Env{
+              status: 200,
+              body: user,
+              headers: [{"content-type", "application/activity+json"}]
+            }
         %{method: :get, url: "https://example.com/users/lain/collections/featured"} ->
           %Tesla.Env{
             status: 200,
@@ -907,6 +928,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
     test "it accepts messages with to as string instead of array", %{conn: conn, data: data} do
       user = insert(:user)
+      |> with_signing_key()
 
       data =
         data
@@ -952,6 +974,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
     test "it accepts messages with bcc as string instead of array", %{conn: conn, data: data} do
       user = insert(:user)
+      |> with_signing_key()
 
       data =
         data
@@ -1273,7 +1296,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       conn
       |> assign(:valid_signature, true)
-      |> put_req_header("signature", "keyId=\"#{remote_actor}/main-key\"")
+      |> put_req_header("signature", "keyId=\"#{remote_actor}#main-key\"")
       |> put_req_header("content-type", "application/activity+json")
       |> post("/users/#{reported_user.nickname}/inbox", data)
       |> json_response(200)

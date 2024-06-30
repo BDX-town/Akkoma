@@ -67,7 +67,12 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     do: render("service.json", %{user: user}) |> Map.put("preferredUsername", user.nickname)
 
   def render("user.json", %{user: user}) do
-    {:ok, public_key} = User.SigningKey.public_key_pem(user)
+    public_key =
+      case User.SigningKey.public_key_pem(user) do
+        {:ok, public_key} -> public_key
+        _ -> nil
+      end
+
     user = User.sanitize_html(user)
 
     endpoints = render("endpoints.json", %{user: user})

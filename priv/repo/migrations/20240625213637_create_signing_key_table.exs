@@ -10,6 +10,6 @@ defmodule Pleroma.Repo.Migrations.CreateSigningKeyTable do
       timestamps()
     end
 
-    create index(:signing_keys, [:key_id])
+    create unique_index(:signing_keys, [:key_id])
   end
 end

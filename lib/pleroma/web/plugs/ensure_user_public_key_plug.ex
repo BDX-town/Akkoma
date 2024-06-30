@@ -14,7 +14,7 @@ defmodule Pleroma.Web.Plugs.EnsureUserPublicKeyPlug do
     key_id = key_id_from_conn(conn)
 
     unless is_nil(key_id) do
-      SigningKey.fetch_remote_key(key_id)
+      User.SigningKey.fetch_remote_key(key_id)
       # now we SHOULD have the user that owns the key locally. maybe.
       # if we don't, we'll error out when we try to validate.
     end

@@ -17,8 +17,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   setup do
     user =
       :user
-      |> insert(%{ ap_id: "http://mastodon.example.org/users/admin" })
-      |> with_signing_key(%{ key_id: "http://mastodon.example.org/users/admin#main-key" })
+      |> insert(%{ap_id: "http://mastodon.example.org/users/admin"})
+      |> with_signing_key(%{key_id: "http://mastodon.example.org/users/admin#main-key"})
 
     {:ok, %{user: user}}
   end

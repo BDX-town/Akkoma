@@ -14,7 +14,11 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlugTest do
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
-    user = insert(:user)
+
+    user =
+      insert(:user)
+      |> with_signing_key()
+
     {:ok, %{user: user}}
   end
 

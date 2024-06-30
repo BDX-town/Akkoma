@@ -96,9 +96,9 @@ defmodule Pleroma.Factory do
   end
 
   def with_signing_key(%User{} = user, attrs \\ %{}) do
-
-    signing_key = build(:signing_key, %{user: user, key_id: "#{user.ap_id}#main-key"})
-    |> merge_attributes(attrs)
+    signing_key =
+      build(:signing_key, %{user: user, key_id: "#{user.ap_id}#main-key"})
+      |> merge_attributes(attrs)
 
     insert(signing_key)
     %{user | signing_key: signing_key}
@@ -111,8 +111,8 @@ defmodule Pleroma.Factory do
 
     %Pleroma.User.SigningKey{
       user_id: user.id,
-      public_key: public_key,
-      private_key: pem,
+      public_key: attrs[:public_key] || public_key,
+      private_key: attrs[:private_key] || pem,
       key_id: attrs[:key_id]
     }
   end

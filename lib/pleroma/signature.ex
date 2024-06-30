@@ -8,32 +8,24 @@ defmodule Pleroma.Signature do
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.User.SigningKey
+  require Logger
 
   def key_id_to_actor_id(key_id) do
     # Given the key ID, first attempt to look it up in the signing keys table.
-    # If it's not found, then attempt to look it up via request to the remote instance.
     case SigningKey.key_id_to_ap_id(key_id) do
       nil ->
-        # this requires us to look up the url!
-        request_key_id_from_remote_instance(key_id)
+        # hm, we SHOULD have gotten this in the pipeline before we hit here!
+        Logger.error("Could not figure out who owns the key #{key_id}")
+        {:error, :key_owner_not_found}
 
       key ->
         {:ok, key}
     end
   end
 
-  def request_key_id_from_remote_instance(key_id) do
-    case SigningKey.fetch_remote_key(key_id) do
-      {:ok, key_id} ->
-        {:ok, key_id}
-
-      {:error, _} ->
-        {:error, "Key ID not found"}
-    end
-  end
-
   def fetch_public_key(conn) do
     with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
+         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
          {:ok, actor_id} <- key_id_to_actor_id(kid),
          {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
       {:ok, public_key}
@@ -45,8 +37,8 @@ defmodule Pleroma.Signature do
 
   def refetch_public_key(conn) do
     with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
+         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
          {:ok, actor_id} <- key_id_to_actor_id(kid),
-         {:ok, _user} <- ActivityPub.make_user_from_ap_id(actor_id),
          {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
       {:ok, public_key}
     else

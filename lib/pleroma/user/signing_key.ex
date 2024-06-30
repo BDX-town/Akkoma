@@ -154,6 +154,21 @@ defmodule Pleroma.User.SigningKey do
     {:ok, key}
   end
 
+  @spec get_or_fetch_by_key_id(String.t()) :: {:ok, __MODULE__} | {:error, String.t()}
+  @doc """
+  Given a key ID, return the signing key associated with that key.
+  Will either return the key if it exists locally, or fetch it from the remote instance.
+  """
+  def get_or_fetch_by_key_id(key_id) do
+    case key_id_to_user_id(key_id) do
+      nil ->
+        fetch_remote_key(key_id)
+
+      user_id ->
+        {:ok, Repo.get_by(__MODULE__, user_id: user_id)}
+    end
+  end
+
   @spec fetch_remote_key(String.t()) :: {:ok, __MODULE__} | {:error, String.t()}
   @doc """
   Fetch a remote key by key ID.
@@ -164,23 +179,33 @@ defmodule Pleroma.User.SigningKey do
   So if we're rejected, we should probably just give up.
   """
   def fetch_remote_key(key_id) do
+    Logger.debug("Fetching remote key: #{key_id}")
     # we should probably sign this, just in case
     resp = Pleroma.Object.Fetcher.get_object(key_id)
 
-    case handle_signature_response(resp) do
-      {:ok, ap_id, public_key_pem} ->
-        # fetch the user
-        user = User.get_or_fetch_by_ap_id(ap_id)
-        # store the key
-        key = %__MODULE__{
-          user_id: user.id,
-          public_key: public_key_pem,
-          key_id: key_id
-        }
+    case resp do
+      {:ok, _original_url, body} ->
+        case handle_signature_response(resp) do
+          {:ok, ap_id, public_key_pem} ->
+            Logger.debug("Fetched remote key: #{ap_id}")
+            # fetch the user
+            {:ok, user} = User.get_or_fetch_by_ap_id(ap_id)
+            # store the key
+            key = %__MODULE__{
+              user_id: user.id,
+              public_key: public_key_pem,
+              key_id: key_id
+            }
 
-        Repo.insert(key)
+            Repo.insert(key, on_conflict: :replace_all, conflict_target: :key_id)
+
+          e ->
+            Logger.debug("Failed to fetch remote key: #{inspect(e)}")
+            {:error, "Could not fetch key"}
+        end
 
       _ ->
+        Logger.debug("Failed to fetch remote key: #{inspect(resp)}")
         {:error, "Could not fetch key"}
     end
   end
@@ -196,7 +221,7 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
-  defp handle_signature_response({:ok, %{status: status, body: body}}) when status in 200..299 do
+  defp handle_signature_response({:ok, _original_url, body}) do
     case Jason.decode(body) do
       {:ok, %{"id" => _user_id, "publicKey" => _public_key} = body} ->
         extract_key_details(body)
