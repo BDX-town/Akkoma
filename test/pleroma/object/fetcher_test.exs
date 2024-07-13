@@ -252,7 +252,7 @@ defmodule Pleroma.Object.FetcherTest do
     end
 
     test "it does not fetch a spoofed object with id different from URL" do
-      assert {:error, :id_mismatch} =
+      assert {:error, :not_found} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/media/03ca3c8b4ac3ddd08bf0f84be7885f2f88de0f709112131a22d83650819e36c2.json"
                )

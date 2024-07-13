@@ -263,7 +263,12 @@ defmodule HttpRequestMock do
     {:ok,
      %Tesla.Env{
        status: 200,
-       body: File.read!("test/fixtures/tesla_mock/rye.json"),
+       body:
+         File.read!("test/fixtures/tesla_mock/rye.json")
+         |> Jason.decode!()
+         |> Map.put("name", "evil rye")
+         |> Map.put("bio", "boooo!")
+         |> Jason.encode!(),
        headers: activitypub_object_headers()
      }}
   end

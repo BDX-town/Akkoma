@@ -116,7 +116,7 @@ defmodule Pleroma.Object.Fetcher do
   @doc "Assumes object already is in our database and refetches from remote to update (e.g. for polls)"
   def refetch_object(%Object{data: %{"id" => id}} = object) do
     with {:local, false} <- {:local, Object.local?(object)},
-         {:ok, new_data} <- fetch_and_contain_remote_object_from_id(id),
+         {:ok, new_data} <- fetch_and_contain_remote_object_from_id(id, true),
          {:id, true} <- {:id, new_data["id"] == id},
          {:ok, object} <- reinject_object(object, new_data) do
       {:ok, object}
@@ -253,14 +253,17 @@ defmodule Pleroma.Object.Fetcher do
     end
   end
 
-  @doc "Fetches arbitrary remote object and performs basic safety and authenticity checks"
-  def fetch_and_contain_remote_object_from_id(id)
+  @doc """
+  Fetches arbitrary remote object and performs basic safety and authenticity checks.
+  When the fetch URL is known to already be a canonical AP id, checks are stricter.
+  """
+  def fetch_and_contain_remote_object_from_id(id, is_ap_id \\ false)
 
-  def fetch_and_contain_remote_object_from_id(%{"id" => id}),
-    do: fetch_and_contain_remote_object_from_id(id)
+  def fetch_and_contain_remote_object_from_id(%{"id" => id}, is_ap_id),
+    do: fetch_and_contain_remote_object_from_id(id, is_ap_id)
 
-  def fetch_and_contain_remote_object_from_id(id) when is_binary(id) do
-    Logger.debug("Fetching object #{id} via AP")
+  def fetch_and_contain_remote_object_from_id(id, is_ap_id) when is_binary(id) do
+    Logger.debug("Fetching object #{id} via AP [ap_id=#{is_ap_id}]")
 
     with {:valid_uri_scheme, true} <- {:valid_uri_scheme, String.starts_with?(id, "http")},
          %URI{} = uri <- URI.parse(id),
@@ -270,18 +273,31 @@ defmodule Pleroma.Object.Fetcher do
            {:mrf_accept_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri)},
          {:local_fetch, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
          {:ok, final_id, body} <- get_object(id),
+         # a canonical ID shouldn't be a redirect
+         true <- !is_ap_id || final_id == id,
          {:ok, data} <- safe_json_decode(body),
-         {_, :ok} <- {:strict_id, Containment.contain_id_to_fetch(final_id, data)},
-         {_, :ok} <- {:containment, Containment.contain_origin(final_id, data)} do
+         {_, :ok} <- {:containment, Containment.contain_origin(final_id, data)},
+         {_, _, :ok} <- {:strict_id, data["id"], Containment.contain_id_to_fetch(final_id, data)} do
       unless Instances.reachable?(final_id) do
         Instances.set_reachable(final_id)
       end
 
       {:ok, data}
     else
-      {:strict_id, _} = e ->
-        log_fetch_error(id, e)
-        {:error, :id_mismatch}
+      # E.g.  Mastodon and *key serve the AP object directly under their display URLs without
+      # redirecting to their canonical location first, thus ids will expectedly differ.
+      # Similarly keys, either use a fragment ID and are a subobjects or a distinct ID
+      # but for compatibility are still a subobject presenting their owning actors ID at the toplevel.
+      # Refetching _once_ from the listed id, should yield a strict match afterwards.
+      {:strict_id, ap_id, _} = e ->
+        case is_ap_id do
+          false ->
+            fetch_and_contain_remote_object_from_id(ap_id, true)
+
+          true ->
+            log_fetch_error(id, e)
+            {:error, :id_mismatch}
+        end
 
       {:mrf_reject_check, _} = e ->
         log_fetch_error(id, e)
@@ -311,7 +327,7 @@ defmodule Pleroma.Object.Fetcher do
     end
   end
 
-  def fetch_and_contain_remote_object_from_id(_id),
+  def fetch_and_contain_remote_object_from_id(_id, _is_ap_id),
     do: {:error, :invalid_id}
 
   defp check_crossdomain_redirect(final_host, original_url)
