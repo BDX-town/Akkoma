@@ -317,7 +317,7 @@ defmodule Pleroma.Object.Fetcher do
 
       {:containment, reason} ->
         log_fetch_error(id, reason)
-        {:error, reason}
+        {:error, {:containment, reason}}
 
       {:error, e} ->
         {:error, e}
@@ -330,22 +330,10 @@ defmodule Pleroma.Object.Fetcher do
   def fetch_and_contain_remote_object_from_id(_id, _is_ap_id),
     do: {:error, :invalid_id}
 
-  defp check_crossdomain_redirect(final_host, original_url)
-
   # HOPEFULLY TEMPORARY
   # Basically none of our Tesla mocks in tests set the (supposed to
   # exist for Tesla proper) url parameter for their responses
   # causing almost every fetch in test to fail otherwise
-  if @mix_env == :test do
-    defp check_crossdomain_redirect(nil, _) do
-      {:cross_domain_redirect, false}
-    end
-  end
-
-  defp check_crossdomain_redirect(final_host, original_url) do
-    {:cross_domain_redirect, final_host != URI.parse(original_url).host}
-  end
-
   if @mix_env == :test do
     defp get_final_id(nil, initial_url), do: initial_url
     defp get_final_id("", initial_url), do: initial_url
@@ -371,10 +359,6 @@ defmodule Pleroma.Object.Fetcher do
     with {:ok, %{body: body, status: code, headers: headers, url: final_url}}
          when code in 200..299 <-
            HTTP.Backoff.get(id, headers),
-         remote_host <-
-           URI.parse(final_url).host,
-         {:cross_domain_redirect, false} <-
-           check_crossdomain_redirect(remote_host, id),
          {:has_content_type, {_, content_type}} <-
            {:has_content_type, List.keyfind(headers, "content-type", 0)},
          {:parse_content_type, {:ok, "application", subtype, type_params}} <-

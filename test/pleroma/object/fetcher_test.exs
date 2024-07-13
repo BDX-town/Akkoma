@@ -22,6 +22,7 @@ defmodule Pleroma.Object.FetcherTest do
     |> Jason.decode!()
     |> Map.put("id", id)
     |> Map.put("actor", actor_id)
+    |> Map.put("attributedTo", actor_id)
     |> Jason.encode!()
   end
 
@@ -109,13 +110,26 @@ defmodule Pleroma.Object.FetcherTest do
           body: spoofed_object_with_ids("https://patch.cx/objects/spoof_media_redirect1")
         }
 
-      # Spoof: cross-domain redirect with final domain id
+      # Spoof: cross-domain redirect with final domain id, but original id actor
       %{method: :get, url: "https://patch.cx/objects/spoof_media_redirect2"} ->
         %Tesla.Env{
           status: 200,
           url: "https://media.patch.cx/objects/spoof_media_redirect2",
           headers: [{"content-type", "application/activity+json"}],
           body: spoofed_object_with_ids("https://media.patch.cx/objects/spoof_media_redirect2")
+        }
+
+      # No-Spoof: cross-domain redirect with id and actor from final domain
+      %{method: :get, url: "https://patch.cx/objects/spoof_media_redirect3"} ->
+        %Tesla.Env{
+          status: 200,
+          url: "https://media.patch.cx/objects/spoof_media_redirect3",
+          headers: [{"content-type", "application/activity+json"}],
+          body:
+            spoofed_object_with_ids(
+              "https://media.patch.cx/objects/spoof_media_redirect3",
+              "https://media.patch.cx/users/rin"
+            )
         }
 
       # No-Spoof: same domain redirect
@@ -264,17 +278,27 @@ defmodule Pleroma.Object.FetcherTest do
     end
 
     test "it does not fetch an object via cross-domain redirects (initial id)" do
-      assert {:error, {:cross_domain_redirect, true}} =
+      assert {:error, {:containment, _}} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/objects/spoof_media_redirect1"
                )
     end
 
-    test "it does not fetch an object via cross-domain redirects (final id)" do
-      assert {:error, {:cross_domain_redirect, true}} =
+    test "it does not fetch an object via cross-domain redirect if the actor is from the original domain" do
+      assert {:error, {:containment, :error}} =
                Fetcher.fetch_and_contain_remote_object_from_id(
                  "https://patch.cx/objects/spoof_media_redirect2"
                )
+    end
+
+    test "it allows cross-domain redirects when id and author are from final domain" do
+      assert {:ok, %{"id" => id, "attributedTo" => author}} =
+               Fetcher.fetch_and_contain_remote_object_from_id(
+                 "https://patch.cx/objects/spoof_media_redirect3"
+               )
+
+      assert URI.parse(id).host == "media.patch.cx"
+      assert URI.parse(author).host == "media.patch.cx"
     end
 
     test "it accepts same-domain redirects" do
