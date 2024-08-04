@@ -61,6 +61,34 @@ defmodule Pleroma.HTML.Scrubber.Default do
   Meta.allow_tag_with_this_attribute_values(:span, "class", [
     "h-card",
     "quote-inline",
+    # "FEP-c16b: Formatting MFM functions" tags that Akkoma supports
+    # NOTE: Maybe it would be better to have something like "allow `mfm-*`,
+    #       but at moment of writing this is not a thing in the HTML parser we use
+    # The following are the non-animated MFM
+    "mfm-center",
+    "mfm-flip",
+    "mfm-font",
+    "mfm-blur",
+    "mfm-rotate",
+    "mfm-x2",
+    "mfm-x3",
+    "mfm-x4",
+    "mfm-position",
+    "mfm-scale",
+    "mfm-fg",
+    "mfm-bg",
+    # The following are the animated MFM
+    "mfm-jelly",
+    "mfm-twitch",
+    "mfm-shake",
+    "mfm-spin",
+    "mfm-jump",
+    "mfm-bounce",
+    "mfm-rainbow",
+    "mfm-tada",
+    "mfm-sparkle",
+    # MFM legacy
+    # This is for backwards compatibility with posts formatted on Akkoma before support for FEP-c16b
     "mfm",
     "mfm _mfm_tada_",
     "mfm _mfm_jelly_",
@@ -79,6 +107,26 @@ defmodule Pleroma.HTML.Scrubber.Default do
   ])
 
   Meta.allow_tag_with_these_attributes(:span, [
+    # "FEP-c16b: Formatting MFM functions" attributes that Akkoma supports
+    # NOTE: Maybe it would be better to have something like "allow `data-mfm-*`,
+    #       but at moment of writing this is not a thing in the HTML parser we use
+    "data-mfm-h",
+    "data-mfm-v",
+    "data-mfm-x",
+    "data-mfm-y",
+    "data-mfm-alternate",
+    "data-mfm-speed",
+    "data-mfm-deg",
+    "data-mfm-left",
+    "data-mfm-serif",
+    "data-mfm-monospace",
+    "data-mfm-cursive",
+    "data-mfm-fantasy",
+    "data-mfm-emoji",
+    "data-mfm-math",
+    "data-mfm-color",
+    # MFM legacy
+    # This is for backwards compatibility with posts formatted on Akkoma before support for FEP-c16b
     "data-x",
     "data-y",
     "data-h",
