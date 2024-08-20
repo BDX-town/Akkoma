@@ -1631,6 +1631,11 @@ defmodule Pleroma.User do
   def blocks_domain?(%User{} = user, url) when is_binary(url) do
     %{host: host} = URI.parse(url)
     Enum.member?(user.domain_blocks, host)
+    # TODO: functionality should probably be changed such that subdomains block as well,
+    # but as it stands, this just hecks up the relationships endpoint
+    # domain_blocks = Pleroma.Web.ActivityPub.MRF.subdomains_regex(user.domain_blocks)
+    # %{host: host} = URI.parse(target.ap_id)
+    # Pleroma.Web.ActivityPub.MRF.subdomain_match?(domain_blocks, host)
   end
 
   def blocks_domain?(_, _), do: false
