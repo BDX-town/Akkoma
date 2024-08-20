@@ -1624,8 +1624,12 @@ defmodule Pleroma.User do
 
   def blocks_user?(_, _), do: false
 
-  def blocks_domain?(%User{} = user, %User{} = target) do
-    %{host: host} = URI.parse(target.ap_id)
+  def blocks_domain?(%User{} = user, %User{ap_id: ap_id}) do
+    blocks_domain?(user, ap_id)
+  end
+
+  def blocks_domain?(%User{} = user, url) when is_binary(url) do
+    %{host: host} = URI.parse(url)
     Enum.member?(user.domain_blocks, host)
     # TODO: functionality should probably be changed such that subdomains block as well,
     # but as it stands, this just hecks up the relationships endpoint
