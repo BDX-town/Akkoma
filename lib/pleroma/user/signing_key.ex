@@ -144,14 +144,20 @@ defmodule Pleroma.User.SigningKey do
   @doc """
   Given a user, return the private key for that user in binary format.
   """
-  def private_key(%User{signing_key: %__MODULE__{private_key: private_key_pem}}) do
-    key =
-      private_key_pem
-      |> :public_key.pem_decode()
-      |> hd()
-      |> :public_key.pem_entry_decode()
+  def private_key(%User{} = user) do
+    case Repo.preload(user, :signing_key) do
+      %{signing_key: %__MODULE__{private_key: private_key_pem}} ->
+        key =
+          private_key_pem
+          |> :public_key.pem_decode()
+          |> hd()
+          |> :public_key.pem_entry_decode()
 
-    {:ok, key}
+        {:ok, key}
+
+      _ ->
+        {:error, "key not found"}
+    end
   end
 
   @spec get_or_fetch_by_key_id(String.t()) :: {:ok, __MODULE__} | {:error, String.t()}

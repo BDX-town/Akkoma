@@ -1,5 +1,6 @@
 defmodule Pleroma.Test.MatchingHelpers do
   import ExUnit.Assertions
+
   @assoc_fields [
     :signing_key
   ]

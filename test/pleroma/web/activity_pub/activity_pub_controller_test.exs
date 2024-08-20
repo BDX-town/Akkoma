@@ -710,15 +710,15 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
             headers: [{"content-type", "application/activity+json"}]
           }
 
-          %{
-            method: :get,
-            url: ^key_id
-          } ->
-            %Tesla.Env{
-              status: 200,
-              body: user,
-              headers: [{"content-type", "application/activity+json"}]
-            }
+        %{
+          method: :get,
+          url: ^key_id
+        } ->
+          %Tesla.Env{
+            status: 200,
+            body: user,
+            headers: [{"content-type", "application/activity+json"}]
+          }
 
         %{method: :get, url: "https://example.com/users/lain/collections/featured"} ->
           %Tesla.Env{
@@ -823,15 +823,16 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
             headers: [{"content-type", "application/activity+json"}]
           }
 
-          %{
-            method: :get,
-            url: ^key_id
-          } ->
-            %Tesla.Env{
-              status: 200,
-              body: user,
-              headers: [{"content-type", "application/activity+json"}]
-            }
+        %{
+          method: :get,
+          url: ^key_id
+        } ->
+          %Tesla.Env{
+            status: 200,
+            body: user,
+            headers: [{"content-type", "application/activity+json"}]
+          }
+
         %{method: :get, url: "https://example.com/users/lain/collections/featured"} ->
           %Tesla.Env{
             status: 200,
@@ -927,8 +928,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
 
     test "it accepts messages with to as string instead of array", %{conn: conn, data: data} do
-      user = insert(:user)
-      |> with_signing_key()
+      user =
+        insert(:user)
+        |> with_signing_key()
 
       data =
         data
@@ -973,8 +975,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
 
     test "it accepts messages with bcc as string instead of array", %{conn: conn, data: data} do
-      user = insert(:user)
-      |> with_signing_key()
+      user =
+        insert(:user)
+        |> with_signing_key()
 
       data =
         data
