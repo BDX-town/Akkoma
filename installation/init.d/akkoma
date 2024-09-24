@@ -58,6 +58,12 @@ start_pre() {
 	|| eerror "Logfile(s) not owned by $command_user, or not a file!"
 	checkpath --writable "$output_log" "$error_log" \
 	|| eerror "Logfile(s) not writable!"
+
+	# If a recompile is needed perform it with lowest prio
+	# (delaying the actual start) to avoid hogging too much
+	# CPU from other services
+	cd "$directory"
+	doas -u "${command_user%%:*}" env MIX_ENV="$MIX_ENV" nice -n 19 "$command" compile
 }
 
 healthcheck() {
