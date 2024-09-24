@@ -33,7 +33,10 @@ healthcheck_timer="${healthcheck_timer:-30}"
 
 MIX_ENV=prod
 ERL_EPMD_ADDRESS="${ERL_EPMD_ADDRESS:-127.0.0.1}"
-supervise_daemon_args="${supervise_daemon_args} --env MIX_ENV=${MIX_ENV} --env ERL_EPMD_ADDRESS=${ERL_EPMD_ADDRESS}"
+ERL_AFLAGS="${ERL_AFLAGS:-+sbwt none +sbwtdcpu none +sbwtdio none}"
+supervise_daemon_args="${supervise_daemon_args} --env MIX_ENV=${MIX_ENV}"
+supervise_daemon_args="${supervise_daemon_args} --env ERL_EPMD_ADDRESS=${ERL_EPMD_ADDRESS}"
+supervise_daemon_args="${supervise_daemon_args} --env ERL_AFLAGS='${ERL_AFLAGS}'"
 
 if yesno "${akkoma_console}"; then
 	command=elixir
