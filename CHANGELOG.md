@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## UNRELEASED
 
+## Added
+- It is now possible to display custom source URLs in akkoma-fe;
+  the settings are part of the frontend configuration
+
 ## Fixed
 - Media proxy no longer attempts to proxy embedded images
 
