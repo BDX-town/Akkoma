@@ -346,7 +346,10 @@ defmodule Mix.Tasks.Pleroma.Database do
       DELETE FROM hashtags AS ht
       WHERE NOT EXISTS (
         SELECT 1 FROM hashtags_objects hto
-        WHERE ht.id = hto.hashtag_id)
+        WHERE ht.id = hto.hashtag_id
+        UNION
+        SELECT 1 FROM user_follows_hashtag ufht
+        WHERE ht.id = ufht.hashtag_id)
       """
       |> Repo.query!()
 
