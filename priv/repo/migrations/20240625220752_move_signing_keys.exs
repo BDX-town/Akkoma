@@ -14,7 +14,7 @@ defmodule Pleroma.Repo.Migrations.MoveSigningKeys do
 
     Repo.stream(query, timeout: :infinity)
     |> Enum.each(fn
-      %User{id: user_id, keys: private_key, local: true} ->
+      %User{id: user_id, keys: private_key, local: true, ap_id: ap_id} ->
         # we can precompute the public key here...
         # we do use it on every user view which makes it a bit of a dos attack vector
         # so we should probably cache it
@@ -23,6 +23,7 @@ defmodule Pleroma.Repo.Migrations.MoveSigningKeys do
         key = %User.SigningKey{
           user_id: user_id,
           public_key: public_key,
+	  key_id: "#{ap_id}#main-key",
           private_key: private_key
         }
 
