@@ -67,8 +67,8 @@ defmodule Pleroma.Web.Plugs.MappedSignatureToIdentityPlug do
         Logger.debug("Failed to map identity from signature (lookup failure)")
         Logger.debug("key_id=#{inspect(key_id_from_conn(conn))}")
 
-	conn
-	|> assign(:valid_signature, false)
+        conn
+        |> assign(:valid_signature, false)
 
       _ ->
         Logger.debug("Failed to map identity from signature (no payload actor mismatch)")

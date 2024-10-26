@@ -4,8 +4,6 @@ defmodule Pleroma.Web.Plugs.EnsureUserPublicKeyPlug do
   We _should_ be able to request the URL from the key URL...
   """
 
-  import Plug.Conn
-
   alias Pleroma.User
 
   def init(options), do: options
