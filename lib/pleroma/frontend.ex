@@ -82,7 +82,7 @@ defmodule Pleroma.Frontend do
         new_file_path
         |> Path.dirname()
         |> File.rm()
-        
+
         new_file_path
         |> Path.dirname()
         |> File.mkdir_p!()
