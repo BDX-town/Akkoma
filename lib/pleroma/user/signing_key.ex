@@ -2,6 +2,7 @@ defmodule Pleroma.User.SigningKey do
   use Ecto.Schema
   import Ecto.Query
   import Ecto.Changeset
+  require Pleroma.Constants
   alias Pleroma.User
   alias Pleroma.Repo
 
@@ -185,7 +186,6 @@ defmodule Pleroma.User.SigningKey do
   """
   def fetch_remote_key(key_id) do
     Logger.debug("Fetching remote key: #{key_id}")
-    # we should probably sign this, just in case
     resp = Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id)
 
     case resp do
@@ -228,7 +228,20 @@ defmodule Pleroma.User.SigningKey do
 
   defp handle_signature_response({:ok, body}) do
     case body do
-      %{"id" => _user_id, "publicKey" => _public_key} ->
+      %{
+        "type" => "CryptographicKey",
+        "publicKeyPem" => public_key_pem,
+        "owner" => ap_id
+      } ->
+        {:ok, ap_id, public_key_pem}
+
+      # for when we get a subset of the user object
+      %{
+        "id" => _user_id,
+        "publicKey" => _public_key,
+        "type" => actor_type
+      }
+      when actor_type in Pleroma.Constants.actor_types() ->
         extract_key_details(body)
 
       %{"error" => error} ->

@@ -23,7 +23,7 @@ defmodule Pleroma.Repo.Migrations.MoveSigningKeys do
         key = %User.SigningKey{
           user_id: user_id,
           public_key: public_key,
-	  key_id: "#{ap_id}#main-key",
+          key_id: "#{ap_id}#main-key",
           private_key: private_key
         }
 
