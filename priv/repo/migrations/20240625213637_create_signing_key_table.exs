@@ -9,7 +9,5 @@ defmodule Pleroma.Repo.Migrations.CreateSigningKeyTable do
       add :private_key, :text
       timestamps()
     end
-
-    create unique_index(:signing_keys, [:key_id])
   end
 end
