@@ -1094,7 +1094,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
     test "it clears `unreachable` federation status of the sender", %{conn: conn, data: data} do
       user =
-        insert(:user)
+        insert(:user, ap_id: data["actor"])
         |> with_signing_key()
 
       data = Map.put(data, "bcc", [user.ap_id])
@@ -1277,12 +1277,22 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> File.read!()
         |> String.replace("{{DOMAIN}}", remote_domain)
 
-      Tesla.Mock.mock(fn %{url: ^remote_actor} ->
-        %Tesla.Env{
-          status: 200,
-          body: mock_json_body,
-          headers: [{"content-type", "application/activity+json"}]
-        }
+      key_url = "#{remote_actor}#main-key"
+
+      Tesla.Mock.mock(fn
+        %{url: ^remote_actor} ->
+          %Tesla.Env{
+            status: 200,
+            body: mock_json_body,
+            headers: [{"content-type", "application/activity+json"}]
+          }
+
+        %{url: ^key_url} ->
+          %Tesla.Env{
+            status: 200,
+            body: mock_json_body,
+            headers: [{"content-type", "application/activity+json"}]
+          }
       end)
 
       data = %{

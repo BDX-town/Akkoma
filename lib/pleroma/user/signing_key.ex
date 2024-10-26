@@ -4,7 +4,6 @@ defmodule Pleroma.User.SigningKey do
   import Ecto.Changeset
   alias Pleroma.User
   alias Pleroma.Repo
-  alias Pleroma.HTTP
 
   require Logger
 
@@ -136,7 +135,7 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
-  def public_key_pem(e) do
+  def public_key_pem(_e) do
     {:error, "key not found"}
   end
 
@@ -190,7 +189,7 @@ defmodule Pleroma.User.SigningKey do
     resp = Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id)
 
     case resp do
-      {:ok, _original_url, body} ->
+      {:ok, _body} ->
         case handle_signature_response(resp) do
           {:ok, ap_id, public_key_pem} ->
             Logger.debug("Fetched remote key: #{ap_id}")
@@ -227,16 +226,13 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
-  defp handle_signature_response({:ok, _original_url, body}) do
-    case Jason.decode(body) do
-      {:ok, %{"id" => _user_id, "publicKey" => _public_key} = body} ->
+  defp handle_signature_response({:ok, body}) do
+    case body do
+      %{"id" => _user_id, "publicKey" => _public_key} ->
         extract_key_details(body)
 
-      {:ok, %{"error" => error}} ->
+      %{"error" => error} ->
         {:error, error}
-
-      {:error, _} ->
-        {:error, "Could not parse key"}
     end
   end
 

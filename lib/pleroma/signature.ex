@@ -6,7 +6,6 @@ defmodule Pleroma.Signature do
   @behaviour HTTPSignatures.Adapter
 
   alias Pleroma.User
-  alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.User.SigningKey
   require Logger
 
