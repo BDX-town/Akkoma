@@ -101,7 +101,6 @@ defmodule Pleroma.User do
     field(:password, :string, virtual: true)
     field(:password_confirmation, :string, virtual: true)
     field(:keys, :string)
-    field(:public_key, :string)
     field(:ap_id, :string)
     field(:avatar, :map, default: %{})
     field(:local, :boolean, default: true)
@@ -471,7 +470,6 @@ defmodule Pleroma.User do
         :inbox,
         :shared_inbox,
         :nickname,
-        :public_key,
         :avatar,
         :ap_enabled,
         :banner,
@@ -532,7 +530,6 @@ defmodule Pleroma.User do
         :name,
         :emoji,
         :avatar,
-        :public_key,
         :inbox,
         :shared_inbox,
         :is_locked,

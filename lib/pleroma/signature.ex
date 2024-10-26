@@ -11,7 +11,6 @@ defmodule Pleroma.Signature do
   require Logger
 
   def key_id_to_actor_id(key_id) do
-    # Given the key ID, first attempt to look it up in the signing keys table.
     case SigningKey.key_id_to_ap_id(key_id) do
       nil ->
         # hm, we SHOULD have gotten this in the pipeline before we hit here!

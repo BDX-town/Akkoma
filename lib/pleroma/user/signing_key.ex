@@ -187,7 +187,7 @@ defmodule Pleroma.User.SigningKey do
   def fetch_remote_key(key_id) do
     Logger.debug("Fetching remote key: #{key_id}")
     # we should probably sign this, just in case
-    resp = Pleroma.Object.Fetcher.get_object(key_id)
+    resp = Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id)
 
     case resp do
       {:ok, _original_url, body} ->
