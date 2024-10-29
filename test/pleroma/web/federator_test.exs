@@ -132,7 +132,7 @@ defmodule Pleroma.Web.FederatorTest do
       assert {:ok, _activity} = ObanHelpers.perform(job)
 
       assert {:ok, job} = Federator.incoming_ap_doc(params)
-      assert {:error, :already_present} = ObanHelpers.perform(job)
+      assert {:discard, :already_present} = ObanHelpers.perform(job)
     end
 
     test "successfully normalises public scope descriptors" do
