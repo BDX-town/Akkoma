@@ -602,7 +602,7 @@ config :pleroma, :workers,
     federator_incoming: 5,
     federator_outgoing: 5,
     search_indexing: 2,
-    rich_media_backfill: 3
+    rich_media_backfill: 1
   ],
   timeout: [
     activity_expiration: :timer.seconds(5),
