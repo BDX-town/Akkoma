@@ -40,12 +40,6 @@ defmodule Pleroma.Search.DatabaseSearch do
     end
   end
 
-  @impl true
-  def add_to_index(_activity), do: nil
-
-  @impl true
-  def remove_from_index(_object), do: nil
-
   def maybe_restrict_author(query, %User{} = author) do
     Activity.Queries.by_author(query, author)
   end
