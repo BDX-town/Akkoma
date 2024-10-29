@@ -158,6 +158,14 @@ defmodule Pleroma.Instances.Instance do
     NaiveDateTime.diff(now, metadata_updated_at) > 86_400
   end
 
+  def needs_update(%URI{host: host}) do
+    with %Instance{} = instance <- Repo.get_by(Instance, %{host: host}) do
+      needs_update(instance)
+    else
+      _ -> true
+    end
+  end
+
   def local do
     %Instance{
       host: Pleroma.Web.Endpoint.host(),
