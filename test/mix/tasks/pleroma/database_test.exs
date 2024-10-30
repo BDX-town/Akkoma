@@ -353,7 +353,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
 
     test "We don't have unexpected tables which may contain objects that are referenced by activities" do
       # We can delete orphaned activities. For that we look for the objects they reference in the 'objects', 'activities', and 'users' table.
-      # If someone adds another table with objects (idk, maybe with separate relations, or collections or w/e), then we need to make sure we 
+      # If someone adds another table with objects (idk, maybe with separate relations, or collections or w/e), then we need to make sure we
       # add logic for that in the 'prune_objects' task so that we don't wrongly delete their corresponding activities.
       # So when someone adds (or removes) a table, this test will fail.
       # Either the table contains objects which can be referenced from the activities table
@@ -401,6 +401,7 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
                ["rich_media_card"],
                ["scheduled_activities"],
                ["schema_migrations"],
+               ["signing_keys"],
                ["thread_mutes"],
                ["user_follows_hashtag"],
                ["user_frontend_setting_profiles"],

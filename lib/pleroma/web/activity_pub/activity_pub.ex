@@ -1547,6 +1547,17 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   defp normalize_attachment(attachment) when is_list(attachment), do: attachment
   defp normalize_attachment(_), do: []
 
+  defp maybe_make_public_key_object(data) do
+    if is_map(data["publicKey"]) && is_binary(data["publicKey"]["publicKeyPem"]) do
+      %{
+        public_key: data["publicKey"]["publicKeyPem"],
+        key_id: data["publicKey"]["id"]
+      }
+    else
+      nil
+    end
+  end
+
   defp object_to_user_data(data, additional) do
     fields =
       data
@@ -1578,9 +1589,16 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     featured_address = data["featured"]
     {:ok, pinned_objects} = fetch_and_prepare_featured_from_ap_id(featured_address)
 
-    public_key =
-      if is_map(data["publicKey"]) && is_binary(data["publicKey"]["publicKeyPem"]) do
-        data["publicKey"]["publicKeyPem"]
+    # first, check that the owner is correct
+    signing_key =
+      if data["id"] !== data["publicKey"]["owner"] do
+        Logger.error(
+          "Owner of the public key is not the same as the actor - not saving the public key."
+        )
+
+        nil
+      else
+        maybe_make_public_key_object(data)
       end
 
     shared_inbox =
@@ -1624,7 +1642,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
       bio: data["summary"] || "",
       actor_type: actor_type,
       also_known_as: also_known_as,
-      public_key: public_key,
+      signing_key: signing_key,
       inbox: data["inbox"],
       shared_inbox: shared_inbox,
       pinned_objects: pinned_objects,

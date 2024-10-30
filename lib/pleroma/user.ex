@@ -25,7 +25,6 @@ defmodule Pleroma.User do
   alias Pleroma.Hashtag
   alias Pleroma.User.HashtagFollow
   alias Pleroma.HTML
-  alias Pleroma.Keys
   alias Pleroma.MFA
   alias Pleroma.Notification
   alias Pleroma.Object
@@ -43,6 +42,7 @@ defmodule Pleroma.User do
   alias Pleroma.Web.OAuth
   alias Pleroma.Web.RelMe
   alias Pleroma.Workers.BackgroundWorker
+  alias Pleroma.User.SigningKey
 
   use Pleroma.Web, :verified_routes
 
@@ -101,7 +101,6 @@ defmodule Pleroma.User do
     field(:password, :string, virtual: true)
     field(:password_confirmation, :string, virtual: true)
     field(:keys, :string)
-    field(:public_key, :string)
     field(:ap_id, :string)
     field(:avatar, :map, default: %{})
     field(:local, :boolean, default: true)
@@ -221,6 +220,10 @@ defmodule Pleroma.User do
       MFA.Settings,
       on_replace: :delete
     )
+
+    # FOR THE FUTURE: We might want to make this a one-to-many relationship
+    # it's entirely possible right now, but we don't have a use case for it
+    has_one(:signing_key, SigningKey, foreign_key: :user_id)
 
     timestamps()
   end
@@ -457,6 +460,7 @@ defmodule Pleroma.User do
       |> fix_follower_address()
 
     struct
+    |> Repo.preload(:signing_key)
     |> cast(
       params,
       [
@@ -466,7 +470,6 @@ defmodule Pleroma.User do
         :inbox,
         :shared_inbox,
         :nickname,
-        :public_key,
         :avatar,
         :ap_enabled,
         :banner,
@@ -495,6 +498,7 @@ defmodule Pleroma.User do
     |> validate_required([:ap_id])
     |> validate_required([:name], trim: false)
     |> unique_constraint(:nickname)
+    |> cast_assoc(:signing_key, with: &SigningKey.remote_changeset/2, required: false)
     |> validate_format(:nickname, @email_regex)
     |> validate_length(:bio, max: bio_limit)
     |> validate_length(:name, max: name_limit)
@@ -526,7 +530,6 @@ defmodule Pleroma.User do
         :name,
         :emoji,
         :avatar,
-        :public_key,
         :inbox,
         :shared_inbox,
         :is_locked,
@@ -570,6 +573,7 @@ defmodule Pleroma.User do
       :pleroma_settings_store,
       &{:ok, Map.merge(struct.pleroma_settings_store, &1)}
     )
+    |> cast_assoc(:signing_key, with: &SigningKey.remote_changeset/2, requred: false)
     |> validate_fields(false, struct)
   end
 
@@ -828,8 +832,10 @@ defmodule Pleroma.User do
   end
 
   defp put_private_key(changeset) do
-    {:ok, pem} = Keys.generate_rsa_pem()
-    put_change(changeset, :keys, pem)
+    ap_id = get_field(changeset, :ap_id)
+
+    changeset
+    |> put_assoc(:signing_key, SigningKey.generate_local_keys(ap_id))
   end
 
   defp autofollow_users(user) do
@@ -1146,7 +1152,8 @@ defmodule Pleroma.User do
     was_superuser_before_update = User.superuser?(user)
 
     with {:ok, user} <- Repo.update(changeset, stale_error_field: :id) do
-      set_cache(user)
+      user
+      |> set_cache()
     end
     |> maybe_remove_report_notifications(was_superuser_before_update)
   end
@@ -2051,24 +2058,16 @@ defmodule Pleroma.User do
     |> set_cache()
   end
 
-  def public_key(%{public_key: public_key_pem}) when is_binary(public_key_pem) do
-    key =
-      public_key_pem
-      |> :public_key.pem_decode()
-      |> hd()
-      |> :public_key.pem_entry_decode()
-
-    {:ok, key}
-  end
-
-  def public_key(_), do: {:error, "key not found"}
+  defdelegate public_key(user), to: SigningKey
 
   def get_public_key_for_ap_id(ap_id) do
     with {:ok, %User{} = user} <- get_or_fetch_by_ap_id(ap_id),
-         {:ok, public_key} <- public_key(user) do
+         {:ok, public_key} <- SigningKey.public_key(user) do
       {:ok, public_key}
     else
-      _ -> :error
+      e ->
+        Logger.error("Could not get public key for #{ap_id}.\n#{inspect(e)}")
+        {:error, e}
     end
   end
 

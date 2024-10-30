@@ -14,7 +14,6 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   @behaviour Pleroma.Web.ActivityPub.ObjectValidator.Validating
 
   alias Pleroma.Object.Containment
-  alias Pleroma.Signature
 
   require Pleroma.Constants
 
@@ -23,8 +22,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
 
   def validate(%{"type" => type, "id" => _id} = data, meta)
       when type in Pleroma.Constants.actor_types() do
-    with :ok <- validate_pubkey(data),
-         :ok <- validate_inbox(data),
+    with :ok <- validate_inbox(data),
          :ok <- contain_collection_origin(data) do
       {:ok, data, meta}
     else
@@ -34,33 +32,6 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   end
 
   def validate(_, _), do: {:error, "Not a user object"}
-
-  defp mabye_validate_owner(nil, _actor), do: :ok
-  defp mabye_validate_owner(actor, actor), do: :ok
-  defp mabye_validate_owner(_owner, _actor), do: :error
-
-  defp validate_pubkey(
-         %{"id" => id, "publicKey" => %{"id" => pk_id, "publicKeyPem" => _key}} = data
-       )
-       when id != nil do
-    with {_, {:ok, kactor}} <- {:key, Signature.key_id_to_actor_id(pk_id)},
-         true <- id == kactor,
-         :ok <- mabye_validate_owner(Map.get(data, "owner"), id) do
-      :ok
-    else
-      {:key, _} ->
-        {:error, "Unable to determine actor id from key id"}
-
-      false ->
-        {:error, "Key id does not relate to user id"}
-
-      _ ->
-        {:error, "Actor does not own its public key"}
-    end
-  end
-
-  # pubkey is optional atm
-  defp validate_pubkey(_data), do: :ok
 
   defp validate_inbox(%{"id" => id, "inbox" => inbox}) do
     case Containment.same_origin(id, inbox) do
