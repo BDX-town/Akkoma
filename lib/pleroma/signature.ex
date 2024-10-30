@@ -47,7 +47,7 @@ defmodule Pleroma.Signature do
 
   def sign(%User{} = user, headers) do
     with {:ok, private_key} <- SigningKey.private_key(user) do
-      HTTPSignatures.sign(private_key, user.ap_id <> "#main-key", headers)
+      HTTPSignatures.sign(private_key, SigningKey.local_key_id(user.ap_id), headers)
     end
   end
 

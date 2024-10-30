@@ -91,7 +91,15 @@ defmodule Pleroma.User.SigningKey do
     |> change()
     |> put_change(:public_key, local_pem)
     |> put_change(:private_key, private_pem)
-    |> put_change(:key_id, ap_id <> "#main-key")
+    |> put_change(:key_id, local_key_id(ap_id))
+  end
+
+  @spec local_key_id(String.t()) :: String.t()
+  @doc """
+  Given an AP ID, return the key ID for the local user.
+  """
+  def local_key_id(ap_id) do
+    ap_id <> "#main-key"
   end
 
   @spec private_pem_to_public_pem(binary) :: {:ok, binary()} | {:error, String.t()}

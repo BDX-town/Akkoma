@@ -49,7 +49,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "url" => user.ap_id,
       "manuallyApprovesFollowers" => false,
       "publicKey" => %{
-        "id" => "#{user.ap_id}#main-key",
+        "id" => User.SigningKey.local_key_id(user.ap_id),
         "owner" => user.ap_id,
         "publicKeyPem" => public_key
       },
@@ -97,7 +97,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "url" => user.ap_id,
       "manuallyApprovesFollowers" => user.is_locked,
       "publicKey" => %{
-        "id" => "#{user.ap_id}#main-key",
+        "id" => User.SigningKey.local_key_id(user.ap_id),
         "owner" => user.ap_id,
         "publicKeyPem" => public_key
       },
