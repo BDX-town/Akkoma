@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## BREAKING
 - Minimum PostgreSQL version is raised to 12
+- Swagger UI moved from `/akkoma/swaggerui/` to `/pleroma/swaggerui/`
 
 ## Added
 - Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
@@ -19,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
 - Emoji are now federated as anonymous objects, fixing issues with
   some strict servers e.g. rejecting e.g. remote emoji reactions
+- AP objects with additional JSON-LD profiles beyond ActivityStreams can now be fetched
+- Single-selection polls no longer expose the voter_count; MastoAPI demands it be null
+  and this confused some clients leading to vote distributions >100%
 
 ## Changed
 - Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.

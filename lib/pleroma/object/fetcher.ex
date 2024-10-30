@@ -369,8 +369,12 @@ defmodule Pleroma.Object.Fetcher do
         {"activity+json", _} ->
           {:ok, final_id, body}
 
-        {"ld+json", %{"profile" => "https://www.w3.org/ns/activitystreams"}} ->
-          {:ok, final_id, body}
+        {"ld+json", %{"profile" => profiles}} ->
+          if "https://www.w3.org/ns/activitystreams" in String.split(profiles) do
+            {:ok, final_id, body}
+          else
+            {:error, {:content_type, content_type}}
+          end
 
         _ ->
           {:error, {:content_type, content_type}}

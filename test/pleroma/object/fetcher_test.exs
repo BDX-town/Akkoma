@@ -203,7 +203,6 @@ defmodule Pleroma.Object.FetcherTest do
       :ok
     end
 
-    @tag capture_log: true
     test "it works when fetching the OP actor errors out" do
       # Here we simulate a case where the author of the OP can't be read
       assert {:ok, _} =
@@ -779,7 +778,7 @@ defmodule Pleroma.Object.FetcherTest do
       assert {:ok, _, "{}"} = Fetcher.get_object("https://mastodon.social/2")
     end
 
-    test "should return ok if the content type is application/ld+json with a profile" do
+    test "should return ok if the content type is application/ld+json with the ActivityStream profile" do
       Tesla.Mock.mock(fn
         %{
           method: :get,
@@ -791,6 +790,26 @@ defmodule Pleroma.Object.FetcherTest do
             headers: [
               {"content-type",
                "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""}
+            ],
+            body: "{}"
+          }
+      end)
+
+      assert {:ok, _, "{}"} = Fetcher.get_object("https://mastodon.social/2")
+    end
+
+    test "should return ok if the content type is application/ld+json with several profiles" do
+      Tesla.Mock.mock(fn
+        %{
+          method: :get,
+          url: "https://mastodon.social/2"
+        } ->
+          %Tesla.Env{
+            status: 200,
+            url: "https://mastodon.social/2",
+            headers: [
+              {"content-type",
+               "application/ld+json; profile=\"https://example.org/ns/superduperspec https://www.w3.org/ns/activitystreams\""}
             ],
             body: "{}"
           }

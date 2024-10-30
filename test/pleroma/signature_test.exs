@@ -6,7 +6,6 @@ defmodule Pleroma.SignatureTest do
   use Pleroma.DataCase, async: false
   @moduletag :mocked
 
-  import ExUnit.CaptureLog
   import Pleroma.Factory
   import Tesla.Mock
   import Mock
