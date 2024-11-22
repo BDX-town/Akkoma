@@ -43,9 +43,9 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "followers" => "#{user.ap_id}/followers",
       "inbox" => "#{user.ap_id}/inbox",
       "outbox" => "#{user.ap_id}/outbox",
-      "name" => "Pleroma",
+      "name" => "Akkoma",
       "summary" =>
-        "An internal service actor for this Pleroma instance.  No user-serviceable parts inside.",
+        "An internal service actor for this Akkoma instance.  No user-serviceable parts inside.",
       "url" => user.ap_id,
       "manuallyApprovesFollowers" => false,
       "publicKey" => %{
