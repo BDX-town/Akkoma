@@ -58,7 +58,11 @@ defmodule Pleroma.UserTest do
                local: true,
                ap_id: ^uri,
                follower_address: ^followers_uri
-             } = User.get_or_create_service_actor_by_ap_id(uri, "relay")
+             } =
+               User.get_or_create_service_actor_by_ap_id(uri, "relay",
+                 followable: true,
+                 following: true
+               )
 
       assert capture_log(fn ->
                refute User.get_or_create_service_actor_by_ap_id("/relay", "relay")
@@ -67,7 +71,6 @@ defmodule Pleroma.UserTest do
 
     test "returns invisible actor" do
       uri = "#{Pleroma.Web.Endpoint.url()}/internal/fetch-test"
-      followers_uri = "#{uri}/followers"
       user = User.get_or_create_service_actor_by_ap_id(uri, "internal.fetch-test")
 
       assert %User{
@@ -75,7 +78,7 @@ defmodule Pleroma.UserTest do
                invisible: true,
                local: true,
                ap_id: ^uri,
-               follower_address: ^followers_uri
+               follower_address: nil
              } = user
 
       user2 = User.get_or_create_service_actor_by_ap_id(uri, "internal.fetch-test")

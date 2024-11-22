@@ -16,9 +16,8 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   import Ecto.Query
 
-  def render("endpoints.json", %{user: %User{nickname: nil, local: true} = _user}) do
-    %{"sharedInbox" => url(~p"/inbox")}
-  end
+  defp maybe_put(map, _, nil), do: map
+  defp maybe_put(map, k, v), do: Map.put(map, k, v)
 
   def render("endpoints.json", %{user: %User{local: true} = _user}) do
     %{
@@ -39,8 +38,6 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     %{
       "id" => user.ap_id,
       "type" => "Application",
-      "following" => "#{user.ap_id}/following",
-      "followers" => "#{user.ap_id}/followers",
       "inbox" => "#{user.ap_id}/inbox",
       "outbox" => "#{user.ap_id}/outbox",
       "name" => "Akkoma",
@@ -56,15 +53,14 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "endpoints" => endpoints,
       "invisible" => User.invisible?(user)
     }
+    |> maybe_put("following", user.following_address)
+    |> maybe_put("followers", user.follower_address)
+    |> maybe_put("preferredUsername", user.nickname)
     |> Map.merge(Utils.make_json_ld_header())
   end
 
-  # the instance itself is not a Person, but instead an Application
-  def render("user.json", %{user: %User{nickname: nil} = user}),
+  def render("user.json", %{user: %User{actor_type: "Application"} = user}),
     do: render("service.json", %{user: user})
-
-  def render("user.json", %{user: %User{nickname: "internal." <> _} = user}),
-    do: render("service.json", %{user: user}) |> Map.put("preferredUsername", user.nickname)
 
   def render("user.json", %{user: user}) do
     public_key =
