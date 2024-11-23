@@ -37,6 +37,7 @@ defmodule Pleroma.Web.RichMedia.Parser do
       end
     rescue
       e -> Logger.warning("Fail while fetching rich media for #{url}: #{Exception.format(:error, e, __STACKTRACE__)}")
+    end
   end
 
   defp maybe_parse(html) do
