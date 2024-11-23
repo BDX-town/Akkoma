@@ -57,6 +57,10 @@ defmodule Pleroma.Web.RichMedia.Backfill do
         Logger.debug("Rich media error for #{url}: :content_type is #{type}")
         negative_cache(url_hash, :timer.minutes(30))
 
+      {:error, {:url, reason}} ->
+        Logger.debug("Rich media error for #{url}: refusing URL #{inspect(reason)}")
+        negative_cache(url_hash, :timer.minutes(180))
+
       e ->
         Logger.debug("Rich media error for #{url}: #{inspect(e)}")
         {:error, e}
