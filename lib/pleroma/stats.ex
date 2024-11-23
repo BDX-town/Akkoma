@@ -10,6 +10,7 @@ defmodule Pleroma.Stats do
   alias Pleroma.CounterCache
   alias Pleroma.Repo
   alias Pleroma.User
+  alias Pleroma.Instances.Instance
 
   @interval :timer.seconds(300)
 
@@ -66,14 +67,13 @@ defmodule Pleroma.Stats do
           }
         }
   def calculate_stat_data do
+    # instances table has an unique constraint on the host column
     peers =
       from(
-        u in User,
-        select: fragment("distinct split_part(?, '@', 2)", u.nickname),
-        where: u.local != ^true
+        i in Instance,
+        select: i.host
       )
       |> Repo.all()
-      |> Enum.filter(& &1)
 
     domain_count = Enum.count(peers)
 
