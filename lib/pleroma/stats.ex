@@ -39,7 +39,8 @@ defmodule Pleroma.Stats do
   @spec get_stats() :: %{
           domain_count: non_neg_integer(),
           status_count: non_neg_integer(),
-          user_count: non_neg_integer()
+          user_count: non_neg_integer(),
+          remote_user_count: non_neg_integer()
         }
   def get_stats do
     %{stats: stats} = GenServer.call(__MODULE__, :get_state)
@@ -60,7 +61,8 @@ defmodule Pleroma.Stats do
           stats: %{
             domain_count: non_neg_integer(),
             status_count: non_neg_integer(),
-            user_count: non_neg_integer()
+            user_count: non_neg_integer(),
+            remote_user_count: non_neg_integer()
           }
         }
   def calculate_stat_data do
