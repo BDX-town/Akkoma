@@ -44,6 +44,26 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   def route_aliases(_), do: []
 
+  def maybe_put_created_psudoheader(conn) do
+    case HTTPSignatures.signature_for_conn(conn) do
+      %{"created" => created} ->
+        put_req_header(conn, "(created)", created)
+
+      _ ->
+        conn
+    end
+  end
+
+  def maybe_put_expires_psudoheader(conn) do
+    case HTTPSignatures.signature_for_conn(conn) do
+      %{"expires" => expires} ->
+        put_req_header(conn, "(expires)", expires)
+
+      _ ->
+        conn
+    end
+  end
+
   defp assign_valid_signature_on_route_aliases(conn, []), do: conn
 
   defp assign_valid_signature_on_route_aliases(%{assigns: %{valid_signature: true}} = conn, _),
@@ -55,6 +75,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn =
       conn
       |> put_req_header("(request-target)", request_target)
+      |> maybe_put_created_psudoheader()
+      |> maybe_put_expires_psudoheader()
       |> case do
         %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
         conn -> conn
@@ -117,12 +139,17 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   defp maybe_require_signature(conn), do: conn
 
   defp signature_host(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, actor_id} <- Signature.key_id_to_actor_id(kid) do
+    with {:key_id, %{"keyId" => kid}} <- {:key_id, HTTPSignatures.signature_for_conn(conn)},
+         {:actor_id, {:ok, actor_id}} <- {:actor_id, Signature.key_id_to_actor_id(kid)} do
       actor_id
     else
-      e ->
-        {:error, e}
+      {:key_id, e} ->
+        Logger.error("Failed to extract key_id from signature: #{inspect(e)}")
+        nil
+
+      {:actor_id, e} ->
+        Logger.error("Failed to extract actor_id from signature: #{inspect(e)}")
+        nil
     end
   end
 end

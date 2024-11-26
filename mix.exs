@@ -4,7 +4,7 @@ defmodule Pleroma.Mixfile do
   def project do
     [
       app: :pleroma,
-      version: version("3.13.2"),
+      version: version("3.13.3"),
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
@@ -78,7 +78,8 @@ defmodule Pleroma.Mixfile do
         :comeonin,
         :fast_sanitize,
         :os_mon,
-        :ssl
+        :ssl,
+        :recon
       ],
       included_applications: [:ex_syslogger]
     ]
@@ -136,14 +137,14 @@ defmodule Pleroma.Mixfile do
       {:tesla, "~> 1.7"},
       {:castore, "~> 1.0"},
       {:cowlib, "~> 2.12"},
-      {:finch, "~> 0.16.0"},
+      {:finch, "~> 0.18.0"},
       {:jason, "~> 1.4"},
       {:trailing_format_plug, "~> 0.0.7"},
       {:mogrify, "~> 0.9"},
       {:ex_aws, "~> 2.4"},
       {:ex_aws_s3, "~> 2.4"},
       {:sweet_xml, "~> 0.7"},
-      {:earmark, "~> 1.4"},
+      {:earmark, "1.4.46"},
       {:bbcode_pleroma, "~> 0.2.0"},
       {:argon2_elixir, "~> 3.1"},
       {:cors_plug, "~> 3.0"},
@@ -157,10 +158,10 @@ defmodule Pleroma.Mixfile do
       {:floki, "~> 0.34"},
       {:timex, "~> 3.7"},
       {:ueberauth, "== 0.10.5"},
-      {:linkify, git: "https://akkoma.dev/AkkomaGang/linkify.git"},
+      {:linkify, "~> 0.5.3"},
       {:http_signatures,
        git: "https://akkoma.dev/AkkomaGang/http_signatures.git",
-       ref: "6640ce7d24c783ac2ef56e27d00d12e8dc85f396"},
+       ref: "d44c43d66758c6a73eaa4da9cffdbee0c5da44ae"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},
@@ -179,7 +180,7 @@ defmodule Pleroma.Mixfile do
       {:remote_ip, "~> 1.1.0"},
       {:captcha,
        git: "https://git.pleroma.social/pleroma/elixir-libraries/elixir-captcha.git",
-       ref: "90f6ce7672f70f56708792a98d98bd05176c9176"},
+       ref: "6630c42aaaab124e697b4e513190c89d8b64e410"},
       {:restarter, path: "./restarter"},
       {:majic,
        git: "https://akkoma.dev/AkkomaGang/majic.git",
@@ -199,7 +200,7 @@ defmodule Pleroma.Mixfile do
 
       ## dev & test
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:ex_machina, "~> 2.7", only: :test},
+      {:ex_machina, "~> 2.8", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:mock, "~> 0.3.8", only: :test},
       {:excoveralls, "0.16.1", only: :test},

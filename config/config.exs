@@ -63,7 +63,6 @@ config :pleroma, Pleroma.Upload,
   uploader: Pleroma.Uploaders.Local,
   filters: [],
   link_name: false,
-  proxy_remote: false,
   filename_display_max_length: 30,
   base_url: nil,
   allowed_mime_types: ["image", "audio", "video"]
@@ -189,8 +188,10 @@ config :pleroma, :http,
   receive_timeout: :timer.seconds(15),
   proxy_url: nil,
   user_agent: :default,
-  pool_size: 50,
-  adapter: []
+  pool_size: 10,
+  adapter: [],
+  # see: https://hexdocs.pm/finch/Finch.html#start_link/1
+  pool_max_idle_time: :timer.seconds(30)
 
 config :pleroma, :instance,
   name: "Akkoma",
@@ -437,8 +438,12 @@ config :pleroma, :rich_media,
     Pleroma.Web.RichMedia.Parsers.TwitterCard,
     Pleroma.Web.RichMedia.Parsers.OEmbed
   ],
-  failure_backoff: :timer.minutes(20),
-  ttl_setters: [Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl]
+  failure_backoff: 60_000,
+  ttl_setters: [
+    Pleroma.Web.RichMedia.Parser.TTL.AwsSignedUrl,
+    Pleroma.Web.RichMedia.Parser.TTL.Opengraph
+  ],
+  max_body: 5_000_000
 
 config :pleroma, :media_proxy,
   enabled: false,
@@ -576,7 +581,9 @@ config :pleroma, Oban,
     mute_expire: 5,
     search_indexing: 10,
     nodeinfo_fetcher: 1,
-    database_prune: 1
+    database_prune: 1,
+    rich_media_backfill: 2,
+    rich_media_expiration: 2
   ],
   plugins: [
     Oban.Plugins.Pruner,
@@ -592,7 +599,8 @@ config :pleroma, :workers,
   retries: [
     federator_incoming: 5,
     federator_outgoing: 5,
-    search_indexing: 2
+    search_indexing: 2,
+    rich_media_backfill: 3
   ],
   timeout: [
     activity_expiration: :timer.seconds(5),
@@ -614,7 +622,8 @@ config :pleroma, :workers,
     mute_expire: :timer.seconds(5),
     search_indexing: :timer.seconds(5),
     nodeinfo_fetcher: :timer.seconds(10),
-    database_prune: :timer.minutes(10)
+    database_prune: :timer.minutes(10),
+    rich_media_backfill: :timer.seconds(30)
   ]
 
 config :pleroma, Pleroma.Formatter,
@@ -813,8 +822,10 @@ config :pleroma, :modules, runtime_dir: "instance/modules"
 config :pleroma, configurable_from_database: false
 
 config :pleroma, Pleroma.Repo,
-  parameters: [gin_fuzzy_search_limit: "500"],
-  prepare: :unnamed
+  parameters: [
+    gin_fuzzy_search_limit: "500",
+    plan_cache_mode: "force_custom_plan"
+  ]
 
 config :pleroma, :majic_pool, size: 2
 

@@ -16,10 +16,13 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.MastodonAPI.AccountView
   alias Pleroma.Web.MastodonAPI.StatusView
+  alias Pleroma.Web.RichMedia.Card
+  alias Pleroma.UnstubbedConfigMock, as: ConfigMock
 
   import Pleroma.Factory
   import Tesla.Mock
   import OpenApiSpex.TestAssertions
+  import Mox
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
@@ -30,6 +33,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     user = insert(:user)
     other_user = insert(:user)
     third_user = insert(:user)
+    domain_blocked_user = insert(:user, %{ap_id: "https://blocked.com/@blocked"})
+
+    {:ok, user} = User.block_domain(user, "blocked.com")
+
     {:ok, activity} = CommonAPI.post(user, %{status: "dae cofe??"})
 
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, user, "☕")
@@ -37,6 +44,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, third_user, "🍵")
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, "☕")
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, ":dinosaur:")
+    # this should not show up when the user is viewing the status
+    {:ok, _} = CommonAPI.react_with_emoji(activity.id, domain_blocked_user, "😈")
 
     activity = Repo.get(Activity, activity.id)
     status = StatusView.render("show.json", activity: activity)
@@ -52,7 +61,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
                url: "http://localhost:4001/emoji/dino walking.gif",
                account_ids: [other_user.id, user.id]
              },
-             %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]}
+             %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]},
+             %{name: "😈", count: 1, me: false, url: nil, account_ids: [domain_blocked_user.id]}
            ]
 
     status = StatusView.render("show.json", activity: activity, for: user)
@@ -70,6 +80,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
              },
              %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]}
            ]
+
+    refute Enum.any?(status[:pleroma][:emoji_reactions], fn reaction -> reaction[:name] == "😈" end)
   end
 
   test "works correctly with badly formatted emojis" do
@@ -677,56 +689,88 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
 
   describe "rich media cards" do
     test "a rich media card without a site name renders correctly" do
-      page_url = "http://example.com"
+      page_url = "https://example.com"
 
-      card = %{
-        url: page_url,
-        image: page_url <> "/example.jpg",
-        title: "Example website"
-      }
+      {:ok, card} =
+        Card.create(page_url, %{image: page_url <> "/example.jpg", title: "Example website"})
 
-      %{provider_name: "example.com"} =
-        StatusView.render("card.json", %{page_url: page_url, rich_media: card})
+      %{provider_name: "example.com"} = StatusView.render("card.json", card)
     end
 
     test "a rich media card without a site name or image renders correctly" do
-      page_url = "http://example.com"
+      page_url = "https://example.com"
 
-      card = %{
-        url: page_url,
-        title: "Example website"
+      fields = %{
+        "url" => page_url,
+        "title" => "Example website"
       }
 
-      %{provider_name: "example.com"} =
-        StatusView.render("card.json", %{page_url: page_url, rich_media: card})
+      {:ok, card} = Card.create(page_url, fields)
+
+      %{provider_name: "example.com"} = StatusView.render("card.json", card)
     end
 
     test "a rich media card without an image renders correctly" do
-      page_url = "http://example.com"
+      page_url = "https://example.com"
 
-      card = %{
-        url: page_url,
-        site_name: "Example site name",
-        title: "Example website"
+      fields = %{
+        "url" => page_url,
+        "site_name" => "Example site name",
+        "title" => "Example website"
       }
 
-      %{provider_name: "example.com"} =
-        StatusView.render("card.json", %{page_url: page_url, rich_media: card})
+      {:ok, card} = Card.create(page_url, fields)
+
+      %{provider_name: "example.com"} = StatusView.render("card.json", card)
     end
 
     test "a rich media card with all relevant data renders correctly" do
-      page_url = "http://example.com"
+      page_url = "https://example.com"
 
-      card = %{
-        url: page_url,
-        site_name: "Example site name",
-        title: "Example website",
-        image: page_url <> "/example.jpg",
-        description: "Example description"
+      fields = %{
+        "url" => page_url,
+        "site_name" => "Example site name",
+        "title" => "Example website",
+        "image" => page_url <> "/example.jpg",
+        "description" => "Example description"
       }
 
-      %{provider_name: "example.com"} =
-        StatusView.render("card.json", %{page_url: page_url, rich_media: card})
+      {:ok, card} = Card.create(page_url, fields)
+
+      %{provider_name: "example.com"} = StatusView.render("card.json", card)
+    end
+
+    test "a rich media card has all media proxied" do
+      clear_config([:media_proxy, :enabled], true)
+      clear_config([:media_preview_proxy, :enabled])
+
+      ConfigMock
+      |> stub_with(Pleroma.Test.StaticConfig)
+
+      page_url = "https://example.com"
+
+      fields = %{
+        "url" => page_url,
+        "site_name" => "Example site name",
+        "title" => "Example website",
+        "image" => page_url <> "/example.jpg",
+        "audio" => page_url <> "/example.ogg",
+        "video" => page_url <> "/example.mp4",
+        "description" => "Example description"
+      }
+
+      {:ok, card} = Card.create(page_url, fields)
+
+      %{
+        provider_name: "example.com",
+        image: image,
+        pleroma: %{opengraph: og}
+      } = StatusView.render("card.json", card)
+
+      assert String.match?(image, ~r/\/proxy\//)
+      assert String.match?(og["image"], ~r/\/proxy\//)
+      assert String.match?(og["audio"], ~r/\/proxy\//)
+      assert String.match?(og["video"], ~r/\/proxy\//)
     end
   end
 

@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## UNRELEASED
+
+## BREAKING
+- Minimum PostgreSQL version is raised to 12
+- Swagger UI moved from `/akkoma/swaggerui/` to `/pleroma/swaggerui/`
+
+## Added
+- Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
+- Meilisearch: it is now possible to use separate keys for search and admin actions
+- New standalone `prune_orphaned_activities` mix task with configurable batch limit
+- The `prune_objects` mix task now accepts a `--limit` parameter for initial object pruning
+
+## Fixed
+- Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
+- Emoji are now federated as anonymous objects, fixing issues with
+  some strict servers e.g. rejecting e.g. remote emoji reactions
+- AP objects with additional JSON-LD profiles beyond ActivityStreams can now be fetched
+- Single-selection polls no longer expose the voter_count; MastoAPI demands it be null
+  and this confused some clients leading to vote distributions >100%
+
+## Changed
+- Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.
+
 ## 2024.04.1 (Security)
 
 ## Fixed

@@ -119,14 +119,6 @@ config :pleroma, :config_description, [
         ]
       },
       %{
-        key: :proxy_remote,
-        type: :boolean,
-        description: """
-        Proxy requests to the remote uploader.\n
-        Useful if media upload endpoint is not internet accessible.
-        """
-      },
-      %{
         key: :filename_display_max_length,
         type: :integer,
         description: "Set max length of a filename to display. 0 = no limit. Default: 30"
@@ -2717,8 +2709,8 @@ config :pleroma, :config_description, [
       %{
         key: :pool_size,
         type: :integer,
-        description: "Number of concurrent outbound HTTP requests to allow. Default 50.",
-        suggestions: [50]
+        description: "Number of concurrent outbound HTTP requests to allow PER HOST. Default 10.",
+        suggestions: [10]
       },
       %{
         key: :adapter,
@@ -2741,6 +2733,13 @@ config :pleroma, :config_description, [
             ]
           }
         ]
+      },
+      %{
+        key: :pool_max_idle_time,
+        type: :integer,
+        description:
+          "Number of seconds to retain an HTTP pool; pool will remain if actively in use. Default 30 seconds (in ms).",
+        suggestions: [30_000]
       }
     ]
   },
