@@ -12,6 +12,7 @@
 - [FEP-67ff: FEDERATION](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md)
 - [FEP-f1d5: NodeInfo in Fediverse Software](https://codeberg.org/fediverse/fep/src/branch/main/fep/f1d5/fep-f1d5.md)
 - [FEP-fffd: Proxy Objects](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md)
+- [FEP-c16b: Formatting MFM functions](https://codeberg.org/fediverse/fep/src/branch/main/fep/c16b/fep-c16b.md)
 
 ## ActivityPub
 
@@ -29,6 +30,10 @@ Akkoma does not perform JSON-LD processing.
 #### HTTP Signatures
 All AP S2S POST requests to Akkoma instances MUST be signed.
 Depending on instance configuration the same may be true for GET requests.
+
+### FEP-c16b: Formatting MFM functions
+
+The optional extension term `htmlMfm` is currently not used.
 
 ## Nodeinfo
 
