@@ -639,11 +639,12 @@ defmodule Pleroma.UserTest do
       changeset = User.register_changeset(%User{}, @full_user_data)
 
       assert changeset.valid?
-
       assert is_binary(changeset.changes[:password_hash])
-      assert is_binary(changeset.changes[:keys])
       assert changeset.changes[:ap_id] == User.ap_id(%User{nickname: @full_user_data.nickname})
-      assert is_binary(changeset.changes[:keys])
+      assert changeset.changes[:signing_key]
+      assert changeset.changes[:signing_key].valid?
+      assert is_binary(changeset.changes[:signing_key].changes.private_key)
+      assert is_binary(changeset.changes[:signing_key].changes.public_key)
       assert changeset.changes.follower_address == "#{changeset.changes.ap_id}/followers"
     end
 
@@ -814,7 +815,6 @@ defmodule Pleroma.UserTest do
       assert user == fetched_user
     end
 
-    @tag capture_log: true
     test "returns nil if no user could be fetched" do
       {:error, fetched_user} = User.get_or_fetch_by_nickname("nonexistant@social.heldscal.la")
       assert fetched_user == "not found nonexistant@social.heldscal.la"
@@ -871,7 +871,6 @@ defmodule Pleroma.UserTest do
       assert orig_user.nickname == "#{orig_user.id}.admin@mastodon.example.org"
     end
 
-    @tag capture_log: true
     test "it returns the old user if stale, but unfetchable" do
       a_week_ago = NaiveDateTime.add(NaiveDateTime.utc_now(), -604_800)
 
@@ -966,6 +965,21 @@ defmodule Pleroma.UserTest do
       cs = User.remote_user_changeset(user, %{name: "tom from myspace"})
 
       refute cs.valid?
+    end
+
+    test "it truncates fields" do
+      clear_config([:instance, :max_remote_account_fields], 2)
+
+      fields = [
+        %{"name" => "One", "value" => "Uno"},
+        %{"name" => "Two", "value" => "Dos"},
+        %{"name" => "Three", "value" => "Tres"}
+      ]
+
+      cs = User.remote_user_changeset(@valid_remote |> Map.put(:fields, fields))
+
+      assert [%{"name" => "One", "value" => "Uno"}, %{"name" => "Two", "value" => "Dos"}] ==
+               Ecto.Changeset.get_field(cs, :fields)
     end
   end
 
@@ -1149,6 +1163,18 @@ defmodule Pleroma.UserTest do
       assert User.blocks?(user, blocked_user)
     end
 
+    test "it blocks domains" do
+      user = insert(:user)
+      blocked_user = insert(:user)
+
+      refute User.blocks_domain?(user, blocked_user)
+
+      url = URI.parse(blocked_user.ap_id)
+      {:ok, user} = User.block_domain(user, url.host)
+
+      assert User.blocks_domain?(user, blocked_user)
+    end
+
     test "it unblocks users" do
       user = insert(:user)
       blocked_user = insert(:user)
@@ -1157,6 +1183,17 @@ defmodule Pleroma.UserTest do
       {:ok, _user_block} = User.unblock(user, blocked_user)
 
       refute User.blocks?(user, blocked_user)
+    end
+
+    test "it unblocks domains" do
+      user = insert(:user)
+      blocked_user = insert(:user)
+
+      url = URI.parse(blocked_user.ap_id)
+      {:ok, user} = User.block_domain(user, url.host)
+      {:ok, user} = User.unblock_domain(user, url.host)
+
+      refute User.blocks_domain?(user, blocked_user)
     end
 
     test "blocks tear down cyclical follow relationships" do
@@ -1642,7 +1679,6 @@ defmodule Pleroma.UserTest do
         name: "qqqqqqq",
         password_hash: "pdfk2$1b3n159001",
         keys: "RSA begin buplic key",
-        public_key: "--PRIVATE KEYE--",
         avatar: %{"a" => "b"},
         tags: ["qqqqq"],
         banner: %{"a" => "b"},
@@ -1681,8 +1717,6 @@ defmodule Pleroma.UserTest do
              email: nil,
              name: nil,
              password_hash: nil,
-             keys: "RSA begin buplic key",
-             public_key: "--PRIVATE KEYE--",
              avatar: %{},
              tags: [],
              last_refreshed_at: nil,

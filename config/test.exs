@@ -51,7 +51,8 @@ config :pleroma, Pleroma.Repo,
   hostname: System.get_env("DB_HOST") || "localhost",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 50,
-  queue_target: 5000
+  queue_target: 5000,
+  log: false
 
 config :pleroma, :dangerzone, override_repo_pool_size: true
 

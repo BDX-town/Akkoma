@@ -139,12 +139,17 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   defp maybe_require_signature(conn), do: conn
 
   defp signature_host(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, actor_id} <- Signature.key_id_to_actor_id(kid) do
+    with {:key_id, %{"keyId" => kid}} <- {:key_id, HTTPSignatures.signature_for_conn(conn)},
+         {:actor_id, {:ok, actor_id}} <- {:actor_id, Signature.key_id_to_actor_id(kid)} do
       actor_id
     else
-      e ->
-        {:error, e}
+      {:key_id, e} ->
+        Logger.error("Failed to extract key_id from signature: #{inspect(e)}")
+        nil
+
+      {:actor_id, e} ->
+        Logger.error("Failed to extract actor_id from signature: #{inspect(e)}")
+        nil
     end
   end
 end

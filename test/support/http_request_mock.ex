@@ -263,7 +263,12 @@ defmodule HttpRequestMock do
     {:ok,
      %Tesla.Env{
        status: 200,
-       body: File.read!("test/fixtures/tesla_mock/rye.json"),
+       body:
+         File.read!("test/fixtures/tesla_mock/rye.json")
+         |> Jason.decode!()
+         |> Map.put("name", "evil rye")
+         |> Map.put("bio", "boooo!")
+         |> Jason.encode!(),
        headers: activitypub_object_headers()
      }}
   end
@@ -411,6 +416,15 @@ defmodule HttpRequestMock do
   end
 
   def get("http://mastodon.example.org/users/admin", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       body: File.read!("test/fixtures/tesla_mock/admin@mastdon.example.org.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  def get("http://mastodon.example.org/users/admin/main-key", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
@@ -953,6 +967,15 @@ defmodule HttpRequestMock do
      }}
   end
 
+  def get("https://mastodon.social/users/lambadalambda#main-key", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       body: File.read!("test/fixtures/lambadalambda.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
   def get("https://mastodon.social/users/lambadalambda/collections/featured", _, _, _) do
     {:ok,
      %Tesla.Env{
@@ -1390,6 +1413,15 @@ defmodule HttpRequestMock do
   end
 
   def get("https://relay.mastodon.host/actor", _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       body: File.read!("test/fixtures/relay/relay.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  def get("https://relay.mastodon.host/actor#main-key", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,

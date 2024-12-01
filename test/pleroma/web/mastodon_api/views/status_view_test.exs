@@ -33,6 +33,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     user = insert(:user)
     other_user = insert(:user)
     third_user = insert(:user)
+    domain_blocked_user = insert(:user, %{ap_id: "https://blocked.com/@blocked"})
+
+    {:ok, user} = User.block_domain(user, "blocked.com")
+
     {:ok, activity} = CommonAPI.post(user, %{status: "dae cofe??"})
 
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, user, "☕")
@@ -40,6 +44,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, third_user, "🍵")
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, "☕")
     {:ok, _} = CommonAPI.react_with_emoji(activity.id, other_user, ":dinosaur:")
+    # this should not show up when the user is viewing the status
+    {:ok, _} = CommonAPI.react_with_emoji(activity.id, domain_blocked_user, "😈")
 
     activity = Repo.get(Activity, activity.id)
     status = StatusView.render("show.json", activity: activity)
@@ -55,7 +61,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
                url: "http://localhost:4001/emoji/dino walking.gif",
                account_ids: [other_user.id, user.id]
              },
-             %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]}
+             %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]},
+             %{name: "😈", count: 1, me: false, url: nil, account_ids: [domain_blocked_user.id]}
            ]
 
     status = StatusView.render("show.json", activity: activity, for: user)
@@ -73,6 +80,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
              },
              %{name: "🍵", count: 1, me: false, url: nil, account_ids: [third_user.id]}
            ]
+
+    refute Enum.any?(status[:pleroma][:emoji_reactions], fn reaction -> reaction[:name] == "😈" end)
   end
 
   test "works correctly with badly formatted emojis" do
