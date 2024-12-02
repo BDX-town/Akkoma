@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## UNRELEASED
+
+### BREAKING
+- The HTML content for new posts (both Client-to-Server as well as Server-to-Server communication) will now use a different formatting to represent MFM. See [FEP-c16b](https://codeberg.org/fediverse/fep/src/branch/main/fep/c16b/fep-c16b.md) for more details.
+
+### Fixed
+
+### Changed
+
+### Added
+
+### Removed
+
 ## 3.13.3 
 
 ## BREAKING
