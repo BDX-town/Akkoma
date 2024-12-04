@@ -519,10 +519,13 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   defp handle_incoming_normalised(%{"type" => type} = data, _options)
        when type in ~w{Like EmojiReact Announce Add Remove} do
-    with :ok <- ObjectValidator.fetch_actor_and_object(data),
+    with {_, :ok} <- {:link, ObjectValidator.fetch_actor_and_object(data)},
          {:ok, activity, _meta} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else
+      {:link, _} ->
+        {:error, :link_resolve_failed}
+
       e ->
         {:error, e}
     end

@@ -33,6 +33,13 @@ defmodule Pleroma.Workers.ReceiverWorker do
         Logger.info("Received invalid AP document: (2e) #{inspect(issue)}")
         {:discard, :invalid}
 
+      # failed to resolve a necessary referenced remote AP object;
+      # might be temporary server/network trouble thus reattempt
+      {:error, :link_resolve_failed} = e ->
+        # TODO: lower to debug for PR!
+        Logger.info("Failed to resolve AP link; may retry: #{inspect(params)}")
+        e
+
       {:error, _} = e ->
         Logger.error("Unexpected AP doc error: #{inspect(e)} from #{inspect(params)}")
         e

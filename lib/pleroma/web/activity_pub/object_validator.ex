@@ -253,9 +253,12 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidator do
   end
 
   def fetch_actor_and_object(object) do
-    fetch_actor(object)
-    Object.normalize(object["object"], fetch: true)
-    :ok
+    with {:ok, %User{}} <- fetch_actor(object),
+         %Object{} <- Object.normalize(object["object"], fetch: true) do
+      :ok
+    else
+      _ -> :error
+    end
   end
 
   defp for_each_history_item(
