@@ -34,9 +34,11 @@ defmodule Pleroma.Workers.ReceiverWorker do
         {:discard, :invalid}
 
       {:error, _} = e ->
+        Logger.error("Unexpected AP doc error: #{inspect(e)} from #{inspect(params)}")
         e
 
       e ->
+        Logger.error("Unexpected AP doc error: (raw) #{inspect(e)} from #{inspect(params)}")
         {:error, e}
     end
   end
