@@ -86,7 +86,7 @@ defmodule Pleroma.Web.RichMedia.Backfill do
   end
 
   defp stream_update(%{"activity_id" => activity_id}) do
-    Logger.info("Rich media backfill: streaming update for activity #{activity_id}")
+    Logger.debug("Rich media backfill: streaming update for activity #{activity_id}")
 
     Pleroma.Activity.get_by_id(activity_id)
     |> Pleroma.Activity.normalize()
