@@ -188,7 +188,7 @@ defmodule Pleroma.Instances.Instance do
   defp do_update_metadata(%URI{host: host} = uri, existing_record) do
     if existing_record do
       if needs_update(existing_record) do
-        Logger.info("Updating metadata for #{host}")
+        Logger.debug("Updating metadata for #{host}")
         favicon = scrape_favicon(uri)
         nodeinfo = scrape_nodeinfo(uri)
 
@@ -207,7 +207,7 @@ defmodule Pleroma.Instances.Instance do
       favicon = scrape_favicon(uri)
       nodeinfo = scrape_nodeinfo(uri)
 
-      Logger.info("Creating metadata for #{host}")
+      Logger.debug("Creating metadata for #{host}")
 
       %Instance{}
       |> changeset(%{
