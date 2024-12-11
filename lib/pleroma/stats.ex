@@ -79,24 +79,22 @@ defmodule Pleroma.Stats do
 
     status_count = Repo.aggregate(User.Query.build(%{local: true}), :sum, :note_count)
 
-    users_query =
+    # there are few enough local users for postgres to use an index scan
+    # (also here an exact count is a bit more important)
+    user_count =
       from(u in User,
         where: u.is_active == true,
         where: u.local == true,
         where: not is_nil(u.nickname),
         where: not u.invisible
       )
+      |> Repo.aggregate(:count, :id)
 
-    remote_users_query =
-      from(u in User,
-        where: u.is_active == true,
-        where: u.local == false,
-        where: not is_nil(u.nickname),
-        where: not u.invisible
-      )
-
-    user_count = Repo.aggregate(users_query, :count, :id)
-    remote_user_count = Repo.aggregate(remote_users_query, :count, :id)
+    # but mostly numerous remote users leading to a full a full table scan
+    # (ecto currently doesn't allow building queries without explicit table)
+    %{rows: [[remote_user_count]]} =
+      "SELECT estimate_remote_user_count();"
+      |> Pleroma.Repo.query!()
 
     %{
       peers: peers,
