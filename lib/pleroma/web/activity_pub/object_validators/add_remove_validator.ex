@@ -73,7 +73,9 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.AddRemoveValidator do
   end
 
   defp maybe_refetch_user(%User{ap_id: ap_id}) do
-    # Maybe it could use User.get_or_fetch_by_ap_id to avoid refreshing too often
-    User.fetch_by_ap_id(ap_id)
+    # If the user didn't expose a featured collection before,
+    # recheck now so we can verify perms for add/remove.
+    # But wait at least 5s to avoid rapid refetches in edge cases
+    User.get_or_fetch_by_ap_id(ap_id, maximum_age: 5)
   end
 end
