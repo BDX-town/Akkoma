@@ -24,13 +24,13 @@ defmodule Pleroma.Workers.ReceiverWorker do
         {:discard, :already_present}
 
       # invalid data or e.g. deleting an object we don't know about anyway
-      {:error, {:error, {:validate, issue}}} ->
+      {:error, {:validate, issue}} ->
         Logger.info("Received invalid AP document: #{inspect(issue)}")
         {:discard, :invalid}
 
       # rarer, but sometimes there’s an additional :error in front
-      {:error, {:error, {:error, {:validate, issue}}}} ->
-        Logger.info("Received invalid AP document: (3e) #{inspect(issue)}")
+      {:error, {:error, {:validate, issue}}} ->
+        Logger.info("Received invalid AP document: (2e) #{inspect(issue)}")
         {:discard, :invalid}
 
       {:error, _} = e ->
