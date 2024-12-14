@@ -523,6 +523,15 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
          {:ok, activity, _meta} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else
+      {:link, {:error, :ignore}} ->
+        {:error, :ignore}
+
+      {:link, {:error, {:validate, _}} = e} ->
+        e
+
+      {:link, {:error, {:reject, _}} = e} ->
+        e
+
       {:link, _} ->
         {:error, :link_resolve_failed}
 

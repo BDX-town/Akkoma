@@ -23,6 +23,9 @@ defmodule Pleroma.Workers.ReceiverWorker do
       {:error, :already_present} ->
         {:discard, :already_present}
 
+      {:error, :ignore} ->
+        {:discard, :ignore}
+
       # invalid data or e.g. deleting an object we don't know about anyway
       {:error, {:validate, issue}} ->
         Logger.info("Received invalid AP document: #{inspect(issue)}")
@@ -36,7 +39,6 @@ defmodule Pleroma.Workers.ReceiverWorker do
       # failed to resolve a necessary referenced remote AP object;
       # might be temporary server/network trouble thus reattempt
       {:error, :link_resolve_failed} = e ->
-        # TODO: lower to debug for PR!
         Logger.info("Failed to resolve AP link; may retry: #{inspect(params)}")
         e
 

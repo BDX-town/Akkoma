@@ -1999,6 +1999,10 @@ defmodule Pleroma.User do
       {%User{} = user, _} ->
         {:ok, user}
 
+      {_, {:error, {:reject, :mrf}}} ->
+        Logger.debug("Rejected to fetch user due to MRF: #{ap_id}")
+        {:error, {:reject, :mrf}}
+
       e ->
         Logger.error("Could not fetch user #{ap_id}, #{inspect(e)}")
         {:error, :not_found}
