@@ -2003,8 +2003,16 @@ defmodule Pleroma.User do
         Logger.debug("Rejected to fetch user due to MRF: #{ap_id}")
         {:error, {:reject, :mrf}}
 
-      e ->
+      {_, {:error, :not_found}} ->
+        Logger.debug("User doesn't exist (anymore): #{ap_id}")
+        {:error, :not_found}
+
+      {_, {:error, e}} ->
         Logger.error("Could not fetch user #{ap_id}, #{inspect(e)}")
+        {:error, e}
+
+      e ->
+        Logger.error("Unexpected error condition while fetching user #{ap_id}, #{inspect(e)}")
         {:error, :not_found}
     end
   end

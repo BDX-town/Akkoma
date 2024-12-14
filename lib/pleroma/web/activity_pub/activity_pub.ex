@@ -1750,19 +1750,16 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     else
       # If this has been deleted, only log a debug and not an error
       {:error, {"Object has been deleted", _, _} = e} ->
-        Logger.debug("Could not decode user at fetch #{ap_id}, #{inspect(e)}")
-        {:error, e}
+        Logger.debug("User was explicitly deleted #{ap_id}, #{inspect(e)}")
+        {:error, :not_found}
 
-      {:reject, reason} = e ->
-        Logger.debug("Rejected user #{ap_id}: #{inspect(reason)}")
+      {:reject, _reason} = e ->
         {:error, e}
 
       {:valid, reason} ->
-        Logger.debug("Data is not a valid user #{ap_id}: #{inspect(reason)}")
-        {:error, "Not a user"}
+        {:error, {:validate, reason}}
 
       {:error, e} ->
-        Logger.error("Could not decode user at fetch #{ap_id}, #{inspect(e)}")
         {:error, e}
     end
   end
