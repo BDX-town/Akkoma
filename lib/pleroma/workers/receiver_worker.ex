@@ -50,5 +50,13 @@ defmodule Pleroma.Workers.ReceiverWorker do
         Logger.error("Unexpected AP doc error: (raw) #{inspect(e)} from #{inspect(params)}")
         {:error, e}
     end
+  rescue
+    err ->
+      Logger.error(
+        "Receiver worker CRASH on #{inspect(params)} with: #{Exception.format(:error, err, __STACKTRACE__)}"
+      )
+
+      # reraise to let oban handle transaction conflicts without deductig an attempt
+      reraise err, __STACKTRACE__
   end
 end
