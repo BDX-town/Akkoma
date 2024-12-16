@@ -2581,10 +2581,10 @@ defmodule Pleroma.User do
           [pinned_objects: "You have already pinned the maximum number of statuses"]
         end
       end)
+      |> update_and_set_cache()
     else
-      change(user)
+      {:ok, user}
     end
-    |> update_and_set_cache()
   end
 
   @spec remove_pinned_object_id(User.t(), String.t()) :: {:ok, t()} | {:error, term()}
