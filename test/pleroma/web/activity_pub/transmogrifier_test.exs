@@ -52,6 +52,25 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
       refute User.following?(User.get_cached_by_ap_id(data["actor"]), user)
     end
 
+    test "it ignores Undo activities for unknown objects" do
+      undo_data = %{
+        "id" => "https://remote.com/undo",
+        "type" => "Undo",
+        "actor" => "https:://remote.com/users/unknown",
+        "object" => %{
+          "id" => "https://remote.com/undone_activity/unknown",
+          "type" => "Like"
+        }
+      }
+
+      assert {:error, :ignore} == Transmogrifier.handle_incoming(undo_data)
+
+      user = insert(:user, local: false, ap_id: "https://remote.com/users/known")
+      undo_data = %{undo_data | "actor" => user.ap_id}
+
+      assert {:error, :ignore} == Transmogrifier.handle_incoming(undo_data)
+    end
+
     test "it accepts Flag activities" do
       user = insert(:user)
       other_user = insert(:user)

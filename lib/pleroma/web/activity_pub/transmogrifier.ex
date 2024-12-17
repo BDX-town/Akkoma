@@ -604,6 +604,20 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
        when type in ["Like", "EmojiReact", "Announce", "Block"] do
     with {:ok, activity, _} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
+    else
+      {:error, {:validate, {:error, %Ecto.Changeset{errors: errors}}}} = e ->
+        # If we never saw the activity being undone, no need to do anything.
+        # Inspectinging the validation error content is a bit akward, but looking up the Activity
+        # ahead of time here would be too costly since Activity queries are not cached
+        # and there's no way atm to pass the retrieved result along along
+        if errors[:object] == {"can't find object", []} do
+          {:error, :ignore}
+        else
+          e
+        end
+
+      e ->
+        e
     end
   end
 
