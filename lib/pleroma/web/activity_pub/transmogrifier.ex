@@ -577,12 +577,13 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
           # We'd still like to process side effects so insert a fake tombstone and retry
           # (real tombstones from Object.delete do not have an actor field)
           with {:ok, object_id} <- ObjectValidators.ObjectID.cast(data["object"]),
-               %Activity{data: %{"actor" => actor}} <-
-                 Activity.create_by_object_ap_id(object_id) |> Repo.one(),
+               {_, %Activity{data: %{"actor" => actor}}} <-
+                 {:create, Activity.create_by_object_ap_id(object_id) |> Repo.one()},
                {:ok, tombstone_data, _} <- Builder.tombstone(actor, object_id),
                {:ok, _tombstone} <- Object.create(tombstone_data) do
             handle_incoming(data)
           else
+            {:create, _} -> {:error, :ignore}
             _ -> e
           end
         else
