@@ -560,17 +560,23 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
            Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else
-      {:error, {:validate, _}} = e ->
-        # Check if we have a create activity for this
-        with {:ok, object_id} <- ObjectValidators.ObjectID.cast(data["object"]),
-             %Activity{data: %{"actor" => actor}} <-
-               Activity.create_by_object_ap_id(object_id) |> Repo.one(),
-             # We have one, insert a tombstone and retry
-             {:ok, tombstone_data, _} <- Builder.tombstone(actor, object_id),
-             {:ok, _tombstone} <- Object.create(tombstone_data) do
-          handle_incoming(data)
+      {:error, {:validate, {:error, %Ecto.Changeset{errors: errors}}}} = e ->
+        if errors[:object] == {"can't find object", []} do
+          # Check if we have a create activity for this
+          # (e.g. from a db prune without --prune-activities)
+          # We'd still like to process side effects so insert a tombstone and retry
+          with {:ok, object_id} <- ObjectValidators.ObjectID.cast(data["object"]),
+               %Activity{data: %{"actor" => actor}} <-
+                 Activity.create_by_object_ap_id(object_id) |> Repo.one(),
+               # We have one, insert a tombstone and retry
+               {:ok, tombstone_data, _} <- Builder.tombstone(actor, object_id),
+               {:ok, _tombstone} <- Object.create(tombstone_data) do
+            handle_incoming(data)
+          else
+            _ -> e
+          end
         else
-          _ -> e
+          e
         end
 
       {:error, _} = e ->
