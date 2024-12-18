@@ -556,19 +556,29 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
          %{"type" => "Delete"} = data,
          _options
        ) do
-    with {:ok, activity, _} <-
-           Pipeline.common_pipeline(data, local: false) do
+    oid_result = ObjectValidators.ObjectID.cast(data["object"])
+
+    with {_, {:ok, object_id}} <- {:object_id, oid_result},
+         object <- Object.get_cached_by_ap_id(object_id),
+         {_, false} <- {:tombstone, Object.is_tombstone_object?(object) && !data["actor"]},
+         {:ok, activity, _} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else
+      {:object_id, _} ->
+        {:error, {:validate, "Invalid object id: #{data["object"]}"}}
+
+      {:tombstone, true} ->
+        {:error, :ignore}
+
       {:error, {:validate, {:error, %Ecto.Changeset{errors: errors}}}} = e ->
         if errors[:object] == {"can't find object", []} do
           # Check if we have a create activity for this
           # (e.g. from a db prune without --prune-activities)
-          # We'd still like to process side effects so insert a tombstone and retry
+          # We'd still like to process side effects so insert a fake tombstone and retry
+          # (real tombstones from Object.delete do not have an actor field)
           with {:ok, object_id} <- ObjectValidators.ObjectID.cast(data["object"]),
                %Activity{data: %{"actor" => actor}} <-
                  Activity.create_by_object_ap_id(object_id) |> Repo.one(),
-               # We have one, insert a tombstone and retry
                {:ok, tombstone_data, _} <- Builder.tombstone(actor, object_id),
                {:ok, _tombstone} <- Object.create(tombstone_data) do
             handle_incoming(data)
