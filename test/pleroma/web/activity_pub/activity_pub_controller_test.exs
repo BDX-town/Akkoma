@@ -16,7 +16,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Relay
   alias Pleroma.Web.ActivityPub.UserView
-  alias Pleroma.Web.ActivityPub.Utils
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.Endpoint
   alias Pleroma.Workers.ReceiverWorker
@@ -1113,7 +1112,8 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
 
     test "it removes all follower collections but actor's", %{conn: conn} do
-      [actor, recipient] = insert_pair(:user)
+      actor = insert(:user, local: false)
+      recipient = insert(:user, local: true)
       actor = with_signing_key(actor)
 
       to = [
@@ -1127,7 +1127,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       data = %{
         "@context" => ["https://www.w3.org/ns/activitystreams"],
         "type" => "Create",
-        "id" => Utils.generate_activity_id(),
+        "id" => actor.ap_id <> "/create/12345",
         "to" => to,
         "cc" => cc,
         "actor" => actor.ap_id,
@@ -1137,7 +1137,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
           "cc" => cc,
           "content" => "It's a note",
           "attributedTo" => actor.ap_id,
-          "id" => Utils.generate_object_id()
+          "id" => actor.ap_id <> "/note/12345"
         }
       }
 
