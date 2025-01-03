@@ -950,8 +950,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
       "icon" => %{"url" => "#{URI.encode(url)}", "type" => "Image"},
       "name" => ":" <> name <> ":",
       "type" => "Emoji",
-      "updated" => "1970-01-01T00:00:00Z",
-      "id" => nil
+      "updated" => "1970-01-01T00:00:00Z"
     }
   end
 
