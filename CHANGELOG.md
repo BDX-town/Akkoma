@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Fixed
 - Media proxy no longer attempts to proxy embedded images
+- ObjectAge policy no longer lets unlisted posts slip through
+- ObjectAge policy no longer leaks belated DMs and follower-only posts
+- the NodeINfo endpoint now uses the correct content type
+
+## Changed
+- Anonymous objects now federate completely without an id
+  adopting a proposed AP spec errata and restoring federation
+  with e.g. IceShrimp.NET and fedify-based implementations
 
 ## 3.13.3 
 
@@ -28,8 +36,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - AP objects with additional JSON-LD profiles beyond ActivityStreams can now be fetched
 - Single-selection polls no longer expose the voter_count; MastoAPI demands it be null
   and this confused some clients leading to vote distributions >100%
-- ObjectAge policy no longer lets unlisted posts slip through
-- ObjectAge policy no longer leaks belated DMs and follower-only posts
 
 ## Changed
 - Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.
