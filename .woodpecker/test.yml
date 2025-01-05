@@ -17,10 +17,6 @@ matrix:
       OTP_VERSION: 26
 
 variables:
-  - &scw-secrets
-    - SCW_ACCESS_KEY
-    - SCW_SECRET_KEY
-    - SCW_DEFAULT_ORGANIZATION_ID
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
   - &on-release
     when:
