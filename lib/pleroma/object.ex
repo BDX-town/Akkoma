@@ -9,7 +9,6 @@ defmodule Pleroma.Object do
   import Ecto.Changeset
 
   alias Pleroma.Activity
-  alias Pleroma.Config
   alias Pleroma.Hashtag
   alias Pleroma.Object
   alias Pleroma.Object.Fetcher
@@ -241,22 +240,10 @@ defmodule Pleroma.Object do
     with {:ok, _obj} = swap_object_with_tombstone(object),
          deleted_activity = Activity.delete_all_by_object_ap_id(id),
          {:ok, _} <- invalid_object_cache(object) do
-      cleanup_attachments(
-        Config.get([:instance, :cleanup_attachments]),
-        %{object: object}
-      )
-
+      AttachmentsCleanupWorker.enqueue_if_needed(object.data)
       {:ok, object, deleted_activity}
     end
   end
-
-  @spec cleanup_attachments(boolean(), %{required(:object) => map()}) ::
-          {:ok, Oban.Job.t() | nil}
-  def cleanup_attachments(true, %{object: _} = params) do
-    AttachmentsCleanupWorker.enqueue("cleanup_attachments", params)
-  end
-
-  def cleanup_attachments(_, _), do: {:ok, nil}
 
   def prune(%Object{data: %{"id" => _id}} = object) do
     with {:ok, object} <- Repo.delete(object),
