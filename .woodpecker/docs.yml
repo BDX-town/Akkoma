@@ -45,12 +45,14 @@ variables:
 steps:
   docs:
     <<: *on-point-release
-    secrets:
-    - SCW_ACCESS_KEY
-    - SCW_SECRET_KEY
-    - SCW_DEFAULT_ORGANIZATION_ID
     environment:
       CI: "true"
+      SCW_ACCESS_KEY:
+        from_secret: SCW_ACCESS_KEY
+      SCW_SECRET_KEY:
+        from_secret: SCW_SECRET_KEY
+      SCW_DEFAULT_ORGANIZATION_ID:
+        from_secret: SCW_DEFAULT_ORGANIZATION_ID
     image: python:3.10-slim
     commands:
       - apt-get update && apt-get install -y rclone wget git zip
