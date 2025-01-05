@@ -1184,7 +1184,7 @@ config :pleroma, :config_description, [
             logoMask: true,
             minimalScopesMode: false,
             noAttachmentLinks: false,
-            nsfwCensorImage: "/static/img/nsfw.74818f9.png",
+            nsfwCensorImage: "",
             postContentType: "text/plain",
             redirectRootLogin: "/main/friends",
             redirectRootNoLogin: "/main/all",
@@ -1194,7 +1194,9 @@ config :pleroma, :config_description, [
             showInstanceSpecificPanel: false,
             subjectLineBehavior: "email",
             theme: "pleroma-dark",
-            webPushNotifications: false
+            webPushNotifications: false,
+            backendCommitUrl: "",
+            frontendCommitUrl: ""
           }
         ],
         children: [
@@ -1285,7 +1287,7 @@ config :pleroma, :config_description, [
             type: {:string, :image},
             description:
               "URL of the image to use for hiding NSFW media attachments in the timeline",
-            suggestions: ["/static/img/nsfw.74818f9.png"]
+            suggestions: [""]
           },
           %{
             key: :postContentType,
@@ -1398,6 +1400,18 @@ config :pleroma, :config_description, [
             label: "Stop Gifs",
             type: :boolean,
             description: "Whether to pause animated images until they're hovered on"
+          },
+          %{
+            key: :backendCommitUrl,
+            label: "Backend Commit URL",
+            type: :string,
+            description: "URL prefix for backend commit hashes"
+          },
+          %{
+            key: :frontendCommitUrl,
+            label: "Frontend Commit URL",
+            type: :string,
+            description: "URL prefix for frontend commit hashes"
           }
         ]
       },

@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2025.01
+
+## Added
+- New config option `:instance, :cleanup_attachments_delay`
+- It is now possible to display custom source URLs in akkoma-fe;
+  the settings are part of the frontend configuration
+
+## Fixed
+- Media proxy no longer attempts to proxy embedded images
+- Fix significant uneccessary overhead of attachment cleanup;
+  it no longer attempts to cleanup attachments of deleted remote posts
+- Fix “Delete & Redraft” often losing attachments if attachment cleanup was enabled
+- ObjectAge policy no longer lets unlisted posts slip through
+- ObjectAge policy no longer leaks belated DMs and follower-only posts
+- the NodeINfo endpoint now uses the correct content type
+
+## Changed
+- Anonymous objects now federate completely without an id
+  adopting a proposed AP spec errata and restoring federation
+  with e.g. IceShrimp.NET and fedify-based implementations
+
 ## 3.13.3 
 
 ## BREAKING

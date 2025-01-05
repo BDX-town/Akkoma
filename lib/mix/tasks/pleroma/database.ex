@@ -343,10 +343,16 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     %{:num_rows => del_hashtags} =
       """
-      DELETE FROM hashtags AS ht
-      WHERE NOT EXISTS (
-        SELECT 1 FROM hashtags_objects hto
-        WHERE ht.id = hto.hashtag_id)
+      DELETE FROM hashtags
+      USING hashtags AS ht
+      LEFT JOIN hashtags_objects hto
+            ON ht.id = hto.hashtag_id
+      LEFT JOIN user_follows_hashtag ufht
+            ON ht.id = ufht.hashtag_id
+      WHERE
+          hashtags.id = ht.id
+          AND hto.hashtag_id is NULL
+          AND ufht.hashtag_id is NULL
       """
       |> Repo.query!()
 

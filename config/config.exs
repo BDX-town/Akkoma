@@ -255,6 +255,7 @@ config :pleroma, :instance,
   external_user_synchronization: true,
   extended_nickname_format: true,
   cleanup_attachments: false,
+  cleanup_attachments_delay: 1800,
   multi_factor_authentication: [
     totp: [
       # digits 6 or 8
@@ -302,6 +303,7 @@ config :pleroma, :markup,
   allow_headings: false,
   allow_tables: false,
   allow_fonts: false,
+  allow_math: true,
   scrub_policy: [
     Pleroma.HTML.Scrubber.Default,
     Pleroma.HTML.Transform.MediaProxy
