@@ -1194,7 +1194,9 @@ config :pleroma, :config_description, [
             showInstanceSpecificPanel: false,
             subjectLineBehavior: "email",
             theme: "pleroma-dark",
-            webPushNotifications: false
+            webPushNotifications: false,
+            backendCommitUrl: "",
+            frontendCommitUrl: ""
           }
         ],
         children: [
@@ -1398,6 +1400,18 @@ config :pleroma, :config_description, [
             label: "Stop Gifs",
             type: :boolean,
             description: "Whether to pause animated images until they're hovered on"
+          },
+          %{
+            key: :backendCommitUrl,
+            label: "Backend Commit URL",
+            type: :string,
+            description: "URL prefix for backend commit hashes"
+          },
+          %{
+            key: :frontendCommitUrl,
+            label: "Frontend Commit URL",
+            type: :string,
+            description: "URL prefix for frontend commit hashes"
           }
         ]
       },
