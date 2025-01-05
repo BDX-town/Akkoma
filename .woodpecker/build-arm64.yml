@@ -1,5 +1,5 @@
 labels:
-  platform: linux/aarch64
+  platform: linux/arm64
 
 depends_on:
   - test
