@@ -6,9 +6,12 @@ depends_on:
 
 variables:
   - &scw-secrets
-    - SCW_ACCESS_KEY
-    - SCW_SECRET_KEY
-    - SCW_DEFAULT_ORGANIZATION_ID
+    SCW_ACCESS_KEY:
+      from_secret: SCW_ACCESS_KEY
+    SCW_SECRET_KEY:
+      from_secret: SCW_SECRET_KEY
+    SCW_DEFAULT_ORGANIZATION_ID:
+      from_secret: SCW_DEFAULT_ORGANIZATION_ID
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
   - &on-release
     when:
@@ -56,7 +59,7 @@ steps:
   release-debian-bookworm:
     image: akkoma/releaser
     <<: *on-release
-    secrets: *scw-secrets
+    environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64.zip
       # AMD64
@@ -86,7 +89,7 @@ steps:
   release-debian-bullseye:
     image: akkoma/releaser
     <<: *on-release
-    secrets: *scw-secrets
+    environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64-debian-bullseye.zip
       # AMD64
@@ -112,7 +115,7 @@ steps:
   release-musl:
     image: akkoma/releaser
     <<: *on-stable
-    secrets: *scw-secrets
+    environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64-musl.zip
       - export DEST=scaleway:akkoma-updates/$${CI_COMMIT_TAG:-"$CI_COMMIT_BRANCH"}/akkoma-amd64-musl.zip
