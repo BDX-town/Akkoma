@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## 2025.01.01
+
+Hotfix: Federation could break if a null value found its way into `should_federate?\1`
 
 ## 2025.01
 
