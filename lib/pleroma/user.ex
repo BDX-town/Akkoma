@@ -100,7 +100,6 @@ defmodule Pleroma.User do
     field(:password_hash, :string)
     field(:password, :string, virtual: true)
     field(:password_confirmation, :string, virtual: true)
-    field(:keys, :string)
     field(:ap_id, :string)
     field(:avatar, :map, default: %{})
     field(:local, :boolean, default: true)

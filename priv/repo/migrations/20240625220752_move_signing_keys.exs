@@ -11,7 +11,7 @@ defmodule Pleroma.Repo.Migrations.MoveSigningKeys do
     # Also this MUST use select, else the migration will fail in future installs with new user fields!
     from(u in Pleroma.User,
       where: u.local == true,
-      select: {u.id, u.keys, u.ap_id}
+      select: {u.id, fragment("?.keys", u), u.ap_id}
     )
     |> Repo.stream(timeout: :infinity)
     |> Enum.each(fn

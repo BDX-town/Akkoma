@@ -1708,7 +1708,6 @@ defmodule Pleroma.UserTest do
         bio: "eyy lmao",
         name: "qqqqqqq",
         password_hash: "pdfk2$1b3n159001",
-        keys: "RSA begin buplic key",
         avatar: %{"a" => "b"},
         tags: ["qqqqq"],
         banner: %{"a" => "b"},
