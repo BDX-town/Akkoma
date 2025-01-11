@@ -461,12 +461,7 @@ defmodule Pleroma.UserTest do
               }
             )
 
-    setup do:
-            clear_config(:mrf,
-              policies: [
-                Pleroma.Web.ActivityPub.MRF.SimplePolicy
-              ]
-            )
+    setup do: clear_config([:mrf, :policies], [Pleroma.Web.ActivityPub.MRF.SimplePolicy])
 
     test "it sends a welcome email message if it is set" do
       welcome_user = insert(:user)
