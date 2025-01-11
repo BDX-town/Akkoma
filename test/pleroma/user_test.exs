@@ -2232,6 +2232,56 @@ defmodule Pleroma.UserTest do
       # is not a superuser any more
       assert [] = Notification.for_user(user)
     end
+
+    test "updates public key pem" do
+      # note: in the future key updates might be limited to announced expirations
+      user_org =
+        insert(:user, local: false)
+        |> with_signing_key()
+
+      old_pub = user_org.signing_key.public_key
+      new_pub = "BEGIN RSA public key"
+      refute old_pub == new_pub
+
+      {:ok, %User{} = user} =
+        User.update_and_set_cache(user_org, %{signing_key: %{public_key: new_pub}})
+
+      user = SigningKey.load_key(user)
+
+      assert user.signing_key.public_key == new_pub
+    end
+
+    test "updates public key id if valid" do
+      # note: in the future key updates might be limited to announced expirations
+      user_org =
+        insert(:user, local: false)
+        |> with_signing_key()
+
+      old_kid = user_org.signing_key.key_id
+      new_kid = old_kid <> "_v2"
+
+      {:ok, %User{} = user} =
+        User.update_and_set_cache(user_org, %{signing_key: %{key_id: new_kid}})
+
+      user = SigningKey.load_key(user)
+
+      assert user.signing_key.key_id == new_kid
+      refute Repo.get_by(SigningKey, key_id: old_kid)
+    end
+
+    test "refuses to sever existing key-user mappings" do
+      user1 =
+        insert(:user, local: false)
+        |> with_signing_key()
+
+      user2 =
+        insert(:user, local: false)
+        |> with_signing_key()
+
+      assert_raise Ecto.ConstraintError, fn ->
+        User.update_and_set_cache(user2, %{signing_key: %{key_id: user1.signing_key.key_id}})
+      end
+    end
   end
 
   describe "following/followers synchronization" do

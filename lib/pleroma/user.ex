@@ -222,7 +222,9 @@ defmodule Pleroma.User do
 
     # FOR THE FUTURE: We might want to make this a one-to-many relationship
     # it's entirely possible right now, but we don't have a use case for it
-    has_one(:signing_key, SigningKey, foreign_key: :user_id)
+    # XXX: in the future we’d also like to parse and honour key expiration times
+    #      instead of blindly accepting any change in signing keys
+    has_one(:signing_key, SigningKey, foreign_key: :user_id, on_replace: :update)
 
     timestamps()
   end
