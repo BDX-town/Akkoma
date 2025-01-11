@@ -10,6 +10,7 @@ defmodule Pleroma.UserTest do
   alias Pleroma.Repo
   alias Pleroma.Tests.ObanHelpers
   alias Pleroma.User
+  alias Pleroma.User.SigningKey
   alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.Web.CommonAPI
 
@@ -907,6 +908,35 @@ defmodule Pleroma.UserTest do
 
       assert {:ok, %User{also_known_as: []}} =
                User.get_or_fetch_by_ap_id("https://mbp.example.com/")
+    end
+
+    test "doesn't allow key_id poisoning" do
+      {:error, {:validate, {:error, "Problematic actor-key pairing:" <> _}}} =
+        User.fetch_by_ap_id(
+          "http://remote.example/users/with_key_id_of_admin-mastodon.example.org"
+        )
+
+      used_key_id = "http://mastodon.example.org/users/admin#main-key"
+      refute Repo.get_by(SigningKey, key_id: used_key_id)
+
+      {:ok, user} = User.fetch_by_ap_id("http://mastodon.example.org/users/admin")
+      user = SigningKey.load_key(user)
+
+      # ensure we checked for the right key before
+      assert user.signing_key.key_id == used_key_id
+    end
+
+    test "doesn't allow key_id takeovers" do
+      {:ok, user} = User.fetch_by_ap_id("http://mastodon.example.org/users/admin")
+      user = SigningKey.load_key(user)
+
+      {:error, {:validate, {:error, "Problematic actor-key pairing:" <> _}}} =
+        User.fetch_by_ap_id(
+          "http://remote.example/users/with_key_id_of_admin-mastodon.example.org"
+        )
+
+      refreshed_sk = Repo.get_by(SigningKey, key_id: user.signing_key.key_id)
+      assert refreshed_sk.user_id == user.id
     end
   end
 

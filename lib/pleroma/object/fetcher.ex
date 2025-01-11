@@ -275,6 +275,42 @@ defmodule Pleroma.Object.Fetcher do
   def fetch_and_contain_remote_object_from_id(_id, _is_ap_id),
     do: {:error, :invalid_id}
 
+  def fetch_and_contain_remote_key(id) do
+    Logger.debug("Fetching remote actor key #{id}")
+
+    fetch_and_contain_remote_ap_doc(
+      id,
+      # key IDs are alwas AP IDs which should resolve directly and exactly
+      true,
+      fn
+        final_uri, %{"id" => user_id, "publicKey" => %{"id" => key_id}} ->
+          # For non-fragment keys as used e.g. by GTS, the "id" won't match the fetch URI,
+          # but the key ID will. Thus do NOT strict check the top-lelve id, but byte-exact
+          # check the key ID (since for later lookups we need byte-exact matches).
+          # This relies on fetching already enforcing a domain match for toplevel id and host
+          with :ok <- Containment.contain_key_user(key_id, user_id),
+               true <- key_id == final_uri do
+            {:ok, key_id}
+          else
+            _ -> {:error, key_id}
+          end
+
+        final_uri,
+        %{"type" => "CryptographicKey", "id" => key_id, "owner" => user_id, "publicKeyPem" => _} ->
+          # XXX: refactor into separate function isntead of duplicating
+          with :ok <- Containment.contain_key_user(key_id, user_id),
+               true <- key_id == final_uri do
+            {:ok, key_id}
+          else
+            _ -> {:error, nil}
+          end
+
+        _, _ ->
+          {:error, nil}
+      end
+    )
+  end
+
   # Fetches an AP document and performing variable security checks on it.
   #
   # Note that the received documents "id" matching the final host domain

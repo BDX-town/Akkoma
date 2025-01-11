@@ -196,7 +196,7 @@ defmodule Pleroma.User.SigningKey do
     Logger.debug("Fetching remote key: #{key_id}")
 
     with {:ok, _body} = resp <-
-           Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id),
+           Pleroma.Object.Fetcher.fetch_and_contain_remote_key(key_id),
          {:ok, ap_id, public_key_pem} <- handle_signature_response(resp) do
       Logger.debug("Fetched remote key: #{ap_id}")
       # fetch the user
