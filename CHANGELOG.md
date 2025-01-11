@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Added
 
 ## Fixed
+- fixed some holes in SigningKey verification potentially allowing they key-user mapping to be poisoned
+- frontend ZIP files can no longer traverse to paths outside their install dir
+- fixed user updates trying but failing to renew signing key information
 
 ## Changed
 - Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
