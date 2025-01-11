@@ -174,12 +174,12 @@ defmodule Pleroma.User.SigningKey do
   Will either return the key if it exists locally, or fetch it from the remote instance.
   """
   def get_or_fetch_by_key_id(key_id) do
-    case key_id_to_user_id(key_id) do
+    case Repo.get_by(__MODULE__, key_id: key_id) do
       nil ->
         fetch_remote_key(key_id)
 
-      user_id ->
-        {:ok, Repo.get_by(__MODULE__, user_id: user_id)}
+      key ->
+        {:ok, key}
     end
   end
 
@@ -195,12 +195,11 @@ defmodule Pleroma.User.SigningKey do
   def fetch_remote_key(key_id) do
     Logger.debug("Fetching remote key: #{key_id}")
 
-    with {:ok, _body} = resp <-
+    with {:ok, resp_body} <-
            Pleroma.Object.Fetcher.fetch_and_contain_remote_key(key_id),
-         {:ok, ap_id, public_key_pem} <- handle_signature_response(resp) do
+         {:ok, ap_id, public_key_pem} <- handle_signature_response(resp_body),
+         {:ok, user} <- User.get_or_fetch_by_ap_id(ap_id) do
       Logger.debug("Fetched remote key: #{ap_id}")
-      # fetch the user
-      {:ok, user} = User.get_or_fetch_by_ap_id(ap_id)
       # store the key
       key = %__MODULE__{
         user_id: user.id,
@@ -227,7 +226,7 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
-  defp handle_signature_response({:ok, body}) do
+  defp handle_signature_response(body) do
     case body do
       %{
         "type" => "CryptographicKey",
@@ -247,9 +246,9 @@ defmodule Pleroma.User.SigningKey do
 
       %{"error" => error} ->
         {:error, error}
+
+      other ->
+        {:error, "Could not process key: #{inspect(other)}"}
     end
   end
-
-  defp handle_signature_response({:error, e}), do: {:error, e}
-  defp handle_signature_response(other), do: {:error, "Could not fetch key: #{inspect(other)}"}
 end
