@@ -201,13 +201,22 @@ defmodule Pleroma.User.SigningKey do
          {:ok, user} <- User.get_or_fetch_by_ap_id(ap_id) do
       Logger.debug("Fetched remote key: #{ap_id}")
       # store the key
-      key = %__MODULE__{
+      key = %{
         user_id: user.id,
         public_key: public_key_pem,
         key_id: key_id
       }
 
-      Repo.insert(key, on_conflict: :replace_all, conflict_target: :key_id)
+      key_cs =
+        cast(%__MODULE__{}, key, [:user_id, :public_key, :key_id])
+        |> unique_constraint(:user_id)
+
+      Repo.insert(key_cs,
+        # while this should never run for local users anyway, etc make sure we really never loose privkey info!
+        on_conflict: {:replace_all_except, [:inserted_at, :private_key]},
+        # if the key owner overlaps with a distinct existing key entry, this intetionally still errros
+        conflict_target: :key_id
+      )
     else
       e ->
         Logger.debug("Failed to fetch remote key: #{inspect(e)}")
