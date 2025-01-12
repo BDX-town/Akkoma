@@ -10,23 +10,33 @@ defmodule Pleroma.Signature do
   require Logger
 
   def fetch_public_key(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, %SigningKey{} = sk} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, decoded_key} <- SigningKey.public_key_decoded(sk) do
+    with {_, %{"keyId" => kid}} <- {:keyid, HTTPSignatures.signature_for_conn(conn)},
+         {_, {:ok, %SigningKey{} = sk}, _} <-
+           {:fetch, SigningKey.get_or_fetch_by_key_id(kid), kid},
+         {_, {:ok, decoded_key}} <- {:decode, SigningKey.public_key_decoded(sk)} do
       {:ok, decoded_key}
     else
+      {:fetch, error, kid} ->
+        Logger.error("Failed to acquire key from signature: #{kid} #{inspect(error)}")
+        {:error, {:fetch, error}}
+
       e ->
         {:error, e}
     end
   end
 
   def refetch_public_key(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
+    with {_, %{"keyId" => kid}} <- {:keyid, HTTPSignatures.signature_for_conn(conn)},
          # TODO: force a refetch of stale keys (perhaps with a backoff time based on updated_at)
-         {:ok, %SigningKey{} = sk} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, decoded_key} <- SigningKey.public_key_decoded(sk) do
+         {_, {:ok, %SigningKey{} = sk}, _} <-
+           {:fetch, SigningKey.get_or_fetch_by_key_id(kid), kid},
+         {_, {:ok, decoded_key}} <- {:decode, SigningKey.public_key_decoded(sk)} do
       {:ok, decoded_key}
     else
+      {:fetch, error, kid} ->
+        Logger.error("Failed to refresh stale key from signature: #{kid} #{inspect(error)}")
+        {:error, {:fetch, error}}
+
       e ->
         {:error, e}
     end
