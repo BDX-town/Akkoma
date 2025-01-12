@@ -218,6 +218,23 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
+  defp refresh_key(%__MODULE__{} = key) do
+    min_backoff = Pleroma.Config.get!([:activitypub, :min_key_refetch_interval])
+
+    if Timex.diff(Timex.now(), key.updated_at, :seconds) >= min_backoff do
+      fetch_remote_key(key.key_id)
+    else
+      {:error, :too_young}
+    end
+  end
+
+  def refresh_by_key_id(key_id) do
+    case Repo.get_by(__MODULE__, key_id: key_id) do
+      nil -> {:error, :unknown}
+      key -> refresh_key(key)
+    end
+  end
+
   # Take the response from the remote instance and extract the key details
   # will check if the key ID matches the owner of the key, if not, error
   defp extract_key_details(%{"id" => ap_id, "publicKey" => public_key}) do

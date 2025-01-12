@@ -27,12 +27,18 @@ defmodule Pleroma.Signature do
 
   def refetch_public_key(conn) do
     with {_, %{"keyId" => kid}} <- {:keyid, HTTPSignatures.signature_for_conn(conn)},
-         # TODO: force a refetch of stale keys (perhaps with a backoff time based on updated_at)
-         {_, {:ok, %SigningKey{} = sk}, _} <-
-           {:fetch, SigningKey.get_or_fetch_by_key_id(kid), kid},
+         {_, {:ok, %SigningKey{} = sk}, _} <- {:fetch, SigningKey.refresh_by_key_id(kid), kid},
          {_, {:ok, decoded_key}} <- {:decode, SigningKey.public_key_decoded(sk)} do
       {:ok, decoded_key}
     else
+      {:fetch, {:error, :too_young}, kid} ->
+        Logger.debug("Refusing to refetch recently updated key: #{kid}")
+        {:error, {:fetch, :too_young}}
+
+      {:fetch, {:error, :unknown}, kid} ->
+        Logger.warning("Attempted to refresh unknown key; this should not happen: #{kid}")
+        {:error, {:fetch, :unknown}}
+
       {:fetch, error, kid} ->
         Logger.error("Failed to refresh stale key from signature: #{kid} #{inspect(error)}")
         {:error, {:fetch, error}}

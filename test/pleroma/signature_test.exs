@@ -56,7 +56,18 @@ defmodule Pleroma.SignatureTest do
 
   describe "refetch_public_key/1" do
     test "it returns key" do
+      clear_config([:activitypub, :min_key_refetch_interval], 0)
       ap_id = "https://mastodon.social/users/lambadalambda"
+
+      %Pleroma.User{signing_key: sk} =
+        Pleroma.User.get_or_fetch_by_ap_id(ap_id)
+        |> then(fn {:ok, u} -> u end)
+        |> Pleroma.User.SigningKey.load_key()
+
+      {:ok, _} =
+        %{sk | public_key: "-----BEGIN PUBLIC KEY-----\nasdfghjkl"}
+        |> Ecto.Changeset.change()
+        |> Pleroma.Repo.update()
 
       assert Signature.refetch_public_key(make_fake_conn(ap_id)) == {:ok, @rsa_public_key}
     end

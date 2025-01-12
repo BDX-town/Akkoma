@@ -370,6 +370,7 @@ config :pleroma, :activitypub,
   note_replies_output_limit: 5,
   sign_object_fetches: true,
   authorized_fetch_mode: false,
+  min_key_refetch_interval: 86_400,
   max_collection_objects: 50
 
 config :pleroma, :streamer,
