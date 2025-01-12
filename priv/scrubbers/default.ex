@@ -172,6 +172,119 @@ defmodule Pleroma.HTML.Scrubber.Default do
     Meta.allow_tag_with_these_attributes(:font, ["face"])
   end
 
+  if Pleroma.Config.get!([:markup, :allow_math]) do
+    Meta.allow_tag_with_these_attributes("annotation", ["encoding"])
+    Meta.allow_tag_with_these_attributes(:"annotation-xml", ["encoding"])
+
+    Meta.allow_tag_with_these_attributes(:math, [
+      "display",
+      "displaystyle",
+      "mathvariant",
+      "scriptlevel"
+    ])
+
+    basic_math_tags = [
+      "maction",
+      "merror",
+      :mi,
+      "mmultiscripts",
+      :mn,
+      "mphantom",
+      "mprescripts",
+      "mroot",
+      "mrow",
+      "ms",
+      "msqrt",
+      "mstyle",
+      "msub",
+      "msubsup",
+      "msup",
+      "mtable",
+      "mtext",
+      "mtr",
+      "semantics"
+    ]
+
+    for tag <- basic_math_tags do
+      Meta.allow_tag_with_these_attributes(unquote(tag), [
+        "mathvariant",
+        "displaystyle",
+        "scriptlevel"
+      ])
+    end
+
+    Meta.allow_tag_with_these_attributes("mfrac", [
+      "displaystyle",
+      "linethickness",
+      "mathvariant",
+      "scriptlevel"
+    ])
+
+    Meta.allow_tag_with_these_attributes(:mo, [
+      "displaystyle",
+      "form",
+      "largeop",
+      "lspace",
+      "mathvariant",
+      "minsize",
+      "movablelimits",
+      "rspace",
+      "scriptlevel",
+      "stretchy",
+      "symmetric"
+    ])
+
+    Meta.allow_tag_with_these_attributes("mover", [
+      "accent",
+      "displaystyle",
+      "mathvariant",
+      "scriptlevel"
+    ])
+
+    Meta.allow_tag_with_these_attributes("mpadded", [
+      "depth",
+      "displaystyle",
+      "height",
+      "lspace",
+      "mathvariant",
+      "scriptlevel",
+      "voffset",
+      "width"
+    ])
+
+    Meta.allow_tag_with_these_attributes("mspace", [
+      "depth",
+      "displaystyle",
+      "height",
+      "mathvariant",
+      "scriptlevel",
+      "width"
+    ])
+
+    Meta.allow_tag_with_these_attributes("mtd", [
+      "columnspan",
+      "displaystyle",
+      "mathvariant",
+      "rowspan",
+      "scriptlevel"
+    ])
+
+    Meta.allow_tag_with_these_attributes("munder", [
+      "accentunder",
+      "displaystyle",
+      "mathvariant",
+      "scriptlevel"
+    ])
+
+    Meta.allow_tag_with_these_attributes("munderover", [
+      "accent",
+      "accentunder",
+      "displaystyle",
+      "mathvariant",
+      "scriptlevel"
+    ])
+  end
+
   Meta.allow_tag_with_these_attributes(:center, [])
   Meta.allow_tag_with_these_attributes(:small, [])
 

@@ -194,31 +194,24 @@ defmodule Pleroma.User.SigningKey do
   """
   def fetch_remote_key(key_id) do
     Logger.debug("Fetching remote key: #{key_id}")
-    resp = Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id)
 
-    case resp do
-      {:ok, _body} ->
-        case handle_signature_response(resp) do
-          {:ok, ap_id, public_key_pem} ->
-            Logger.debug("Fetched remote key: #{ap_id}")
-            # fetch the user
-            {:ok, user} = User.get_or_fetch_by_ap_id(ap_id)
-            # store the key
-            key = %__MODULE__{
-              user_id: user.id,
-              public_key: public_key_pem,
-              key_id: key_id
-            }
+    with {:ok, _body} = resp <-
+           Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id),
+         {:ok, ap_id, public_key_pem} <- handle_signature_response(resp) do
+      Logger.debug("Fetched remote key: #{ap_id}")
+      # fetch the user
+      {:ok, user} = User.get_or_fetch_by_ap_id(ap_id)
+      # store the key
+      key = %__MODULE__{
+        user_id: user.id,
+        public_key: public_key_pem,
+        key_id: key_id
+      }
 
-            Repo.insert(key, on_conflict: :replace_all, conflict_target: :key_id)
-
-          e ->
-            Logger.debug("Failed to fetch remote key: #{inspect(e)}")
-            {:error, "Could not fetch key"}
-        end
-
-      _ ->
-        Logger.debug("Failed to fetch remote key: #{inspect(resp)}")
+      Repo.insert(key, on_conflict: :replace_all, conflict_target: :key_id)
+    else
+      e ->
+        Logger.debug("Failed to fetch remote key: #{inspect(e)}")
         {:error, "Could not fetch key"}
     end
   end
