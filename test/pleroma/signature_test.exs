@@ -114,16 +114,6 @@ defmodule Pleroma.SignatureTest do
     end
   end
 
-  describe "key_id_to_actor_id/1" do
-    test "it reverses the key id to actor id" do
-      user =
-        insert(:user)
-        |> with_signing_key()
-
-      assert Signature.key_id_to_actor_id(user.signing_key.key_id) == {:ok, user.ap_id}
-    end
-  end
-
   describe "signed_date" do
     test "it returns formatted current date" do
       with_mock(NaiveDateTime, utc_now: fn -> ~N[2019-08-23 18:11:24.822233] end) do

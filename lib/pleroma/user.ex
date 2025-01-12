@@ -2068,17 +2068,6 @@ defmodule Pleroma.User do
 
   defdelegate public_key(user), to: SigningKey
 
-  def get_public_key_for_ap_id(ap_id) do
-    with {:ok, %User{} = user} <- get_or_fetch_by_ap_id(ap_id),
-         {:ok, public_key} <- SigningKey.public_key(user) do
-      {:ok, public_key}
-    else
-      e ->
-        Logger.error("Could not get public key for #{ap_id}.\n#{inspect(e)}")
-        {:error, e}
-    end
-  end
-
   @doc "Gets or fetch a user by uri or nickname."
   @spec get_or_fetch(String.t()) :: {:ok, User.t()} | {:error, String.t()}
   def get_or_fetch("http://" <> _host = uri), do: get_or_fetch_by_ap_id(uri)

@@ -9,24 +9,11 @@ defmodule Pleroma.Signature do
   alias Pleroma.User.SigningKey
   require Logger
 
-  def key_id_to_actor_id(key_id) do
-    case SigningKey.key_id_to_ap_id(key_id) do
-      nil ->
-        # hm, we SHOULD have gotten this in the pipeline before we hit here!
-        Logger.error("Could not figure out who owns the key #{key_id}")
-        {:error, :key_owner_not_found}
-
-      key ->
-        {:ok, key}
-    end
-  end
-
   def fetch_public_key(conn) do
     with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, actor_id} <- key_id_to_actor_id(kid),
-         {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
-      {:ok, public_key}
+         {:ok, %SigningKey{} = sk} <- SigningKey.get_or_fetch_by_key_id(kid),
+         {:ok, decoded_key} <- SigningKey.public_key_decoded(sk) do
+      {:ok, decoded_key}
     else
       e ->
         {:error, e}
@@ -35,10 +22,10 @@ defmodule Pleroma.Signature do
 
   def refetch_public_key(conn) do
     with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, actor_id} <- key_id_to_actor_id(kid),
-         {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
-      {:ok, public_key}
+         # TODO: force a refetch of stale keys (perhaps with a backoff time based on updated_at)
+         {:ok, %SigningKey{} = sk} <- SigningKey.get_or_fetch_by_key_id(kid),
+         {:ok, decoded_key} <- SigningKey.public_key_decoded(sk) do
+      {:ok, decoded_key}
     else
       e ->
         {:error, e}

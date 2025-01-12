@@ -8,8 +8,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   use Pleroma.Web, :verified_routes
   alias Pleroma.Activity
-  alias Pleroma.Signature
   alias Pleroma.Instances
+  alias Pleroma.User.SigningKey
   require Logger
 
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
@@ -140,15 +140,17 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   defp signature_host(conn) do
     with {:key_id, %{"keyId" => kid}} <- {:key_id, HTTPSignatures.signature_for_conn(conn)},
-         {:actor_id, {:ok, actor_id}} <- {:actor_id, Signature.key_id_to_actor_id(kid)} do
+         {:actor_id, actor_id, _} when actor_id != nil <-
+           {:actor_id, SigningKey.key_id_to_ap_id(kid), kid} do
       actor_id
     else
       {:key_id, e} ->
         Logger.error("Failed to extract key_id from signature: #{inspect(e)}")
         nil
 
-      {:actor_id, e} ->
-        Logger.error("Failed to extract actor_id from signature: #{inspect(e)}")
+      {:actor_id, _, kid} ->
+        # SigningKeys SHOULD have been fetched before this gets called!
+        Logger.error("Failed to extract actor_id from signature: signing key #{kid} not known")
         nil
     end
   end

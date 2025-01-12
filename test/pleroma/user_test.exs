@@ -1820,10 +1820,6 @@ defmodule Pleroma.UserTest do
     end
   end
 
-  test "get_public_key_for_ap_id fetches a user that's not in the db" do
-    assert {:ok, _key} = User.get_public_key_for_ap_id("http://mastodon.example.org/users/admin")
-  end
-
   describe "per-user rich-text filtering" do
     test "html_filter_policy returns default policies, when rich-text is enabled" do
       user = insert(:user)
