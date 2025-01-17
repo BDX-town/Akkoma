@@ -117,7 +117,7 @@ defmodule Pleroma.Mixfile do
     [
       {:phoenix, "~> 1.7.0"},
       {:phoenix_view, "~> 2.0"},
-      {:phoenix_live_dashboard, "~> 0.7.2"},
+      {:phoenix_live_dashboard, "~> 0.8.6"},
       {:tzdata, "~> 1.1.1"},
       {:plug_cowboy, "~> 2.6"},
       {:phoenix_pubsub, "~> 2.1"},
@@ -126,7 +126,8 @@ defmodule Pleroma.Mixfile do
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.10.0"},
       {:postgrex, "~> 0.17.2"},
-      {:oban, "~> 2.17.8"},
+      {:oban, "~> 2.19.0"},
+      {:oban_web, "~> 2.11.0"},
       {:gettext, "~> 0.22.3"},
       {:bcrypt_elixir, "~> 3.0.1"},
       {:fast_sanitize, "~> 0.2.3"},
