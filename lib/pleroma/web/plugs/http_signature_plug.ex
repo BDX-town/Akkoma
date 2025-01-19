@@ -77,10 +77,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       |> put_req_header("(request-target)", request_target)
       |> maybe_put_created_psudoheader()
       |> maybe_put_expires_psudoheader()
-      |> case do
-        %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
-        conn -> conn
-      end
 
     conn
     |> assign(:valid_signature, HTTPSignatures.validate_conn(conn))
@@ -93,7 +89,13 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       # set (request-target) header to the appropriate value
       # we also replace the digest header with the one we computed
       possible_paths =
-        route_aliases(conn) ++ [conn.request_path, conn.request_path <> "?#{conn.query_string}"]
+        [conn.request_path, conn.request_path <> "?#{conn.query_string}" | route_aliases(conn)]
+
+      conn =
+        case conn do
+          %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
+          conn -> conn
+        end
 
       assign_valid_signature_on_route_aliases(conn, possible_paths)
     else
