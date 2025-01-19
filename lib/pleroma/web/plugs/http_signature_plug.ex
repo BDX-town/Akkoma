@@ -6,10 +6,11 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   import Plug.Conn
   import Phoenix.Controller, only: [get_format: 1]
 
+  alias HTTPSignatures.HTTPKey
+
   use Pleroma.Web, :verified_routes
   alias Pleroma.Activity
   alias Pleroma.Instances
-  alias Pleroma.User.SigningKey
   require Logger
 
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
@@ -26,7 +27,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     if get_format(conn) in ["json", "activity+json"] do
       conn
       |> maybe_assign_valid_signature()
-      |> maybe_require_signature()
+      |> maybe_record_signature_success()
     else
       conn
     end
@@ -44,44 +45,46 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   def route_aliases(_), do: []
 
-  def maybe_put_created_psudoheader(conn) do
-    case HTTPSignatures.signature_for_conn(conn) do
-      %{"created" => created} ->
-        put_req_header(conn, "(created)", created)
+  defp maybe_log_error_and_try_aliases(conn, verification_error, remaining_aliases) do
+    case verification_error do
+      {:gone, key_id} ->
+        # We can't verify the data since the actor was deleted and not previously known.
+        # Likely we just received the actor’s Delete activity, so just silently drop.
+        Logger.debug("Unable to verify request signature of deleted actor; dropping (#{key_id})")
+        conn
 
-      _ ->
+      :wrong_signature ->
+        assign_valid_signature_on_route_aliases(conn, remaining_aliases)
+
+      error ->
+        Logger.error("Failed to verify request signature due to fatal error: #{inspect(error)}")
         conn
     end
   end
-
-  def maybe_put_expires_psudoheader(conn) do
-    case HTTPSignatures.signature_for_conn(conn) do
-      %{"expires" => expires} ->
-        put_req_header(conn, "(expires)", expires)
-
-      _ ->
-        conn
-    end
-  end
-
-  defp assign_valid_signature_on_route_aliases(conn, []), do: conn
 
   defp assign_valid_signature_on_route_aliases(%{assigns: %{valid_signature: true}} = conn, _),
     do: conn
 
+  defp assign_valid_signature_on_route_aliases(conn, []) do
+    Logger.warning("Received request with invalid signature!\n#{inspect(conn)}")
+    conn
+  end
+
   defp assign_valid_signature_on_route_aliases(conn, [path | rest]) do
     request_target = String.downcase("#{conn.method}") <> " #{path}"
 
-    conn =
-      conn
-      |> put_req_header("(request-target)", request_target)
-      |> maybe_put_created_psudoheader()
-      |> maybe_put_expires_psudoheader()
+    case HTTPSignatures.validate_conn(conn, request_target) do
+      {:ok, %HTTPKey{user_data: ud}} ->
+        conn
+        |> assign(:valid_signature, true)
+        |> assign(:signature_user, ud["key_user"])
 
-    conn
-    |> assign(:valid_signature, HTTPSignatures.validate_conn(conn))
-    |> assign(:signature_actor_id, signature_host(conn))
-    |> assign_valid_signature_on_route_aliases(rest)
+      {:error, e} ->
+        conn
+        |> assign(:valid_signature, false)
+        |> assign(:signature_user, nil)
+        |> maybe_log_error_and_try_aliases(e, rest)
+    end
   end
 
   defp maybe_assign_valid_signature(conn) do
@@ -108,8 +111,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn |> get_req_header("signature") |> Enum.at(0, false)
   end
 
-  defp maybe_require_signature(
-         %{assigns: %{valid_signature: true, signature_actor_id: actor_id}} = conn
+  defp maybe_record_signature_success(
+         %{assigns: %{valid_signature: true, signature_user: signature_user}} = conn
        ) do
     # inboxes implicitly need http signatures for authentication
     # so we don't really know if the instance will have broken federation after
@@ -117,7 +120,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     #
     # to "check" this is a signed fetch, verify if method is GET
     if conn.method == "GET" do
-      actor_host = URI.parse(actor_id).host
+      actor_host = URI.parse(signature_user.ap_id).host
 
       case @cachex.get(:request_signatures_cache, actor_host) do
         {:ok, nil} ->
@@ -138,22 +141,5 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn
   end
 
-  defp maybe_require_signature(conn), do: conn
-
-  defp signature_host(conn) do
-    with {:key_id, %{"keyId" => kid}} <- {:key_id, HTTPSignatures.signature_for_conn(conn)},
-         {:actor_id, actor_id, _} when actor_id != nil <-
-           {:actor_id, SigningKey.key_id_to_ap_id(kid), kid} do
-      actor_id
-    else
-      {:key_id, e} ->
-        Logger.error("Failed to extract key_id from signature: #{inspect(e)}")
-        nil
-
-      {:actor_id, _, kid} ->
-        # SigningKeys SHOULD have been fetched before this gets called!
-        Logger.error("Failed to extract actor_id from signature: signing key #{kid} not known")
-        nil
-    end
-  end
+  defp maybe_record_signature_success(conn), do: conn
 end

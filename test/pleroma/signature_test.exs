@@ -10,7 +10,9 @@ defmodule Pleroma.SignatureTest do
   import Tesla.Mock
   import Mock
 
+  alias HTTPSignatures.HTTPKey
   alias Pleroma.Signature
+  alias Pleroma.User.SigningKey
 
   setup do
     mock(fn env -> apply(HttpRequestMock, :request, [env]) end)
@@ -28,20 +30,27 @@ defmodule Pleroma.SignatureTest do
     65_537
   }
 
-  defp make_fake_signature(key_id), do: "keyId=\"#{key_id}\""
+  defp keyid(user = %Pleroma.User{}), do: keyid(user.ap_id)
+  defp keyid(user_ap_id), do: user_ap_id <> "#main-key"
 
-  defp make_fake_conn(key_id),
-    do: %Plug.Conn{req_headers: %{"signature" => make_fake_signature(key_id <> "#main-key")}}
+  defp assert_key(retval, refkey, refuser) do
+    assert match?(
+             {:ok, %HTTPKey{key: ^refkey, user_data: %{"key_user" => %Pleroma.User{}}}},
+             retval
+           )
+
+    {:ok, key} = retval
+    # Avoid comparison failures from (not) loaded Ecto associations etc
+    assert refuser.id == key.user_data["key_user"].id
+  end
 
   describe "fetch_public_key/1" do
     test "it returns the key" do
-      expected_result = {:ok, @rsa_public_key}
-
       user =
         insert(:user)
         |> with_signing_key(public_key: @public_key)
 
-      assert Signature.fetch_public_key(make_fake_conn(user.ap_id)) == expected_result
+      assert_key(Signature.fetch_public_key(keyid(user), nil), @rsa_public_key, user)
     end
 
     test "it returns error if public key is nil" do
@@ -50,7 +59,7 @@ defmodule Pleroma.SignatureTest do
       key_id = user.ap_id <> "#main-key"
       Tesla.Mock.mock(fn %{url: ^key_id} -> {:ok, %{status: 404}} end)
 
-      assert {:error, _} = Signature.fetch_public_key(make_fake_conn(user.ap_id))
+      assert {:error, _} = Signature.fetch_public_key(keyid(user), nil)
     end
   end
 
@@ -60,16 +69,17 @@ defmodule Pleroma.SignatureTest do
       ap_id = "https://mastodon.social/users/lambadalambda"
 
       %Pleroma.User{signing_key: sk} =
+        user =
         Pleroma.User.get_or_fetch_by_ap_id(ap_id)
         |> then(fn {:ok, u} -> u end)
-        |> Pleroma.User.SigningKey.load_key()
+        |> SigningKey.load_key()
 
       {:ok, _} =
         %{sk | public_key: "-----BEGIN PUBLIC KEY-----\nasdfghjkl"}
         |> Ecto.Changeset.change()
         |> Pleroma.Repo.update()
 
-      assert Signature.refetch_public_key(make_fake_conn(ap_id)) == {:ok, @rsa_public_key}
+      assert_key(Signature.refetch_public_key(keyid(ap_id), nil), @rsa_public_key, user)
     end
   end
 
@@ -111,8 +121,8 @@ defmodule Pleroma.SignatureTest do
         |> with_signing_key(private_key: @private_key)
 
       headers = %{
-        host: "test.test",
-        "content-length": "100"
+        "host" => "test.test",
+        "content-length" => "100"
       }
 
       assert_signature_equal(

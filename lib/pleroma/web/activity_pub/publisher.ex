@@ -58,11 +58,11 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
 
     signature =
       Pleroma.Signature.sign(actor, %{
-        "(request-target)": "post #{path}",
-        host: signature_host(uri),
-        "content-length": byte_size(json),
-        digest: digest,
-        date: date
+        "(request-target)" => "post #{path}",
+        "host" => signature_host(uri),
+        "content-length" => byte_size(json),
+        "digest" => digest,
+        "date" => date
       })
 
     with {:ok, %{status: code}} = result when code in 200..299 <-

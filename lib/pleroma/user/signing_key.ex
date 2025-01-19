@@ -208,7 +208,11 @@ defmodule Pleroma.User.SigningKey do
     else
       e ->
         Logger.debug("Failed to fetch remote key: #{inspect(e)}")
-        {:error, "Could not fetch key"}
+
+        case e do
+          {:error, e} -> {:error, e}
+          _ -> {:error, {"Could not fetch key", e}}
+        end
     end
   end
 

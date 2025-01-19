@@ -14,6 +14,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   import Phoenix.Controller, only: [put_format: 2]
   import Mock
 
+  @user_ap_id "http://mastodon.example.org/users/admin"
+
   setup do
     user =
       :user
@@ -26,15 +28,13 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   setup_with_mocks([
     {HTTPSignatures, [],
      [
-       signature_for_conn: fn _ ->
-         %{
-           "keyId" => "http://mastodon.example.org/users/admin#main-key",
-           "created" => "1234567890",
-           "expires" => "1234567890"
-         }
-       end,
-       validate_conn: fn conn ->
-         Map.get(conn.assigns, :valid_signature, true)
+       validate_conn: fn conn, _ ->
+         if Map.get(conn.assigns, :valid_signature, true) do
+           {:ok, user} = Pleroma.User.get_or_fetch_by_ap_id(@user_ap_id)
+           {:ok, %HTTPSignatures.HTTPKey{key: "aaa", user_data: %{"key_user" => user}}}
+         else
+           {:error, :wrong_signature}
+         end
        end
      ]}
   ]) do
@@ -69,9 +69,9 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
       |> HTTPSignaturePlug.call(%{})
 
     assert conn.assigns.valid_signature == true
-    assert conn.assigns.signature_actor_id == params["actor"]
+    assert conn.assigns.signature_user.ap_id == params["actor"]
     assert conn.halted == false
-    assert called(HTTPSignatures.validate_conn(:_))
+    assert called(HTTPSignatures.validate_conn(:_, :_))
   end
 
   test "it sets request signatures property on the instance" do
@@ -122,7 +122,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
         |> HTTPSignaturePlug.call(%{})
 
       assert conn.assigns.valid_signature == false
-      assert called(HTTPSignatures.validate_conn(:_))
+      assert called(HTTPSignatures.validate_conn(:_, :_))
     end
 
     test "and signature is correct", %{conn: conn} do
@@ -135,7 +135,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
         |> HTTPSignaturePlug.call(%{})
 
       assert conn.assigns.valid_signature == true
-      assert called(HTTPSignatures.validate_conn(:_))
+      assert called(HTTPSignatures.validate_conn(:_, :_))
     end
 
     test "and halts the connection when `signature` header is not present", %{conn: conn} do
@@ -153,19 +153,5 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
     assert ["/notice/#{act.id}", "/notice/#{act.id}?actor=someparam"] ==
              HTTPSignaturePlug.route_aliases(conn)
-  end
-
-  test "(created) psudoheader", _ do
-    conn = build_conn(:get, "/doesntmattter")
-    conn = HTTPSignaturePlug.maybe_put_created_psudoheader(conn)
-    created_header = List.keyfind(conn.req_headers, "(created)", 0)
-    assert {_, "1234567890"} = created_header
-  end
-
-  test "(expires) psudoheader", _ do
-    conn = build_conn(:get, "/doesntmattter")
-    conn = HTTPSignaturePlug.maybe_put_expires_psudoheader(conn)
-    expires_header = List.keyfind(conn.req_headers, "(expires)", 0)
-    assert {_, "1234567890"} = expires_header
   end
 end
