@@ -56,16 +56,10 @@ defmodule Pleroma.User.SigningKey do
   def key_id_to_ap_id(key_id) do
     Logger.debug("Looking up key ID: #{key_id}")
 
-    result =
-      from(sk in __MODULE__, where: sk.key_id == ^key_id)
-      |> join(:inner, [sk], u in User, on: sk.user_id == u.id)
-      |> select([sk, u], %{user: u})
-      |> Repo.one()
-
-    case result do
-      %{user: %User{ap_id: ap_id}} -> ap_id
-      _ -> nil
-    end
+    from(sk in __MODULE__, where: sk.key_id == ^key_id)
+    |> join(:inner, [sk], u in User, on: sk.user_id == u.id)
+    |> select([sk, u], u.ap_id)
+    |> Repo.one()
   end
 
   @spec generate_rsa_pem() :: {:ok, binary()}
