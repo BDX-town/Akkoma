@@ -61,6 +61,23 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn
   end
 
+  defp maybe_halt(conn, :gone) do
+    # If the key was deleted the error is basically unrecoverable.
+    # Most likely it was the Delete activity for the key actor and we never knew about this actor before.
+    # Older Mastodon is very insistent about resending those Deletes until it receives a success.
+    # see: https://github.com/mastodon/mastodon/pull/33617
+    with "POST" <- conn.method,
+         %{"type" => "Delete"} <- conn.body_params do
+      conn
+      |> resp(202, "Accepted")
+      |> halt()
+    else
+      _ -> conn
+    end
+  end
+
+  defp maybe_halt(conn, _), do: conn
+
   defp assign_valid_signature(%{assigns: %{valid_signature: true}} = conn, _),
     do: conn
 
@@ -76,6 +93,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
         |> assign(:valid_signature, false)
         |> assign(:signature_user, nil)
         |> maybe_log_error(e)
+        |> maybe_halt(e)
     end
   end
 

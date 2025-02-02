@@ -27,11 +27,16 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     {HTTPSignatures, [],
      [
        validate_conn: fn conn, _ ->
-         if Map.get(conn.assigns, :valid_signature, true) do
-           {:ok, user} = Pleroma.User.get_or_fetch_by_ap_id(@user_ap_id)
-           {:ok, %HTTPSignatures.HTTPKey{key: "aaa", user_data: %{"key_user" => user}}}
-         else
-           {:error, :wrong_signature}
+         cond do
+           Map.get(conn.assigns, :gone_signature_key, false) ->
+             {:error, :gone}
+
+           Map.get(conn.assigns, :valid_signature, true) ->
+             {:ok, user} = Pleroma.User.get_or_fetch_by_ap_id(@user_ap_id)
+             {:ok, %HTTPSignatures.HTTPKey{key: "aaa", user_data: %{"key_user" => user}}}
+
+           true ->
+             {:error, :wrong_signature}
          end
        end
      ]}
@@ -110,5 +115,33 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
     assert ["/notice/#{act.id}", "/notice/#{act.id}?actor=someparam"] ==
              HTTPSignaturePlug.route_aliases(conn)
+  end
+
+  test "fakes success on gone key when receiving Delete" do
+    build_conn(:post, "/inbox", %{"type" => "Delete"})
+    |> put_format("activity+json")
+    |> assign(:gone_signature_key, true)
+    |> put_req_header(
+      "signature",
+      "keyId=\"http://somewhere.example.org/users/deleted#main-key\""
+    )
+    |> HTTPSignaturePlug.call(%{})
+    |> response(202)
+  end
+
+  test "fails on gone key for non-Delete" do
+    conn =
+      build_conn(:post, "/inbox", %{"type" => "Note"})
+      |> put_format("activity+json")
+      |> assign(:gone_signature_key, true)
+      |> put_req_header(
+        "signature",
+        "keyId=\"http://somewhere.example.org/users/deleted#main-key\""
+      )
+      |> HTTPSignaturePlug.call(%{})
+
+    refute conn.halted
+    assert conn.assigns.valid_signature == false
+    assert conn.assigns.signature_user == nil
   end
 end
