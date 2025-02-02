@@ -42,35 +42,30 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   def route_aliases(_), do: []
 
-  defp maybe_log_error_and_try_aliases(conn, verification_error, remaining_aliases) do
+  defp maybe_log_error(conn, verification_error) do
     case verification_error do
-      {:gone, key_id} ->
+      :gone ->
         # We can't verify the data since the actor was deleted and not previously known.
         # Likely we just received the actor’s Delete activity, so just silently drop.
-        Logger.debug("Unable to verify request signature of deleted actor; dropping (#{key_id})")
-        conn
+        Logger.debug("Unable to verify request signature of deleted actor; dropping (#{inspect(conn)})")
 
       :wrong_signature ->
-        assign_valid_signature_on_route_aliases(conn, remaining_aliases)
+        Logger.warning("Received request with invalid signature!\n#{inspect(conn)}")
+
+      {:fetch_key, e} ->
+        Logger.info("Unable to verify request since key cannot be retrieved: #{inspect(e)}")
 
       error ->
         Logger.error("Failed to verify request signature due to fatal error: #{inspect(error)}")
-        conn
     end
-  end
-
-  defp assign_valid_signature_on_route_aliases(%{assigns: %{valid_signature: true}} = conn, _),
-    do: conn
-
-  defp assign_valid_signature_on_route_aliases(conn, []) do
-    Logger.warning("Received request with invalid signature!\n#{inspect(conn)}")
     conn
   end
 
-  defp assign_valid_signature_on_route_aliases(conn, [path | rest]) do
-    request_target = String.downcase("#{conn.method}") <> " #{path}"
+  defp assign_valid_signature(%{assigns: %{valid_signature: true}} = conn, _),
+    do: conn
 
-    case HTTPSignatures.validate_conn(conn, request_target) do
+  defp assign_valid_signature(conn, request_targets) do
+    case HTTPSignatures.validate_conn(conn, request_targets) do
       {:ok, %HTTPKey{user_data: ud}} ->
         conn
         |> assign(:valid_signature, true)
@@ -80,7 +75,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
         conn
         |> assign(:valid_signature, false)
         |> assign(:signature_user, nil)
-        |> maybe_log_error_and_try_aliases(e, rest)
+        |> maybe_log_error(e)
     end
   end
 
@@ -88,8 +83,9 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     if has_signature_header?(conn) do
       # set (request-target) header to the appropriate value
       # we also replace the digest header with the one we computed
-      possible_paths =
+      request_targets =
         [conn.request_path, conn.request_path <> "?#{conn.query_string}" | route_aliases(conn)]
+        |> Enum.map(fn path -> String.downcase("#{conn.method}") <> " #{path}" end)
 
       conn =
         case conn do
@@ -97,7 +93,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
           conn -> conn
         end
 
-      assign_valid_signature_on_route_aliases(conn, possible_paths)
+      assign_valid_signature(conn, request_targets)
     else
       Logger.debug("No signature header!")
       conn
