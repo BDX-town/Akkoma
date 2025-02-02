@@ -26,7 +26,6 @@ defmodule Pleroma.Instances.Instance do
     field(:favicon, :string)
     field(:metadata_updated_at, :naive_datetime)
     field(:nodeinfo, :map, default: %{})
-    field(:has_request_signatures, :boolean)
 
     timestamps()
   end
@@ -40,8 +39,7 @@ defmodule Pleroma.Instances.Instance do
       :unreachable_since,
       :favicon,
       :nodeinfo,
-      :metadata_updated_at,
-      :has_request_signatures
+      :metadata_updated_at
     ])
     |> validate_required([:host])
     |> unique_constraint(:host)
@@ -332,24 +330,4 @@ defmodule Pleroma.Instances.Instance do
       end)
     end
   end
-
-  def set_request_signatures(url_or_host) when is_binary(url_or_host) do
-    host = host(url_or_host)
-    existing_record = Repo.get_by(Instance, %{host: host})
-    changes = %{has_request_signatures: true}
-
-    cond do
-      is_nil(existing_record) ->
-        %Instance{}
-        |> changeset(Map.put(changes, :host, host))
-        |> Repo.insert()
-
-      true ->
-        existing_record
-        |> changeset(changes)
-        |> Repo.update()
-    end
-  end
-
-  def set_request_signatures(_), do: {:error, :invalid_input}
 end

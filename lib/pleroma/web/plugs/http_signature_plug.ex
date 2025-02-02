@@ -10,10 +10,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   use Pleroma.Web, :verified_routes
   alias Pleroma.Activity
-  alias Pleroma.Instances
   require Logger
 
-  @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
 
   def init(options) do
     options
@@ -27,7 +25,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     if get_format(conn) in ["json", "activity+json"] do
       conn
       |> maybe_assign_valid_signature()
-      |> maybe_record_signature_success()
     else
       conn
     end
@@ -110,36 +107,4 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   defp has_signature_header?(conn) do
     conn |> get_req_header("signature") |> Enum.at(0, false)
   end
-
-  defp maybe_record_signature_success(
-         %{assigns: %{valid_signature: true, signature_user: signature_user}} = conn
-       ) do
-    # inboxes implicitly need http signatures for authentication
-    # so we don't really know if the instance will have broken federation after
-    # we turn on authorized_fetch_mode.
-    #
-    # to "check" this is a signed fetch, verify if method is GET
-    if conn.method == "GET" do
-      actor_host = URI.parse(signature_user.ap_id).host
-
-      case @cachex.get(:request_signatures_cache, actor_host) do
-        {:ok, nil} ->
-          Logger.debug("Successful signature from #{actor_host}")
-          Instances.set_request_signatures(actor_host)
-          @cachex.put(:request_signatures_cache, actor_host, true)
-
-        {:ok, true} ->
-          :noop
-
-        any ->
-          Logger.warning(
-            "expected request signature cache to return a boolean, instead got #{inspect(any)}"
-          )
-      end
-    end
-
-    conn
-  end
-
-  defp maybe_record_signature_success(conn), do: conn
 end

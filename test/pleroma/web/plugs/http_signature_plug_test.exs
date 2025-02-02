@@ -7,8 +7,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   @moduletag :mocked
   import Pleroma.Factory
   alias Pleroma.Web.Plugs.HTTPSignaturePlug
-  alias Pleroma.Instances.Instance
-  alias Pleroma.Repo
 
   import Plug.Conn
   import Phoenix.Controller, only: [put_format: 2]
@@ -41,20 +39,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     :ok
   end
 
-  defp submit_to_plug(host), do: submit_to_plug(host, :get, "/doesntmattter")
-
-  defp submit_to_plug(host, method, path) do
-    params = %{"actor" => "http://#{host}/users/admin"}
-
-    build_conn(method, path, params)
-    |> put_req_header(
-      "signature",
-      "keyId=\"http://#{host}/users/admin#main-key"
-    )
-    |> put_format("activity+json")
-    |> HTTPSignaturePlug.call(%{})
-  end
-
   test "it call HTTPSignatures to check validity if the actor signed it", %{user: user} do
     params = %{"actor" => user.ap_id}
     conn = build_conn(:get, "/doesntmattter", params)
@@ -72,33 +56,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     assert conn.assigns.signature_user.ap_id == params["actor"]
     assert conn.halted == false
     assert called(HTTPSignatures.validate_conn(:_, :_))
-  end
-
-  test "it sets request signatures property on the instance" do
-    host = "mastodon.example.org"
-    conn = submit_to_plug(host)
-    assert conn.assigns.valid_signature == true
-    instance = Repo.get_by(Instance, %{host: host})
-    assert instance.has_request_signatures
-  end
-
-  test "it does not set request signatures property on the instance when using inbox" do
-    host = "mastodon.example.org"
-    conn = submit_to_plug(host, :post, "/inbox")
-    assert conn.assigns.valid_signature == true
-
-    # we don't even create the instance entry if its just POST /inbox
-    refute Repo.get_by(Instance, %{host: host})
-  end
-
-  test "it does not set request signatures property on the instance when its cached" do
-    host = "mastodon.example.org"
-    Cachex.put(:request_signatures_cache, host, true)
-    conn = submit_to_plug(host)
-    assert conn.assigns.valid_signature == true
-
-    # we don't even create the instance entry if it was already done
-    refute Repo.get_by(Instance, %{host: host})
   end
 
   describe "requires a signature when `authorized_fetch_mode` is enabled" do
