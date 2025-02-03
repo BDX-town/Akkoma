@@ -12,7 +12,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   alias Pleroma.Activity
   require Logger
 
-
   def init(options) do
     options
   end
@@ -43,21 +42,36 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
   def route_aliases(_), do: []
 
   defp maybe_log_error(conn, verification_error) do
+    siginfo_str =
+      "<#{conn.method} #{conn.request_path}> #{inspect(get_req_header(conn, "signature"))}"
+
     case verification_error do
       :gone ->
         # We can't verify the data since the actor was deleted and not previously known.
         # Likely we just received the actor’s Delete activity, so just silently drop.
-        Logger.debug("Unable to verify request signature of deleted actor; dropping (#{inspect(conn)})")
+        Logger.debug(
+          "Unable to verify request signature of deleted actor; dropping (#{siginfo_str})"
+        )
+
+      {:reject, reason} ->
+        Logger.debug(
+          "Refusing to validate signature from rejected key due to #{inspect(reason)} #{siginfo_str}"
+        )
 
       :wrong_signature ->
         Logger.warning("Received request with invalid signature!\n#{inspect(conn)}")
 
       {:fetch_key, e} ->
-        Logger.info("Unable to verify request since key cannot be retrieved: #{inspect(e)}")
+        Logger.info(
+          "Unable to verify request since key cannot be retrieved: #{inspect(e)} #{siginfo_str}"
+        )
 
       error ->
-        Logger.error("Failed to verify request signature due to fatal error: #{inspect(error)}")
+        Logger.error(
+          "Failed to verify request signature due to fatal error: #{inspect(error)} #{inspect(conn)}"
+        )
     end
+
     conn
   end
 

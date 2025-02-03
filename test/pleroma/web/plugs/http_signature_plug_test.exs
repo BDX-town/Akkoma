@@ -31,6 +31,9 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
            Map.get(conn.assigns, :gone_signature_key, false) ->
              {:error, :gone}
 
+           Map.get(conn.assigns, :rejected_key_id, false) ->
+             {:error, {:reject, :mrf}}
+
            Map.get(conn.assigns, :valid_signature, true) ->
              {:ok, user} = Pleroma.User.get_or_fetch_by_ap_id(@user_ap_id)
              {:ok, %HTTPSignatures.HTTPKey{key: "aaa", user_data: %{"key_user" => user}}}
@@ -137,6 +140,22 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
       |> put_req_header(
         "signature",
         "keyId=\"http://somewhere.example.org/users/deleted#main-key\""
+      )
+      |> HTTPSignaturePlug.call(%{})
+
+    refute conn.halted
+    assert conn.assigns.valid_signature == false
+    assert conn.assigns.signature_user == nil
+  end
+
+  test "fails on rejected keys", %{user: user} do
+    conn =
+      build_conn(:post, "/inbox", %{"type" => "Note"})
+      |> put_format("activity+json")
+      |> assign(:rejected_key_id, true)
+      |> put_req_header(
+        "signature",
+        "keyId=\"#{user.signing_key.key_id}\""
       )
       |> HTTPSignaturePlug.call(%{})
 

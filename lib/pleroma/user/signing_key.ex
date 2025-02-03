@@ -211,6 +211,7 @@ defmodule Pleroma.User.SigningKey do
 
         case e do
           {:error, e} -> {:error, e}
+          {:reject, reason} -> {:reject, reason}
           _ -> {:error, {"Could not fetch key", e}}
         end
     end

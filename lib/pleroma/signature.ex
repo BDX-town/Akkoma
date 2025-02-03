@@ -45,6 +45,9 @@ defmodule Pleroma.Signature do
       {:fetch, {:error, :not_found}} ->
         {:halt, {:error, :gone}}
 
+      {:fetch, {:reject, reason}} ->
+        {:halt, {:error, {:reject, reason}}}
+
       {:fetch, error} ->
         Logger.error("Failed to #{action_name} key from signature: #{kid} #{inspect(error)}")
         {:error, {:fetch, error}}
