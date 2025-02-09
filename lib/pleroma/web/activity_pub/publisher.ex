@@ -57,13 +57,17 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     date = Pleroma.Signature.signed_date()
 
     signature =
-      Pleroma.Signature.sign(actor, %{
-        "(request-target)" => "post #{path}",
-        "host" => signature_host(uri),
-        "content-length" => byte_size(json),
-        "digest" => digest,
-        "date" => date
-      })
+      Pleroma.Signature.sign(
+        actor,
+        %{
+          "(request-target)" => "post #{path}",
+          "host" => signature_host(uri),
+          "content-length" => byte_size(json),
+          "digest" => digest,
+          "date" => date
+        },
+        has_body: true
+      )
 
     with {:ok, %{status: code}} = result when code in 200..299 <-
            HTTP.post(

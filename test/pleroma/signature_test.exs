@@ -122,7 +122,10 @@ defmodule Pleroma.SignatureTest do
 
       headers = %{
         "host" => "test.test",
-        "content-length" => "100"
+        "content-length" => "100",
+        "date" => "Fri, 23 Aug 2019 18:11:24 GMT",
+        "digest" => "SHA-256=a29cdd711788c5118a2256c00d31519e0a5a0d4b144214e012f81e67b80b0ec1",
+        "(request-target)" => "post https://example.com/inbox"
       }
 
       assert_signature_equal(
@@ -130,7 +133,7 @@ defmodule Pleroma.SignatureTest do
           user,
           headers
         ),
-        "keyId=\"https://mastodon.social/users/lambadalambda#main-key\",algorithm=\"rsa-sha256\",headers=\"content-length host\",signature=\"sibUOoqsFfTDerquAkyprxzDjmJm6erYc42W5w1IyyxusWngSinq5ILTjaBxFvfarvc7ci1xAi+5gkBwtshRMWm7S+Uqix24Yg5EYafXRun9P25XVnYBEIH4XQ+wlnnzNIXQkU3PU9e6D8aajDZVp3hPJNeYt1gIPOA81bROI8/glzb1SAwQVGRbqUHHHKcwR8keiR/W2h7BwG3pVRy4JgnIZRSW7fQogKedDg02gzRXwUDFDk0pr2p3q6bUWHUXNV8cZIzlMK+v9NlyFbVYBTHctAR26GIAN6Hz0eV0mAQAePHDY1mXppbA8Gpp6hqaMuYfwifcXmcc+QFm4e+n3A==\""
+        ~s|keyId="https://mastodon.social/users/lambadalambda#main-key",algorithm="rsa-sha256",headers="(request-target) content-length date digest host",signature="fhOT6IBThnCo6rv2Tv8BRXLV7LvVf/7wTX/bbPLtdq5A4GUqrmXUcY5p77jQ6NU9IRIVczeeStxQV6TrHqk/qPdqQOzDcB6cWsSfrB1gsTinBbAWdPzQYqUOTl+Minqn2RERAfPebKYr9QGa0sTODDHvze/UFPuL8a1lDO2VQE0lRCdg49Igr8pGl/CupUx8Fb874omqP0ba3M+siuKEwo02m9hHcbZUeLSN0ZVdvyTMttyqPM1BfwnFXkaQRAblLTyzt4Fv2+fTN+zPipSxJl1YIo1TsmwNq9klqImpjh8NHM3MJ5eZxTZ109S6Q910n1Lm46V/SqByDaYeg9g7Jw=="|
       )
     end
   end

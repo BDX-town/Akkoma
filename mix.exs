@@ -162,7 +162,7 @@ defmodule Pleroma.Mixfile do
       {:linkify, "~> 0.5.3"},
       {:http_signatures,
        git: "https://akkoma.dev/Oneric/http_signatures.git",
-       ref: "750f817fda9986bfc1e96b7d828b9a98950d60d9"},
+       ref: "2adf4c02142c9798abd3b607b7c3fa18493fa166"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},
