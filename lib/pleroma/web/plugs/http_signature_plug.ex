@@ -29,14 +29,19 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     end
   end
 
-  def route_aliases(%{path_info: ["objects", id], query_string: query_string}) do
+  def route_aliases(%{path_info: ["objects", id], query_string: query_string, method: method}) do
     ap_id = url(~p[/objects/#{id}])
+    method = String.downcase(method)
 
-    with %Activity{} = activity <- Activity.get_by_object_ap_id_with_object(ap_id) do
-      [~p"/notice/#{activity.id}", "/notice/#{activity.id}?#{query_string}"]
-    else
-      _ -> []
-    end
+    [
+      fn ->
+        with %Activity{} = activity <- Activity.get_by_object_ap_id_with_object(ap_id) do
+          ["#{method} /notice/#{activity.id}", "#{method} /notice/#{activity.id}?#{query_string}"]
+        else
+          _ -> []
+        end
+      end
+    ]
   end
 
   def route_aliases(_), do: []
@@ -115,9 +120,13 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     if has_signature_header?(conn) do
       # set (request-target) header to the appropriate value
       # we also replace the digest header with the one we computed
+      method = String.downcase(conn.method)
+
       request_targets =
-        [conn.request_path, conn.request_path <> "?#{conn.query_string}" | route_aliases(conn)]
-        |> Enum.map(fn path -> String.downcase("#{conn.method}") <> " #{path}" end)
+        [
+          "#{method} " <> conn.request_path,
+          "#{method} " <> conn.request_path <> "?#{conn.query_string}" | route_aliases(conn)
+        ]
 
       conn =
         case conn do

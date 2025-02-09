@@ -116,8 +116,23 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     path = URI.parse(obj.data["id"]).path
     conn = build_conn(:get, path, params)
 
-    assert ["/notice/#{act.id}", "/notice/#{act.id}?actor=someparam"] ==
-             HTTPSignaturePlug.route_aliases(conn)
+    aliases =
+      HTTPSignaturePlug.route_aliases(conn)
+      |> Enum.reduce([], fn
+        x, acc when is_binary(x) ->
+          acc ++ [x]
+
+        f, acc when is_function(f) ->
+          add =
+            case f.() do
+              a when is_binary(a) -> [a]
+              a -> a
+            end
+
+          acc ++ add
+      end)
+
+    assert ["get /notice/#{act.id}", "get /notice/#{act.id}?actor=someparam"] == aliases
   end
 
   test "fakes success on gone key when receiving Delete" do
