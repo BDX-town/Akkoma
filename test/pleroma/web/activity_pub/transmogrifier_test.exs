@@ -8,7 +8,6 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
   @moduletag :mocked
   alias Pleroma.Activity
   alias Pleroma.Object
-  alias Pleroma.Tests.ObanHelpers
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.Utils
@@ -51,6 +50,25 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
       assert data["actor"] == "http://mastodon.example.org/users/admin"
 
       refute User.following?(User.get_cached_by_ap_id(data["actor"]), user)
+    end
+
+    test "it ignores Undo activities for unknown objects" do
+      undo_data = %{
+        "id" => "https://remote.com/undo",
+        "type" => "Undo",
+        "actor" => "https:://remote.com/users/unknown",
+        "object" => %{
+          "id" => "https://remote.com/undone_activity/unknown",
+          "type" => "Like"
+        }
+      }
+
+      assert {:error, :ignore} == Transmogrifier.handle_incoming(undo_data)
+
+      user = insert(:user, local: false, ap_id: "https://remote.com/users/known")
+      undo_data = %{undo_data | "actor" => user.ap_id}
+
+      assert {:error, :ignore} == Transmogrifier.handle_incoming(undo_data)
     end
 
     test "it accepts Flag activities" do
@@ -345,69 +363,6 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
                  ]
                }
              } = prepared["object"]
-    end
-  end
-
-  describe "user upgrade" do
-    test "it upgrades a user to activitypub" do
-      user =
-        insert(:user, %{
-          nickname: "rye@niu.moe",
-          local: false,
-          ap_id: "https://niu.moe/users/rye",
-          follower_address: User.ap_followers(%User{nickname: "rye@niu.moe"})
-        })
-
-      user_two = insert(:user)
-      Pleroma.FollowingRelationship.follow(user_two, user, :follow_accept)
-
-      {:ok, activity} = CommonAPI.post(user, %{status: "test"})
-      {:ok, unrelated_activity} = CommonAPI.post(user_two, %{status: "test"})
-      assert "http://localhost:4001/users/rye@niu.moe/followers" in activity.recipients
-
-      user = User.get_cached_by_id(user.id)
-      assert user.note_count == 1
-
-      {:ok, user} = Transmogrifier.upgrade_user_from_ap_id("https://niu.moe/users/rye")
-      ObanHelpers.perform_all()
-
-      assert user.ap_enabled
-      assert user.note_count == 1
-      assert user.follower_address == "https://niu.moe/users/rye/followers"
-      assert user.following_address == "https://niu.moe/users/rye/following"
-
-      user = User.get_cached_by_id(user.id)
-      assert user.note_count == 1
-
-      activity = Activity.get_by_id(activity.id)
-      assert user.follower_address in activity.recipients
-
-      assert %{
-               "url" => [
-                 %{
-                   "href" =>
-                     "https://cdn.niu.moe/accounts/avatars/000/033/323/original/fd7f8ae0b3ffedc9.jpeg"
-                 }
-               ]
-             } = user.avatar
-
-      assert %{
-               "url" => [
-                 %{
-                   "href" =>
-                     "https://cdn.niu.moe/accounts/headers/000/033/323/original/850b3448fa5fd477.png"
-                 }
-               ]
-             } = user.banner
-
-      refute "..." in activity.recipients
-
-      unrelated_activity = Activity.get_by_id(unrelated_activity.id)
-      refute user.follower_address in unrelated_activity.recipients
-
-      user_two = User.get_cached_by_id(user_two.id)
-      assert User.following?(user_two, user)
-      refute "..." in User.following(user_two)
     end
   end
 
