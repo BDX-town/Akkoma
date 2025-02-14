@@ -560,7 +560,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
     with {_, {:ok, object_id}} <- {:object_id, oid_result},
          object <- Object.get_cached_by_ap_id(object_id),
-         {_, false} <- {:tombstone, Object.is_tombstone_object?(object) && !data["actor"]},
+         {_, false} <- {:tombstone, Object.tombstone_object?(object) && !data["actor"]},
          {:ok, activity, _} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else

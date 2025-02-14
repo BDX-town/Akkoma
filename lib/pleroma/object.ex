@@ -216,9 +216,9 @@ defmodule Pleroma.Object do
   end
 
   # Intentionally accepts non-Object arguments!
-  @spec is_tombstone_object?(term()) :: boolean()
-  def is_tombstone_object?(%Object{data: %{"type" => "Tombstone"}}), do: true
-  def is_tombstone_object?(_), do: false
+  @spec tombstone_object?(term()) :: boolean()
+  def tombstone_object?(%Object{data: %{"type" => "Tombstone"}}), do: true
+  def tombstone_object?(_), do: false
 
   def make_tombstone(%Object{data: %{"id" => id, "type" => type}}, deleted \\ DateTime.utc_now()) do
     %ObjectTombstone{
