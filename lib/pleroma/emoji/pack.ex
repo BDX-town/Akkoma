@@ -96,8 +96,8 @@ defmodule Pleroma.Emoji.Pack do
     end
   end
 
-  @spec map_zip_emojies(list(String.t())) :: list(map())
-  defp map_zip_emojies(zip_files) do
+  @spec map_zip_emojis(list(String.t())) :: list(map())
+  defp map_zip_emojis(zip_files) do
     Enum.reduce(zip_files, [], fn path, acc ->
       with(
         filename <- Path.basename(path),
@@ -118,14 +118,14 @@ defmodule Pleroma.Emoji.Pack do
           | {:error, File.posix() | atom()}
   def add_file(%Pack{} = pack, _, _, %Plug.Upload{content_type: "application/zip"} = file) do
     with {:ok, zip_files} <- SafeZip.list_dir_file(file.path),
-         [_ | _] = emojies <- map_zip_emojies(zip_files),
+         [_ | _] = emojis <- map_zip_emojis(zip_files),
          {:ok, tmp_dir} <- Utils.tmp_dir("emoji") do
       try do
         {:ok, _emoji_files} =
-          SafeZip.unzip_file(file.path, tmp_dir, Enum.map(emojies, & &1[:path]))
+          SafeZip.unzip_file(file.path, tmp_dir, Enum.map(emojis, & &1[:path]))
 
         {_, updated_pack} =
-          Enum.map_reduce(emojies, pack, fn item, emoji_pack ->
+          Enum.map_reduce(emojis, pack, fn item, emoji_pack ->
             emoji_file = %Plug.Upload{
               filename: item[:filename],
               path: path_join_safe(tmp_dir, item[:path])
