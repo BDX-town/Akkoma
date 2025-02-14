@@ -121,13 +121,13 @@ defmodule Pleroma.Web.RichMedia.ParserTest do
       res = Parser.parse(url)
 
       assert {:error, {:url, "scheme mismatch"}} == res or
-               {:error, {:url, "not an URL"}} == res
+               {:error, {:url, "not a URL"}} == res
     end)
   end
 
   test "refuses to crawl malformed URLs" do
     url = "example.com[]/ogp"
-    assert {:error, {:url, "not an URL"}} == Parser.parse(url)
+    assert {:error, {:url, "not a URL"}} == Parser.parse(url)
   end
 
   test "refuses to crawl URLs of private network from posts" do

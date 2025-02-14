@@ -96,7 +96,7 @@ defmodule Pleroma.Web.RichMedia.Parser do
     |> validate_page_url
   end
 
-  defp parse_uri(_, _), do: {:error, "not an URL"}
+  defp parse_uri(_, _), do: {:error, "not a URL"}
 
   defp get_tld(host) do
     host
