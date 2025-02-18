@@ -130,7 +130,7 @@ defmodule Pleroma.Web.Telemetry do
         unit: {:native, :second},
         tags: [:route],
         reporter_options: [
-          buckets: [0.1, 0.2, 0.5, 1, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000]
+          buckets: [0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.10, 0.25, 0.5, 0.75, 1, 2, 5, 15]
         ]
       ),
 
@@ -232,8 +232,7 @@ defmodule Pleroma.Web.Telemetry do
     # and we can use sum + counter to get the average between polls from their change
     # But for repo query times we need to use a full distribution
 
-    simple_buckets = [0, 1, 2, 4, 8, 16]
-    simple_buckets_quick = for t <- simple_buckets, do: t / 100.0
+    simple_buckets = [1, 2, 4, 8, 16, 32]
 
     # Already included in distribution metrics anyway:
     #   phoenix.router_dispatch.stop.duration
@@ -253,7 +252,7 @@ defmodule Pleroma.Web.Telemetry do
         measurement: :decode_time,
         unit: {:native, :millisecond},
         reporter_options: [
-          buckets: simple_buckets_quick
+          buckets: [0.001, 0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.5]
         ]
       ),
       distribution("pleroma.repo.query.query_time.fdist",
@@ -261,7 +260,7 @@ defmodule Pleroma.Web.Telemetry do
         measurement: :query_time,
         unit: {:native, :millisecond},
         reporter_options: [
-          buckets: simple_buckets
+          buckets: [0.1, 0.2, 0.5, 1, 1.5, 3, 5, 10, 25, 50]
         ]
       ),
       distribution("pleroma.repo.query.idle_time.fdist",
