@@ -14,7 +14,7 @@ defmodule Pleroma.Mixfile do
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: ["coveralls.html": :test],
+      preferred_cli_env: ["coveralls.html": :test, "mneme.test": :test, "mneme.watch": :test],
       # Docs
       name: "Akkoma",
       homepage_url: "https://akkoma.dev/",
@@ -210,7 +210,8 @@ defmodule Pleroma.Mixfile do
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:elixir_xml_to_map, "~> 3.0", only: :test},
       {:mint, "~> 1.5.1", override: true},
-      {:nimble_pool, "~> 1.0", override: true}
+      {:nimble_pool, "~> 1.0", override: true},
+      {:mneme, "~> 0.10.2", only: [:dev, :test]}
     ] ++ oauth_deps()
   end
 
