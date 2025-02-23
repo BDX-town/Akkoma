@@ -905,7 +905,7 @@ defmodule Pleroma.Web.Router do
       csp_nonce_assign_key: :csp_nonce
     )
 
-    oban_dashboard("/oban/dashboard", csp_nonce_assign_key: :csp_nonce)
+    oban_dashboard("/akkoma/oban", csp_nonce_assign_key: :csp_nonce)
   end
 
   # Test-only routes needed to test action dispatching and plug chain execution
