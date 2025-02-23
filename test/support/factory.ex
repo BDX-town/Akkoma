@@ -62,8 +62,7 @@ defmodule Pleroma.Factory do
       last_digest_emailed_at: NaiveDateTime.utc_now(),
       last_refreshed_at: NaiveDateTime.utc_now(),
       notification_settings: %Pleroma.User.NotificationSetting{},
-      multi_factor_authentication_settings: %Pleroma.MFA.Settings{},
-      ap_enabled: true
+      multi_factor_authentication_settings: %Pleroma.MFA.Settings{}
     }
 
     urls =

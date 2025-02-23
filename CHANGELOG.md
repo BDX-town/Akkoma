@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Added
+
+## Fixed
+
+## Changed
+- Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
+- The remote user count in prometheus metrics is now an estimate instead of an exact number
+  since the latter proved unreasonably costly to obtain for a merely nice-to-have statistic
+- Various other tweaks improving stat query performance and avoiding unecessary work on received AP documents
+
 ## 2025.01.01
 
 Hotfix: Federation could break if a null value found its way into `should_federate?\1`

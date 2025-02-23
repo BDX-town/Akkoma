@@ -109,25 +109,40 @@ defmodule Pleroma.Web.RichMedia.ParserTest do
 
   test "refuses to crawl incomplete URLs" do
     url = "example.com/ogp"
-    assert :error == Parser.parse(url)
+    assert {:error, {:url, "scheme mismatch"}} == Parser.parse(url)
+  end
+
+  test "refuses to crawl plain HTTP and other scheme URL" do
+    [
+      "http://example.com/ogp",
+      "ftp://example.org/dist/"
+    ]
+    |> Enum.each(fn url ->
+      res = Parser.parse(url)
+
+      assert {:error, {:url, "scheme mismatch"}} == res or
+               {:error, {:url, "not an URL"}} == res
+    end)
   end
 
   test "refuses to crawl malformed URLs" do
     url = "example.com[]/ogp"
-    assert :error == Parser.parse(url)
+    assert {:error, {:url, "not an URL"}} == Parser.parse(url)
   end
 
   test "refuses to crawl URLs of private network from posts" do
     [
-      "http://127.0.0.1:4000/notice/9kCP7VNyPJXFOXDrgO",
+      "https://127.0.0.1:4000/notice/9kCP7VNyPJXFOXDrgO",
       "https://10.111.10.1/notice/9kCP7V",
       "https://172.16.32.40/notice/9kCP7V",
-      "https://192.168.10.40/notice/9kCP7V",
-      "https://pleroma.local/notice/9kCP7V"
+      "https://192.168.10.40/notice/9kCP7V"
     ]
     |> Enum.each(fn url ->
-      assert :error == Parser.parse(url)
+      assert {:error, {:url, :ip}} == Parser.parse(url)
     end)
+
+    url = "https://pleroma.local/notice/9kCP7V"
+    assert {:error, {:url, :ignore_tld}} == Parser.parse(url)
   end
 
   test "returns error when disabled" do
