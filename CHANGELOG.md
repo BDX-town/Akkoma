@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## BREAKING
+## Added
+
+## Fixed
+
+## Changed
+- Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
+- The remote user count in prometheus metrics is now an estimate instead of an exact number
+  since the latter proved unreasonably costly to obtain for a merely nice-to-have statistic
+- Various other tweaks improving stat query performance and avoiding unecessary work on received AP documents
 - The HTML content for new posts (both Client-to-Server as well as Server-to-Server communication) will now use a different formatting to represent MFM. See [FEP-c16b](https://codeberg.org/fediverse/fep/src/branch/main/fep/c16b/fep-c16b.md) for more details.
 
 ## 2025.01.01

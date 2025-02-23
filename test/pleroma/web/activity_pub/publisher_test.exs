@@ -306,15 +306,13 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       follower =
         insert(:user, %{
           local: false,
-          inbox: "https://domain.com/users/nick1/inbox",
-          ap_enabled: true
+          inbox: "https://domain.com/users/nick1/inbox"
         })
 
       another_follower =
         insert(:user, %{
           local: false,
-          inbox: "https://rejected.com/users/nick2/inbox",
-          ap_enabled: true
+          inbox: "https://rejected.com/users/nick2/inbox"
         })
 
       actor =
@@ -386,8 +384,7 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       follower =
         insert(:user, %{
           local: false,
-          inbox: "https://domain.com/users/nick1/inbox",
-          ap_enabled: true
+          inbox: "https://domain.com/users/nick1/inbox"
         })
 
       actor =
@@ -425,8 +422,7 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       follower =
         insert(:user, %{
           local: false,
-          inbox: "https://domain.com/users/nick1/inbox",
-          ap_enabled: true
+          inbox: "https://domain.com/users/nick1/inbox"
         })
 
       actor = insert(:user, follower_address: follower.ap_id)
@@ -461,15 +457,13 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       fetcher =
         insert(:user,
           local: false,
-          inbox: "https://domain.com/users/nick1/inbox",
-          ap_enabled: true
+          inbox: "https://domain.com/users/nick1/inbox"
         )
 
       another_fetcher =
         insert(:user,
           local: false,
-          inbox: "https://domain2.com/users/nick1/inbox",
-          ap_enabled: true
+          inbox: "https://domain2.com/users/nick1/inbox"
         )
 
       actor = insert(:user)

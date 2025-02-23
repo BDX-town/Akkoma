@@ -57,6 +57,10 @@ defmodule Pleroma.Web.RichMedia.Backfill do
         Logger.debug("Rich media error for #{url}: :content_type is #{type}")
         negative_cache(url_hash, :timer.minutes(30))
 
+      {:error, {:url, reason}} ->
+        Logger.debug("Rich media error for #{url}: refusing URL #{inspect(reason)}")
+        negative_cache(url_hash, :timer.minutes(180))
+
       e ->
         Logger.debug("Rich media error for #{url}: #{inspect(e)}")
         {:error, e}
@@ -82,7 +86,7 @@ defmodule Pleroma.Web.RichMedia.Backfill do
   end
 
   defp stream_update(%{"activity_id" => activity_id}) do
-    Logger.info("Rich media backfill: streaming update for activity #{activity_id}")
+    Logger.debug("Rich media backfill: streaming update for activity #{activity_id}")
 
     Pleroma.Activity.get_by_id(activity_id)
     |> Pleroma.Activity.normalize()
