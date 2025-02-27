@@ -5,6 +5,7 @@
 defmodule Pleroma.Web.Router do
   use Pleroma.Web, :router
   import Phoenix.LiveDashboard.Router
+  import Oban.Web.Router
 
   pipeline :accepts_html do
     plug(:accepts, ["html"])
@@ -903,6 +904,8 @@ defmodule Pleroma.Web.Router do
       metrics: {Pleroma.Web.Telemetry, :live_dashboard_metrics},
       csp_nonce_assign_key: :csp_nonce
     )
+
+    oban_dashboard("/akkoma/oban", csp_nonce_assign_key: :csp_nonce)
   end
 
   # Test-only routes needed to test action dispatching and plug chain execution
