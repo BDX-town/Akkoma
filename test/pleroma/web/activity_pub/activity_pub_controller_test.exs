@@ -1412,7 +1412,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> get("/users/#{user.nickname}/outbox?page=true")
         |> json_response(200)
 
-      assert %{"orderedItems" => []} = resp
+      refute Map.has_key?(resp, "orderedItems")
     end
 
     test "it returns a note activity in a collection", %{conn: conn} do
