@@ -3,6 +3,7 @@ defmodule Pleroma.Web.Telemetry do
   import Telemetry.Metrics
   alias Pleroma.Stats
   alias Pleroma.Config
+  require Logger
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
@@ -10,6 +11,8 @@ defmodule Pleroma.Web.Telemetry do
 
   @impl true
   def init(_arg) do
+    subscribe_to_events()
+
     children =
       [
         {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
@@ -29,6 +32,82 @@ defmodule Pleroma.Web.Telemetry do
       ]
     else
       []
+    end
+  end
+
+  defp subscribe_to_events() do
+    # note: all handlers for a event are executed blockingly
+    # before the event can conclude, so they mustn't do anything heavy
+    :telemetry.attach(
+      "akkoma-oban-jobs-stop",
+      [:oban, :job, :stop],
+      &__MODULE__.handle_lib_event/4,
+      []
+    )
+
+    :telemetry.attach(
+      "akkoma-oban-jobs-fail",
+      [:oban, :job, :exception],
+      &__MODULE__.handle_lib_event/4,
+      []
+    )
+  end
+
+  def handle_lib_event(
+        [:oban, :job, event],
+        _measurements,
+        %{state: :discard, worker: "Pleroma.Workers.PublisherWorker"} = meta,
+        _config
+      )
+      when event in [:stop, :exception] do
+    {full_target, simple_target, reason} =
+      case meta.args["op"] do
+        "publish" ->
+          {meta.args["activity_id"], nil, "inbox_collection"}
+
+        "publish_one" ->
+          full_target = get_in(meta.args, ["params", "inbox"])
+          %{host: simple_target} = URI.parse(full_target || "")
+          error = collect_apdelivery_error(event, meta)
+          {full_target, simple_target, error}
+      end
+
+    Logger.error("Failed AP delivery: #{inspect(reason)} for #{inspect(full_target)}")
+
+    :telemetry.execute([:akkoma, :ap, :delivery, :fail], %{final: 1}, %{
+      reason: reason,
+      target: simple_target
+    })
+  end
+
+  def handle_lib_event([:oban, :job, _], _, _, _), do: :ok
+
+  defp collect_apdelivery_error(:exception, %{result: nil, reason: reason}) do
+    case reason do
+      %Oban.CrashError{} -> "crash"
+      %Oban.TimeoutError{} -> "timeout"
+      %type{} -> "exception_#{type}"
+    end
+  end
+
+  defp collect_apdelivery_error(:exception, %{result: {:error, error}}) do
+    process_fail_reason(error)
+  end
+
+  defp collect_apdelivery_error(:stop, %{result: {_, reason}}) do
+    process_fail_reason(reason)
+  end
+
+  defp collect_apdelivery_error(_, _) do
+    "cause_unknown"
+  end
+
+  defp process_fail_reason(error) do
+    case error do
+      error when is_binary(error) -> error
+      error when is_atom(error) -> "#{error}"
+      %{status: code} when is_number(code) -> "http_#{code}"
+      _ -> "error_unknown"
     end
   end
 
@@ -215,7 +294,8 @@ defmodule Pleroma.Web.Telemetry do
       last_value("pleroma.local_users.total"),
       last_value("pleroma.domains.total"),
       last_value("pleroma.local_statuses.total"),
-      last_value("pleroma.remote_users.total")
+      last_value("pleroma.remote_users.total"),
+      counter("akkoma.ap.delivery.fail.final", tags: [:target, :reason])
     ]
   end
 
