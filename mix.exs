@@ -196,8 +196,8 @@ defmodule Pleroma.Mixfile do
       {:elasticsearch,
        git: "https://akkoma.dev/AkkomaGang/elasticsearch-elixir.git", ref: "main"},
       {:mfm_parser,
-       git: "https://codeberg.org/ilja/mfm_parser.git",
-       ref: "be09e20e7a2fad2e9964ec4c563201d3fd1c4391"},
+       git: "https://akkoma.dev/AkkomaGang/mfm-parser.git",
+       ref: "360a30267a847810a63ab48f606ba227b2ca05f0"},
 
       ## dev & test
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
