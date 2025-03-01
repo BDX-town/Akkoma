@@ -8,8 +8,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   use Pleroma.Web, :verified_routes
   alias Pleroma.Activity
-  alias Pleroma.Signature
   alias Pleroma.Instances
+  alias Pleroma.User.SigningKey
   require Logger
 
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
@@ -77,10 +77,6 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       |> put_req_header("(request-target)", request_target)
       |> maybe_put_created_psudoheader()
       |> maybe_put_expires_psudoheader()
-      |> case do
-        %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
-        conn -> conn
-      end
 
     conn
     |> assign(:valid_signature, HTTPSignatures.validate_conn(conn))
@@ -93,7 +89,13 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       # set (request-target) header to the appropriate value
       # we also replace the digest header with the one we computed
       possible_paths =
-        route_aliases(conn) ++ [conn.request_path, conn.request_path <> "?#{conn.query_string}"]
+        [conn.request_path, conn.request_path <> "?#{conn.query_string}" | route_aliases(conn)]
+
+      conn =
+        case conn do
+          %{assigns: %{digest: digest}} = conn -> put_req_header(conn, "digest", digest)
+          conn -> conn
+        end
 
       assign_valid_signature_on_route_aliases(conn, possible_paths)
     else
@@ -140,15 +142,17 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
 
   defp signature_host(conn) do
     with {:key_id, %{"keyId" => kid}} <- {:key_id, HTTPSignatures.signature_for_conn(conn)},
-         {:actor_id, {:ok, actor_id}} <- {:actor_id, Signature.key_id_to_actor_id(kid)} do
+         {:actor_id, actor_id, _} when actor_id != nil <-
+           {:actor_id, SigningKey.key_id_to_ap_id(kid), kid} do
       actor_id
     else
       {:key_id, e} ->
         Logger.error("Failed to extract key_id from signature: #{inspect(e)}")
         nil
 
-      {:actor_id, e} ->
-        Logger.error("Failed to extract actor_id from signature: #{inspect(e)}")
+      {:actor_id, _, kid} ->
+        # SigningKeys SHOULD have been fetched before this gets called!
+        Logger.error("Failed to extract actor_id from signature: signing key #{kid} not known")
         nil
     end
   end

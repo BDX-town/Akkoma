@@ -100,7 +100,6 @@ defmodule Pleroma.User do
     field(:password_hash, :string)
     field(:password, :string, virtual: true)
     field(:password_confirmation, :string, virtual: true)
-    field(:keys, :string)
     field(:ap_id, :string)
     field(:avatar, :map, default: %{})
     field(:local, :boolean, default: true)
@@ -127,7 +126,6 @@ defmodule Pleroma.User do
     field(:domain_blocks, {:array, :string}, default: [])
     field(:is_active, :boolean, default: true)
     field(:no_rich_text, :boolean, default: false)
-    field(:ap_enabled, :boolean, default: false)
     field(:is_moderator, :boolean, default: false)
     field(:is_admin, :boolean, default: false)
     field(:show_role, :boolean, default: true)
@@ -223,7 +221,9 @@ defmodule Pleroma.User do
 
     # FOR THE FUTURE: We might want to make this a one-to-many relationship
     # it's entirely possible right now, but we don't have a use case for it
-    has_one(:signing_key, SigningKey, foreign_key: :user_id)
+    # XXX: in the future we’d also like to parse and honour key expiration times
+    #      instead of blindly accepting any change in signing keys
+    has_one(:signing_key, SigningKey, foreign_key: :user_id, on_replace: :update)
 
     timestamps()
   end
@@ -473,7 +473,6 @@ defmodule Pleroma.User do
         :shared_inbox,
         :nickname,
         :avatar,
-        :ap_enabled,
         :banner,
         :background,
         :is_locked,
@@ -1006,11 +1005,7 @@ defmodule Pleroma.User do
   end
 
   def maybe_direct_follow(%User{} = follower, %User{} = followed) do
-    if not ap_enabled?(followed) do
-      follow(follower, followed)
-    else
-      {:ok, follower, followed}
-    end
+    {:ok, follower, followed}
   end
 
   @doc "A mass follow for local users. Respects blocks in both directions but does not create activities."
@@ -1826,7 +1821,6 @@ defmodule Pleroma.User do
       confirmation_token: nil,
       domain_blocks: [],
       is_active: false,
-      ap_enabled: false,
       is_moderator: false,
       is_admin: false,
       mastofe_settings: nil,
@@ -2006,8 +2000,20 @@ defmodule Pleroma.User do
       {%User{} = user, _} ->
         {:ok, user}
 
-      e ->
+      {_, {:error, {:reject, :mrf}}} ->
+        Logger.debug("Rejected to fetch user due to MRF: #{ap_id}")
+        {:error, {:reject, :mrf}}
+
+      {_, {:error, :not_found}} ->
+        Logger.debug("User doesn't exist (anymore): #{ap_id}")
+        {:error, :not_found}
+
+      {_, {:error, e}} ->
         Logger.error("Could not fetch user #{ap_id}, #{inspect(e)}")
+        {:error, e}
+
+      e ->
+        Logger.error("Unexpected error condition while fetching user #{ap_id}, #{inspect(e)}")
         {:error, :not_found}
     end
   end
@@ -2061,21 +2067,6 @@ defmodule Pleroma.User do
   end
 
   defdelegate public_key(user), to: SigningKey
-
-  def get_public_key_for_ap_id(ap_id) do
-    with {:ok, %User{} = user} <- get_or_fetch_by_ap_id(ap_id),
-         {:ok, public_key} <- SigningKey.public_key(user) do
-      {:ok, public_key}
-    else
-      e ->
-        Logger.error("Could not get public key for #{ap_id}.\n#{inspect(e)}")
-        {:error, e}
-    end
-  end
-
-  def ap_enabled?(%User{local: true}), do: true
-  def ap_enabled?(%User{ap_enabled: ap_enabled}), do: ap_enabled
-  def ap_enabled?(_), do: false
 
   @doc "Gets or fetch a user by uri or nickname."
   @spec get_or_fetch(String.t()) :: {:ok, User.t()} | {:error, String.t()}
@@ -2580,10 +2571,10 @@ defmodule Pleroma.User do
           [pinned_objects: "You have already pinned the maximum number of statuses"]
         end
       end)
+      |> update_and_set_cache()
     else
-      change(user)
+      {:ok, user}
     end
-    |> update_and_set_cache()
   end
 
   @spec remove_pinned_object_id(User.t(), String.t()) :: {:ok, t()} | {:error, term()}

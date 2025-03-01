@@ -166,10 +166,7 @@ config :mime, :types, %{
   "application/xrd+xml" => ["xrd+xml"],
   "application/jrd+json" => ["jrd+json"],
   "application/activity+json" => ["activity+json"],
-  "application/ld+json" => ["activity+json"],
-  # Can be removed when bumping MIME past 2.0.5
-  # see https://akkoma.dev/AkkomaGang/akkoma/issues/657
-  "image/apng" => ["apng"]
+  "application/ld+json" => ["activity+json"]
 }
 
 config :mime, :extensions, %{
@@ -373,6 +370,7 @@ config :pleroma, :activitypub,
   note_replies_output_limit: 5,
   sign_object_fetches: true,
   authorized_fetch_mode: false,
+  min_key_refetch_interval: 86_400,
   max_collection_objects: 50
 
 config :pleroma, :streamer,
@@ -602,7 +600,7 @@ config :pleroma, :workers,
     federator_incoming: 5,
     federator_outgoing: 5,
     search_indexing: 2,
-    rich_media_backfill: 3
+    rich_media_backfill: 1
   ],
   timeout: [
     activity_expiration: :timer.seconds(5),

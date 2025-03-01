@@ -265,6 +265,64 @@ defmodule Pleroma.Object.Fetcher do
   def fetch_and_contain_remote_object_from_id(id, is_ap_id) when is_binary(id) do
     Logger.debug("Fetching object #{id} via AP [ap_id=#{is_ap_id}]")
 
+    fetch_and_contain_remote_ap_doc(
+      id,
+      is_ap_id,
+      fn final_uri, data -> {Containment.contain_id_to_fetch(final_uri, data), data["id"]} end
+    )
+  end
+
+  def fetch_and_contain_remote_object_from_id(_id, _is_ap_id),
+    do: {:error, :invalid_id}
+
+  def fetch_and_contain_remote_key(id) do
+    Logger.debug("Fetching remote actor key #{id}")
+
+    fetch_and_contain_remote_ap_doc(
+      id,
+      # key IDs are alwas AP IDs which should resolve directly and exactly
+      true,
+      fn
+        final_uri, %{"id" => user_id, "publicKey" => %{"id" => key_id}} ->
+          # For non-fragment keys as used e.g. by GTS, the "id" won't match the fetch URI,
+          # but the key ID will. Thus do NOT strict check the top-lelve id, but byte-exact
+          # check the key ID (since for later lookups we need byte-exact matches).
+          # This relies on fetching already enforcing a domain match for toplevel id and host
+          with :ok <- Containment.contain_key_user(key_id, user_id),
+               true <- key_id == final_uri do
+            {:ok, key_id}
+          else
+            _ -> {:error, key_id}
+          end
+
+        final_uri,
+        %{"type" => "CryptographicKey", "id" => key_id, "owner" => user_id, "publicKeyPem" => _} ->
+          # XXX: refactor into separate function isntead of duplicating
+          with :ok <- Containment.contain_key_user(key_id, user_id),
+               true <- key_id == final_uri do
+            {:ok, key_id}
+          else
+            _ -> {:error, nil}
+          end
+
+        _, _ ->
+          {:error, nil}
+      end
+    )
+  end
+
+  # Fetches an AP document and performing variable security checks on it.
+  #
+  # Note that the received documents "id" matching the final host domain
+  # is always enforced before the custom ID check runs.
+  @spec fetch_and_contain_remote_ap_doc(
+          String.t(),
+          boolean(),
+          (String.t(), Map.t() -> {:ok | :error, String.t() | term()})
+        ) :: {:ok, Map.t()} | {:reject, term()} | {:error, term()}
+  defp fetch_and_contain_remote_ap_doc(id, is_ap_id, verify_id) do
+    Logger.debug("Dereferencing AP doc #{}")
+
     with {:valid_uri_scheme, true} <- {:valid_uri_scheme, String.starts_with?(id, "http")},
          %URI{} = uri <- URI.parse(id),
          {:mrf_reject_check, {:ok, nil}} <-
@@ -277,7 +335,7 @@ defmodule Pleroma.Object.Fetcher do
          true <- !is_ap_id || final_id == id,
          {:ok, data} <- safe_json_decode(body),
          {_, :ok} <- {:containment, Containment.contain_origin(final_id, data)},
-         {_, _, :ok} <- {:strict_id, data["id"], Containment.contain_id_to_fetch(final_id, data)} do
+         {_, {:ok, _}} <- {:strict_id, verify_id.(final_id, data)} do
       unless Instances.reachable?(final_id) do
         Instances.set_reachable(final_id)
       end
@@ -289,14 +347,12 @@ defmodule Pleroma.Object.Fetcher do
       # Similarly keys, either use a fragment ID and are a subobjects or a distinct ID
       # but for compatibility are still a subobject presenting their owning actors ID at the toplevel.
       # Refetching _once_ from the listed id, should yield a strict match afterwards.
-      {:strict_id, ap_id, _} = e ->
-        case is_ap_id do
-          false ->
-            fetch_and_contain_remote_object_from_id(ap_id, true)
-
-          true ->
-            log_fetch_error(id, e)
-            {:error, :id_mismatch}
+      {:strict_id, {_error, ap_id}} = e ->
+        if !is_ap_id and is_binary(ap_id) do
+          fetch_and_contain_remote_ap_doc(ap_id, true, verify_id)
+        else
+          log_fetch_error(id, e)
+          {:error, :id_mismatch}
         end
 
       {:mrf_reject_check, _} = e ->
@@ -326,9 +382,6 @@ defmodule Pleroma.Object.Fetcher do
         {:error, e}
     end
   end
-
-  def fetch_and_contain_remote_object_from_id(_id, _is_ap_id),
-    do: {:error, :invalid_id}
 
   # HOPEFULLY TEMPORARY
   # Basically none of our Tesla mocks in tests set the (supposed to

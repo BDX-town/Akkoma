@@ -157,4 +157,16 @@ defmodule Pleroma.Object.Containment do
 
     compare_uris(uri1, uri2)
   end
+
+  @doc """
+  Checks whether a key_id - owner_id pair are acceptable.
+
+  While in theory keys and actors on different domain could be verified
+  by fetching both and checking the links on both ends (if different at all),
+  this requires extra fetches and there are no known implementations with split
+  actor and key domains, thus atm this simply requires same domain.
+  """
+  def contain_key_user(key_id, user_id) do
+    same_origin(key_id, user_id)
+  end
 end
