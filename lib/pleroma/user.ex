@@ -100,7 +100,6 @@ defmodule Pleroma.User do
     field(:password_hash, :string)
     field(:password, :string, virtual: true)
     field(:password_confirmation, :string, virtual: true)
-    field(:keys, :string)
     field(:ap_id, :string)
     field(:avatar, :map, default: %{})
     field(:local, :boolean, default: true)
@@ -222,7 +221,9 @@ defmodule Pleroma.User do
 
     # FOR THE FUTURE: We might want to make this a one-to-many relationship
     # it's entirely possible right now, but we don't have a use case for it
-    has_one(:signing_key, SigningKey, foreign_key: :user_id)
+    # XXX: in the future we’d also like to parse and honour key expiration times
+    #      instead of blindly accepting any change in signing keys
+    has_one(:signing_key, SigningKey, foreign_key: :user_id, on_replace: :update)
 
     timestamps()
   end
@@ -2066,17 +2067,6 @@ defmodule Pleroma.User do
   end
 
   defdelegate public_key(user), to: SigningKey
-
-  def get_public_key_for_ap_id(ap_id) do
-    with {:ok, %User{} = user} <- get_or_fetch_by_ap_id(ap_id),
-         {:ok, public_key} <- SigningKey.public_key(user) do
-      {:ok, public_key}
-    else
-      e ->
-        Logger.error("Could not get public key for #{ap_id}.\n#{inspect(e)}")
-        {:error, e}
-    end
-  end
 
   @doc "Gets or fetch a user by uri or nickname."
   @spec get_or_fetch(String.t()) :: {:ok, User.t()} | {:error, String.t()}

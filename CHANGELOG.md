@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Oban (worker) dashboard at `/akkoma/oban`
 
 ## Fixed
+- fixed some holes in SigningKey verification potentially allowing they key-user mapping to be poisoned
+- frontend ZIP files can no longer traverse to paths outside their install dir
+- fixed user updates trying but failing to renew signing key information
+- fixed signing key refresh on key rotation
 
 ## Changed
 - Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
@@ -17,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   since the latter proved unreasonably costly to obtain for a merely nice-to-have statistic
 - Various other tweaks improving stat query performance and avoiding unecessary work on received AP documents
 - The HTML content for new posts (both Client-to-Server as well as Server-to-Server communication) will now use a different formatting to represent MFM. See [FEP-c16b](https://codeberg.org/fediverse/fep/src/branch/main/fep/c16b/fep-c16b.md) for more details.
+- HTTP signatures now test the most likely request-target alias first cutting down on overhead
 
 ## 2025.01.01
 

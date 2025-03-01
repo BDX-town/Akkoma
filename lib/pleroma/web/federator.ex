@@ -94,11 +94,19 @@ defmodule Pleroma.Web.Federator do
     with nil <- Activity.normalize(params["id"]),
          {_, :ok} <-
            {:correct_origin?, Containment.contain_origin_from_id(actor, params)},
+         {_, :ok, _} <- {:local, Containment.contain_local_fetch(actor), actor},
          {:ok, activity} <- Transmogrifier.handle_incoming(params) do
       {:ok, activity}
     else
       {:correct_origin?, _} ->
         Logger.debug("Origin containment failure for #{params["id"]}")
+        {:error, :origin_containment_failed}
+
+      {:local, _, actor} ->
+        Logger.alert(
+          "Received incoming AP doc with valid signature for local actor #{actor}! Likely key leak!\n#{inspect(params)}"
+        )
+
         {:error, :origin_containment_failed}
 
       %Activity{} ->

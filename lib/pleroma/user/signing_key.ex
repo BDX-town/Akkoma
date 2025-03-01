@@ -56,16 +56,10 @@ defmodule Pleroma.User.SigningKey do
   def key_id_to_ap_id(key_id) do
     Logger.debug("Looking up key ID: #{key_id}")
 
-    result =
-      from(sk in __MODULE__, where: sk.key_id == ^key_id)
-      |> join(:inner, [sk], u in User, on: sk.user_id == u.id)
-      |> select([sk, u], %{user: u})
-      |> Repo.one()
-
-    case result do
-      %{user: %User{ap_id: ap_id}} -> ap_id
-      _ -> nil
-    end
+    from(sk in __MODULE__, where: sk.key_id == ^key_id)
+    |> join(:inner, [sk], u in User, on: sk.user_id == u.id)
+    |> select([sk, u], u.ap_id)
+    |> Repo.one()
   end
 
   @spec generate_rsa_pem() :: {:ok, binary()}
@@ -115,24 +109,18 @@ defmodule Pleroma.User.SigningKey do
     {:ok, :public_key.pem_encode([public_key])}
   end
 
-  @spec public_key(User.t()) :: {:ok, binary()} | {:error, String.t()}
+  @spec public_key(__MODULE__) :: {:ok, binary()} | {:error, String.t()}
   @doc """
-  Given a user, return the public key for that user in binary format.
+  Return public key data in binary format.
   """
-  def public_key(%User{} = user) do
-    case Repo.preload(user, :signing_key) do
-      %User{signing_key: %__MODULE__{public_key: public_key_pem}} ->
-        key =
-          public_key_pem
-          |> :public_key.pem_decode()
-          |> hd()
-          |> :public_key.pem_entry_decode()
+  def public_key_decoded(%__MODULE__{public_key: public_key_pem}) do
+    decoded =
+      public_key_pem
+      |> :public_key.pem_decode()
+      |> hd()
+      |> :public_key.pem_entry_decode()
 
-        {:ok, key}
-
-      _ ->
-        {:error, "key not found"}
-    end
+    {:ok, decoded}
   end
 
   def public_key(_), do: {:error, "key not found"}
@@ -174,12 +162,12 @@ defmodule Pleroma.User.SigningKey do
   Will either return the key if it exists locally, or fetch it from the remote instance.
   """
   def get_or_fetch_by_key_id(key_id) do
-    case key_id_to_user_id(key_id) do
+    case Repo.get_by(__MODULE__, key_id: key_id) do
       nil ->
         fetch_remote_key(key_id)
 
-      user_id ->
-        {:ok, Repo.get_by(__MODULE__, user_id: user_id)}
+      key ->
+        {:ok, key}
     end
   end
 
@@ -195,24 +183,49 @@ defmodule Pleroma.User.SigningKey do
   def fetch_remote_key(key_id) do
     Logger.debug("Fetching remote key: #{key_id}")
 
-    with {:ok, _body} = resp <-
-           Pleroma.Object.Fetcher.fetch_and_contain_remote_object_from_id(key_id),
-         {:ok, ap_id, public_key_pem} <- handle_signature_response(resp) do
+    with {:ok, resp_body} <-
+           Pleroma.Object.Fetcher.fetch_and_contain_remote_key(key_id),
+         {:ok, ap_id, public_key_pem} <- handle_signature_response(resp_body),
+         {:ok, user} <- User.get_or_fetch_by_ap_id(ap_id) do
       Logger.debug("Fetched remote key: #{ap_id}")
-      # fetch the user
-      {:ok, user} = User.get_or_fetch_by_ap_id(ap_id)
       # store the key
-      key = %__MODULE__{
+      key = %{
         user_id: user.id,
         public_key: public_key_pem,
         key_id: key_id
       }
 
-      Repo.insert(key, on_conflict: :replace_all, conflict_target: :key_id)
+      key_cs =
+        cast(%__MODULE__{}, key, [:user_id, :public_key, :key_id])
+        |> unique_constraint(:user_id)
+
+      Repo.insert(key_cs,
+        # while this should never run for local users anyway, etc make sure we really never loose privkey info!
+        on_conflict: {:replace_all_except, [:inserted_at, :private_key]},
+        # if the key owner overlaps with a distinct existing key entry, this intetionally still errros
+        conflict_target: :key_id
+      )
     else
       e ->
         Logger.debug("Failed to fetch remote key: #{inspect(e)}")
         {:error, "Could not fetch key"}
+    end
+  end
+
+  defp refresh_key(%__MODULE__{} = key) do
+    min_backoff = Pleroma.Config.get!([:activitypub, :min_key_refetch_interval])
+
+    if Timex.diff(Timex.now(), key.updated_at, :seconds) >= min_backoff do
+      fetch_remote_key(key.key_id)
+    else
+      {:error, :too_young}
+    end
+  end
+
+  def refresh_by_key_id(key_id) do
+    case Repo.get_by(__MODULE__, key_id: key_id) do
+      nil -> {:error, :unknown}
+      key -> refresh_key(key)
     end
   end
 
@@ -227,7 +240,7 @@ defmodule Pleroma.User.SigningKey do
     end
   end
 
-  defp handle_signature_response({:ok, body}) do
+  defp handle_signature_response(body) do
     case body do
       %{
         "type" => "CryptographicKey",
@@ -247,9 +260,9 @@ defmodule Pleroma.User.SigningKey do
 
       %{"error" => error} ->
         {:error, error}
+
+      other ->
+        {:error, "Could not process key: #{inspect(other)}"}
     end
   end
-
-  defp handle_signature_response({:error, e}), do: {:error, e}
-  defp handle_signature_response(other), do: {:error, "Could not fetch key: #{inspect(other)}"}
 end

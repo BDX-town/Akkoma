@@ -29,6 +29,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
   @doc """
   Modifies an incoming AP object (mastodon format) to our internal format.
+  (This only deals with non-activity AP objects)
   """
   def fix_object(object, options \\ []) do
     object
@@ -44,6 +45,38 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     |> fix_content_map()
     |> fix_addressing()
     |> fix_summary()
+    |> fix_history(&fix_object/1)
+  end
+
+  defp maybe_fix_object(%{"attributedTo" => _} = object), do: fix_object(object)
+  defp maybe_fix_object(object), do: object
+
+  defp fix_history(%{"formerRepresentations" => %{"orderedItems" => list}} = obj, fix_fun)
+       when is_list(list) do
+    update_in(obj["formerRepresentations"]["orderedItems"], fn h -> Enum.map(h, fix_fun) end)
+  end
+
+  defp fix_history(obj, _), do: obj
+
+  defp fix_recursive(obj, fun) do
+    # unlike Erlang, Elixir does not support recursive inline functions
+    # which would allow us to avoid reconstructing this on every recursion
+    rec_fun = fn
+      obj when is_map(obj) -> fix_recursive(obj, fun)
+      # there may be simple AP IDs in history (or object field)
+      obj -> obj
+    end
+
+    obj
+    |> fun.()
+    |> fix_history(rec_fun)
+    |> then(fn
+      %{"object" => object} = doc when is_map(object) ->
+        update_in(doc["object"], rec_fun)
+
+      apdoc ->
+        apdoc
+    end)
   end
 
   def fix_summary(%{"summary" => nil} = object) do
@@ -414,17 +447,10 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   end
 
   def handle_incoming(data, options \\ []) do
-    data = normalise_addressing_public(data)
-
-    data =
-      if data["object"] != nil do
-        object = normalise_addressing_public(data["object"])
-        Map.put(data, "object", object)
-      else
-        data
-      end
-
-    handle_incoming_normalised(data, options)
+    data
+    |> fix_recursive(&normalise_addressing_public/1)
+    |> fix_recursive(&strip_internal_fields/1)
+    |> handle_incoming_normalised(options)
   end
 
   defp handle_incoming_normalised(data, options)
@@ -490,7 +516,6 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
     object =
       data["object"]
-      |> strip_internal_fields()
       |> fix_type(fetch_options)
       |> fix_in_reply_to(fetch_options)
       |> fix_quote_url(fetch_options)
@@ -545,6 +570,9 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
          _options
        )
        when type in ~w{Update Block Follow Accept Reject} do
+    fixed_obj = maybe_fix_object(data["object"])
+    data = if fixed_obj != nil, do: %{data | "object" => fixed_obj}, else: data
+
     with {:ok, %User{}} <- ObjectValidator.fetch_actor(data),
          {:ok, activity, _} <-
            Pipeline.common_pipeline(data, local: false) do
@@ -560,7 +588,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
     with {_, {:ok, object_id}} <- {:object_id, oid_result},
          object <- Object.get_cached_by_ap_id(object_id),
-         {_, false} <- {:tombstone, Object.is_tombstone_object?(object) && !data["actor"]},
+         {_, false} <- {:tombstone, Object.tombstone_object?(object) && !data["actor"]},
          {:ok, activity, _} <- Pipeline.common_pipeline(data, local: false) do
       {:ok, activity}
     else
@@ -1043,6 +1071,8 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     Map.put(object, "attachment", attachments)
   end
 
+  # for outgoing docs immediately stripping internal fields recursively breaks later emoji transformations
+  # (XXX: it would be better to reorder operations so we can always use recursive stripping)
   def strip_internal_fields(object) do
     Map.drop(object, Pleroma.Constants.object_internal_fields())
   end
