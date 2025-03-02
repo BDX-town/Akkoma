@@ -558,8 +558,6 @@ config :pleroma, Pleroma.User,
   ],
   email_blacklist: []
 
-config :oban_met, auto_start: false
-
 config :pleroma, Oban,
   repo: Pleroma.Repo,
   log: false,
