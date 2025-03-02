@@ -34,7 +34,10 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
 
   def validate(_, _), do: {:error, "Not a user object"}
 
-  defp validate_pubkey(%{"id" => user_id, "publicKey" => %{"id" => pk_id, "publicKeyPem" => _key}}) do
+  defp validate_pubkey(%{
+         "id" => user_id,
+         "publicKey" => %{"id" => pk_id, "publicKeyPem" => _key}
+       }) do
     with {_, true} <- {:user, is_binary(user_id)},
          {_, true} <- {:key, is_binary(pk_id)},
          :ok <- Containment.contain_key_user(pk_id, user_id) do
