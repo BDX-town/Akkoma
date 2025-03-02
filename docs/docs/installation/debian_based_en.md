@@ -61,15 +61,15 @@ Next install Erlang:
 ```shell
 asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
 export KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac"
-asdf install erlang 26.2.5.4
-asdf global erlang 26.2.5.4
+asdf install erlang 27.2.4
+asdf set erlang 27.2.4
 ```
 
 Now install Elixir:
 ```shell
-asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
-asdf install elixir 1.17.3-otp-26
-asdf global elixir 1.17.3-otp-26
+asdf plugin add elixir https://github.com/asdf-vm/asdf-elixir.git
+asdf install elixir 1.18.2-otp-27
+asdf set elixir 1.18.2-otp-27
 ```
 
 Confirm that Elixir is installed correctly by checking the version:
