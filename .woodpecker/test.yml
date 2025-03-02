@@ -10,11 +10,11 @@ matrix:
     - 1.15
     - 1.18
   OTP_VERSION:
-    - 24
+    - 25
     - 27
   include:
     - ELIXIR_VERSION: 1.15
-      OTP_VERSION: 24
+      OTP_VERSION: 25
     - ELIXIR_VERSION: 1.18
       OTP_VERSION: 27
 
