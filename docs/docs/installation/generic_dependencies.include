@@ -1,7 +1,7 @@
 ## Required dependencies
 
 * PostgreSQL 12+
-* Elixir 1.14+ (currently tested up to 1.17)
+* Elixir 1.15+ (currently tested up to 1.18)
 * Erlang OTP 25+ (currently tested up to OTP27)
 * git
 * file / libmagic
