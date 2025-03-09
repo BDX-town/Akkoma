@@ -534,6 +534,16 @@ defmodule Pleroma.Web.CommonAPITest do
       assert activity.data["listMessage"] == list.ap_id
     end
 
+    test "it adds the htmlMFM term to MFM posts" do
+      user = insert(:user)
+
+      assert {:ok, %Pleroma.Activity{object: %Pleroma.Object{data: %{"htmlMfm" => true}}}} =
+               CommonAPI.post(user, %{
+                 status: "$[spin 13:37]",
+                 content_type: "text/x.misskeymarkdown"
+               })
+    end
+
     test "it returns error when status is empty and no attachments" do
       user = insert(:user)
 
