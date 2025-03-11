@@ -62,7 +62,7 @@ defmodule Pleroma.Web.Plugs.InstanceStatic do
     opts =
       opts
       |> Map.put(:from, from)
-      |> Map.put(:content_type, false)
+      |> Map.put(:content_types, false)
 
     conn
     |> set_static_content_type(request_path)

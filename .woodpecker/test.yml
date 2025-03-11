@@ -5,16 +5,18 @@ depends_on:
   - lint
 
 matrix:
+  # test the lowest and highest versions
   ELIXIR_VERSION:
     - 1.14
-    - 1.15
-    - 1.16
+    - 1.18
   OTP_VERSION:
     - 25
-    - 26
+    - 27
   include:
-    - ELIXIR_VERSION: 1.16
-      OTP_VERSION: 26
+    - ELIXIR_VERSION: 1.14
+      OTP_VERSION: 25
+    - ELIXIR_VERSION: 1.18
+      OTP_VERSION: 27
 
 variables:
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
