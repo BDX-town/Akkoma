@@ -16,7 +16,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Relay
   alias Pleroma.Web.ActivityPub.UserView
-  alias Pleroma.Web.ActivityPub.Utils
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.Endpoint
   alias Pleroma.Workers.ReceiverWorker
@@ -562,7 +561,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> assign(:valid_signature, true)
         |> put_req_header(
           "signature",
-          "keyId=\"http://mastodon.example.org/users/admin/main-key\""
+          "keyId=\"http://mastodon.example.org/users/admin#main-key\""
         )
         |> put_req_header("content-type", "application/activity+json")
         |> post("/inbox", data)
@@ -579,7 +578,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       user =
         insert(:user,
           ap_id: "https://mastodon.example.org/users/raymoo",
-          ap_enabled: true,
           local: false,
           last_refreshed_at: nil
         )
@@ -681,7 +679,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> String.replace("{{nickname}}", "lain")
 
       actor = "https://example.com/users/lain"
-      key_id = "#{actor}/main-key"
+      key_id = "#{actor}#main-key"
 
       insert(:user,
         ap_id: actor,
@@ -743,7 +741,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert "ok" ==
                conn
                |> assign(:valid_signature, true)
-               |> put_req_header("signature", "keyId=\"#{actor}/main-key\"")
+               |> put_req_header("signature", "keyId=\"#{actor}#main-key\"")
                |> put_req_header("content-type", "application/activity+json")
                |> post("/inbox", data)
                |> json_response(200)
@@ -766,7 +764,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert "ok" ==
                conn
                |> assign(:valid_signature, true)
-               |> put_req_header("signature", "keyId=\"#{actor}/main-key\"")
+               |> put_req_header("signature", "keyId=\"#{actor}#main-key\"")
                |> put_req_header("content-type", "application/activity+json")
                |> post("/inbox", data)
                |> json_response(200)
@@ -792,7 +790,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> String.replace("{{nickname}}", "lain")
 
       actor = "https://example.com/users/lain"
-      key_id = "#{actor}/main-key"
+      key_id = "#{actor}#main-key"
 
       sender =
         insert(:user,
@@ -885,7 +883,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert "ok" ==
                conn
                |> assign(:valid_signature, true)
-               |> put_req_header("signature", "keyId=\"#{actor}/main-key\"")
+               |> put_req_header("signature", "keyId=\"#{actor}#main-key\"")
                |> put_req_header("content-type", "application/activity+json")
                |> post("/inbox", data)
                |> json_response(200)
@@ -917,7 +915,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{data["actor"]}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{data["actor"]}#main-key\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -941,7 +939,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{data["actor"]}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{data["actor"]}#main-key\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -963,7 +961,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{data["actor"]}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{data["actor"]}#main-key\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -990,7 +988,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       conn =
         conn
         |> assign(:valid_signature, true)
-        |> put_req_header("signature", "keyId=\"#{data["actor"]}/main-key\"")
+        |> put_req_header("signature", "keyId=\"#{data["actor"]}#main-key\"")
         |> put_req_header("content-type", "application/activity+json")
         |> post("/users/#{user.nickname}/inbox", data)
 
@@ -1114,7 +1112,8 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
 
     test "it removes all follower collections but actor's", %{conn: conn} do
-      [actor, recipient] = insert_pair(:user)
+      actor = insert(:user, local: false)
+      recipient = insert(:user, local: true)
       actor = with_signing_key(actor)
 
       to = [
@@ -1128,7 +1127,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       data = %{
         "@context" => ["https://www.w3.org/ns/activitystreams"],
         "type" => "Create",
-        "id" => Utils.generate_activity_id(),
+        "id" => actor.ap_id <> "/create/12345",
         "to" => to,
         "cc" => cc,
         "actor" => actor.ap_id,
@@ -1138,7 +1137,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
           "cc" => cc,
           "content" => "It's a note",
           "attributedTo" => actor.ap_id,
-          "id" => Utils.generate_object_id()
+          "id" => actor.ap_id <> "/note/12345"
         }
       }
 
@@ -1413,7 +1412,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> get("/users/#{user.nickname}/outbox?page=true")
         |> json_response(200)
 
-      assert %{"orderedItems" => []} = resp
+      refute Map.has_key?(resp, "orderedItems")
     end
 
     test "it returns a note activity in a collection", %{conn: conn} do

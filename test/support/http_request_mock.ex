@@ -424,11 +424,24 @@ defmodule HttpRequestMock do
      }}
   end
 
-  def get("http://mastodon.example.org/users/admin/main-key", _, _, _) do
+  def get("http://mastodon.example.org/users/admin#main-key", _, _, _) do
     {:ok,
      %Tesla.Env{
        status: 200,
        body: File.read!("test/fixtures/tesla_mock/admin@mastdon.example.org.json"),
+       headers: activitypub_object_headers()
+     }}
+  end
+
+  def get("http://remote.example/users/with_key_id_of_admin-mastodon.example.org" = url, _, _, _) do
+    {:ok,
+     %Tesla.Env{
+       status: 200,
+       url: url,
+       body:
+         File.read!(
+           "test/fixtures/tesla_mock/evil@remote.example_with_keyid_from_admin@mastdon.example.org.json"
+         ),
        headers: activitypub_object_headers()
      }}
   end

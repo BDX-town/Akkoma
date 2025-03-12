@@ -8,13 +8,14 @@ defmodule Pleroma.Repo.Migrations.MoveSigningKeys do
     # we do not handle remote users here!
     # because we want to store a key id -> user id mapping, and we don't
     # currently store key ids for remote users...
-    query =
-      from(u in User)
-      |> where(local: true)
-
-    Repo.stream(query, timeout: :infinity)
+    # Also this MUST use select, else the migration will fail in future installs with new user fields!
+    from(u in Pleroma.User,
+      where: u.local == true,
+      select: {u.id, fragment("?.keys", u), u.ap_id}
+    )
+    |> Repo.stream(timeout: :infinity)
     |> Enum.each(fn
-      %User{id: user_id, keys: private_key, local: true, ap_id: ap_id} ->
+      {user_id, private_key, ap_id} ->
         IO.puts("Migrating user #{user_id}")
         # we can precompute the public key here...
         # we do use it on every user view which makes it a bit of a dos attack vector

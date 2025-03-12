@@ -22,7 +22,8 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
 
   def validate(%{"type" => type, "id" => _id} = data, meta)
       when type in Pleroma.Constants.actor_types() do
-    with :ok <- validate_inbox(data),
+    with :ok <- validate_pubkey(data),
+         :ok <- validate_inbox(data),
          :ok <- contain_collection_origin(data) do
       {:ok, data, meta}
     else
@@ -32,6 +33,24 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   end
 
   def validate(_, _), do: {:error, "Not a user object"}
+
+  defp validate_pubkey(%{
+         "id" => user_id,
+         "publicKey" => %{"id" => pk_id, "publicKeyPem" => _key}
+       }) do
+    with {_, true} <- {:user, is_binary(user_id)},
+         {_, true} <- {:key, is_binary(pk_id)},
+         :ok <- Containment.contain_key_user(pk_id, user_id) do
+      :ok
+    else
+      {:user, _} -> {:error, "Invalid user id: #{inspect(user_id)}"}
+      {:key, _} -> {:error, "Invalid key id: #{inspect(pk_id)}"}
+      :error -> {:error, "Problematic actor-key pairing: #{user_id} - #{pk_id}"}
+    end
+  end
+
+  # pubkey is optional atm
+  defp validate_pubkey(_data), do: :ok
 
   defp validate_inbox(%{"id" => id, "inbox" => inbox}) do
     case Containment.same_origin(id, inbox) do

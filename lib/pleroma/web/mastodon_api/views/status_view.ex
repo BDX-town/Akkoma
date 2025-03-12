@@ -617,7 +617,9 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
     %{ancestors: ancestors, descendants: descendants} =
       activities
       |> Enum.reverse()
-      |> Enum.group_by(fn %{id: id} -> if id < activity.id, do: :ancestors, else: :descendants end)
+      |> Enum.group_by(fn %{id: id} ->
+        if id < activity.id, do: :ancestors, else: :descendants
+      end)
       |> Map.put_new(:ancestors, [])
       |> Map.put_new(:descendants, [])
 

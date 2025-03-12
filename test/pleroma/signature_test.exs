@@ -56,7 +56,18 @@ defmodule Pleroma.SignatureTest do
 
   describe "refetch_public_key/1" do
     test "it returns key" do
+      clear_config([:activitypub, :min_key_refetch_interval], 0)
       ap_id = "https://mastodon.social/users/lambadalambda"
+
+      %Pleroma.User{signing_key: sk} =
+        Pleroma.User.get_or_fetch_by_ap_id(ap_id)
+        |> then(fn {:ok, u} -> u end)
+        |> Pleroma.User.SigningKey.load_key()
+
+      {:ok, _} =
+        %{sk | public_key: "-----BEGIN PUBLIC KEY-----\nasdfghjkl"}
+        |> Ecto.Changeset.change()
+        |> Pleroma.Repo.update()
 
       assert Signature.refetch_public_key(make_fake_conn(ap_id)) == {:ok, @rsa_public_key}
     end
@@ -111,16 +122,6 @@ defmodule Pleroma.SignatureTest do
         ),
         "keyId=\"https://mastodon.social/users/lambadalambda#main-key\",algorithm=\"rsa-sha256\",headers=\"content-length host\",signature=\"sibUOoqsFfTDerquAkyprxzDjmJm6erYc42W5w1IyyxusWngSinq5ILTjaBxFvfarvc7ci1xAi+5gkBwtshRMWm7S+Uqix24Yg5EYafXRun9P25XVnYBEIH4XQ+wlnnzNIXQkU3PU9e6D8aajDZVp3hPJNeYt1gIPOA81bROI8/glzb1SAwQVGRbqUHHHKcwR8keiR/W2h7BwG3pVRy4JgnIZRSW7fQogKedDg02gzRXwUDFDk0pr2p3q6bUWHUXNV8cZIzlMK+v9NlyFbVYBTHctAR26GIAN6Hz0eV0mAQAePHDY1mXppbA8Gpp6hqaMuYfwifcXmcc+QFm4e+n3A==\""
       )
-    end
-  end
-
-  describe "key_id_to_actor_id/1" do
-    test "it reverses the key id to actor id" do
-      user =
-        insert(:user)
-        |> with_signing_key()
-
-      assert Signature.key_id_to_actor_id(user.signing_key.key_id) == {:ok, user.ap_id}
     end
   end
 

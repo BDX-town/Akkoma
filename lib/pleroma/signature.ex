@@ -9,37 +9,40 @@ defmodule Pleroma.Signature do
   alias Pleroma.User.SigningKey
   require Logger
 
-  def key_id_to_actor_id(key_id) do
-    case SigningKey.key_id_to_ap_id(key_id) do
-      nil ->
-        # hm, we SHOULD have gotten this in the pipeline before we hit here!
-        Logger.error("Could not figure out who owns the key #{key_id}")
-        {:error, :key_owner_not_found}
-
-      key ->
-        {:ok, key}
-    end
-  end
-
   def fetch_public_key(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, actor_id} <- key_id_to_actor_id(kid),
-         {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
-      {:ok, public_key}
+    with {_, %{"keyId" => kid}} <- {:keyid, HTTPSignatures.signature_for_conn(conn)},
+         {_, {:ok, %SigningKey{} = sk}, _} <-
+           {:fetch, SigningKey.get_or_fetch_by_key_id(kid), kid},
+         {_, {:ok, decoded_key}} <- {:decode, SigningKey.public_key_decoded(sk)} do
+      {:ok, decoded_key}
     else
+      {:fetch, error, kid} ->
+        Logger.error("Failed to acquire key from signature: #{kid} #{inspect(error)}")
+        {:error, {:fetch, error}}
+
       e ->
         {:error, e}
     end
   end
 
   def refetch_public_key(conn) do
-    with %{"keyId" => kid} <- HTTPSignatures.signature_for_conn(conn),
-         {:ok, %SigningKey{}} <- SigningKey.get_or_fetch_by_key_id(kid),
-         {:ok, actor_id} <- key_id_to_actor_id(kid),
-         {:ok, public_key} <- User.get_public_key_for_ap_id(actor_id) do
-      {:ok, public_key}
+    with {_, %{"keyId" => kid}} <- {:keyid, HTTPSignatures.signature_for_conn(conn)},
+         {_, {:ok, %SigningKey{} = sk}, _} <- {:fetch, SigningKey.refresh_by_key_id(kid), kid},
+         {_, {:ok, decoded_key}} <- {:decode, SigningKey.public_key_decoded(sk)} do
+      {:ok, decoded_key}
     else
+      {:fetch, {:error, :too_young}, kid} ->
+        Logger.debug("Refusing to refetch recently updated key: #{kid}")
+        {:error, {:fetch, :too_young}}
+
+      {:fetch, {:error, :unknown}, kid} ->
+        Logger.warning("Attempted to refresh unknown key; this should not happen: #{kid}")
+        {:error, {:fetch, :unknown}}
+
+      {:fetch, error, kid} ->
+        Logger.error("Failed to refresh stale key from signature: #{kid} #{inspect(error)}")
+        {:error, {:fetch, error}}
+
       e ->
         {:error, e}
     end
