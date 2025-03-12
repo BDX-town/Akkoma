@@ -10,6 +10,11 @@ This guide will assume that you have administrative rights, either as root or a 
 
 * `postgresql`
 * `elixir`
+  * `erlang-core`
+  * `erlang-ssl`
+  * `erlang-parsetools`
+  * `erlang-syntax_tools`
+  * `erlang-xmerl`
 * `git`
 * `base-devel`
 * `cmake`
@@ -35,6 +40,7 @@ sudo pacman -Syu
 
 ```shell
 sudo pacman -S git base-devel elixir cmake file
+sudo pacman -S --asdeps erlang-core erlang-ssl erlang-parsetools erlang-syntax_tools erlang-xmerl
 ```
 
 ### Install PostgreSQL
