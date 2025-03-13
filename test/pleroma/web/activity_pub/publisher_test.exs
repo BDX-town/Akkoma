@@ -146,20 +146,20 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert {:ok, %{body: "port 42"}} =
                Publisher.publish_one(%{
-                 inbox: inbox42,
-                 json: "{}",
-                 actor: actor,
-                 id: 1,
-                 unreachable_since: true
+                 "inbox" => inbox42,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1,
+                 "unreachable_since" => true
                })
 
       assert {:ok, %{body: "port 80"}} =
                Publisher.publish_one(%{
-                 inbox: inbox80,
-                 json: "{}",
-                 actor: actor,
-                 id: 1,
-                 unreachable_since: true
+                 "inbox" => inbox80,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1,
+                 "unreachable_since" => true
                })
     end
 
@@ -173,7 +173,14 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       inbox = "http://200.site/users/nick1/inbox"
 
-      assert {:ok, _} = Publisher.publish_one(%{inbox: inbox, json: "{}", actor: actor, id: 1})
+      assert {:ok, _} =
+               Publisher.publish_one(%{
+                 "inbox" => inbox,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1
+               })
+
       assert called(Instances.set_reachable(inbox))
     end
 
@@ -189,11 +196,11 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert {:ok, _} =
                Publisher.publish_one(%{
-                 inbox: inbox,
-                 json: "{}",
-                 actor: actor,
-                 id: 1,
-                 unreachable_since: NaiveDateTime.utc_now()
+                 "inbox" => inbox,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1,
+                 "unreachable_since" => NaiveDateTime.utc_now()
                })
 
       assert called(Instances.set_reachable(inbox))
@@ -211,11 +218,11 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert {:ok, _} =
                Publisher.publish_one(%{
-                 inbox: inbox,
-                 json: "{}",
-                 actor: actor,
-                 id: 1,
-                 unreachable_since: nil
+                 "inbox" => inbox,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1,
+                 "unreachable_since" => nil
                })
 
       refute called(Instances.set_reachable(inbox))
@@ -231,7 +238,13 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       inbox = "http://404.site/users/nick1/inbox"
 
-      assert {:error, _} = Publisher.publish_one(%{inbox: inbox, json: "{}", actor: actor, id: 1})
+      assert {:error, _} =
+               Publisher.publish_one(%{
+                 "inbox" => inbox,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1
+               })
 
       assert called(Instances.set_unreachable(inbox))
     end
@@ -248,7 +261,12 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert capture_log(fn ->
                assert {:error, _} =
-                        Publisher.publish_one(%{inbox: inbox, json: "{}", actor: actor, id: 1})
+                        Publisher.publish_one(%{
+                          "inbox" => inbox,
+                          "json" => "{}",
+                          "actor" => actor,
+                          "id" => 1
+                        })
              end) =~ "connrefused"
 
       assert called(Instances.set_unreachable(inbox))
@@ -264,7 +282,13 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       inbox = "http://200.site/users/nick1/inbox"
 
-      assert {:ok, _} = Publisher.publish_one(%{inbox: inbox, json: "{}", actor: actor, id: 1})
+      assert {:ok, _} =
+               Publisher.publish_one(%{
+                 "inbox" => inbox,
+                 "json" => "{}",
+                 "actor" => actor,
+                 "id" => 1
+               })
 
       refute called(Instances.set_unreachable(inbox))
     end
@@ -282,11 +306,11 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       assert capture_log(fn ->
                assert {:error, _} =
                         Publisher.publish_one(%{
-                          inbox: inbox,
-                          json: "{}",
-                          actor: actor,
-                          id: 1,
-                          unreachable_since: NaiveDateTime.utc_now()
+                          "inbox" => inbox,
+                          "json" => "{}",
+                          "actor" => actor,
+                          "id" => 1,
+                          "unreachable_since" => NaiveDateTime.utc_now()
                         })
              end) =~ "connrefused"
 
@@ -344,33 +368,33 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert not called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: note_activity.data["id"]
+                 "inbox" => "https://domain.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => note_activity.data["id"]
                })
              )
 
       assert not called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: public_note_activity.data["id"]
+                 "inbox" => "https://domain.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => public_note_activity.data["id"]
                })
              )
 
       assert not called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://rejected.com/users/nick2/inbox",
-                 actor_id: actor.id,
-                 id: note_activity.data["id"]
+                 "inbox" => "https://rejected.com/users/nick2/inbox",
+                 "actor_id" => actor.id,
+                 "id" => note_activity.data["id"]
                })
              )
 
       assert not called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://rejected.com/users/nick2/inbox",
-                 actor_id: actor.id,
-                 id: public_note_activity.data["id"]
+                 "inbox" => "https://rejected.com/users/nick2/inbox",
+                 "actor_id" => actor.id,
+                 "id" => public_note_activity.data["id"]
                })
              )
     end
@@ -406,9 +430,9 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: note_activity.data["id"]
+                 "inbox" => "https://domain.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => note_activity.data["id"]
                })
              )
     end
@@ -441,9 +465,9 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: note_activity.data["id"]
+                 "inbox" => "https://domain.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => note_activity.data["id"]
                })
              )
     end
@@ -493,17 +517,17 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
 
       assert called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: delete.data["id"]
+                 "inbox" => "https://domain.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => delete.data["id"]
                })
              )
 
       assert called(
                Pleroma.Web.Federator.Publisher.enqueue_one(Publisher, %{
-                 inbox: "https://domain2.com/users/nick1/inbox",
-                 actor_id: actor.id,
-                 id: delete.data["id"]
+                 "inbox" => "https://domain2.com/users/nick1/inbox",
+                 "actor_id" => actor.id,
+                 "id" => delete.data["id"]
                })
              )
     end

@@ -47,7 +47,9 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
   * `actor`: the actor which is signing the message
   * `id`: the ActivityStreams URI of the message
   """
-  def publish_one(%{inbox: inbox, json: json, actor: %User{} = actor, id: id} = params) do
+  def publish_one(
+        %{"inbox" => inbox, "json" => json, "actor" => %User{} = actor, "id" => id} = params
+      ) do
     Logger.debug("Federating #{id} to #{inbox}")
     uri = %{path: path} = URI.parse(inbox)
     digest = "SHA-256=" <> (:crypto.hash(:sha256, json) |> Base.encode64())
@@ -74,24 +76,24 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
                {"digest", digest}
              ]
            ) do
-      if not Map.has_key?(params, :unreachable_since) || params[:unreachable_since] do
+      if not Map.has_key?(params, "unreachable_since") || params["unreachable_since"] do
         Instances.set_reachable(inbox)
       end
 
       result
     else
       {_post_result, response} ->
-        unless params[:unreachable_since], do: Instances.set_unreachable(inbox)
+        unless params["unreachable_since"], do: Instances.set_unreachable(inbox)
         {:error, response}
     end
   end
 
-  def publish_one(%{actor_id: actor_id} = params) do
+  def publish_one(%{"actor_id" => actor_id} = params) do
     actor = User.get_cached_by_id(actor_id)
 
     params
-    |> Map.delete(:actor_id)
-    |> Map.put(:actor, actor)
+    |> Map.delete("actor_id")
+    |> Map.put("actor", actor)
     |> publish_one()
   end
 
@@ -237,11 +239,11 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
           |> Jason.encode!()
 
         Pleroma.Web.Federator.Publisher.enqueue_one(__MODULE__, %{
-          inbox: inbox,
-          json: json,
-          actor_id: actor.id,
-          id: activity.data["id"],
-          unreachable_since: unreachable_since
+          "inbox" => inbox,
+          "json" => json,
+          "actor_id" => actor.id,
+          "id" => activity.data["id"],
+          "unreachable_since" => unreachable_since
         })
       end)
     end)
@@ -270,11 +272,11 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
       Pleroma.Web.Federator.Publisher.enqueue_one(
         __MODULE__,
         %{
-          inbox: inbox,
-          json: json,
-          actor_id: actor.id,
-          id: activity.data["id"],
-          unreachable_since: unreachable_since
+          "inbox" => inbox,
+          "json" => json,
+          "actor_id" => actor.id,
+          "id" => activity.data["id"],
+          "unreachable_since" => unreachable_since
         }
       )
     end)
