@@ -11,7 +11,6 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
   import Tesla.Mock
   import Mock
 
-  alias Pleroma.Activity
   alias Pleroma.Instances
   alias Pleroma.Object
   alias Pleroma.Web.ActivityPub.Publisher
@@ -48,82 +47,6 @@ defmodule Pleroma.Web.ActivityPub.PublisherTest do
       ]
 
       assert expected_links == Publisher.gather_webfinger_links(user)
-    end
-  end
-
-  describe "determine_inbox/2" do
-    test "it returns sharedInbox for messages involving as:Public in to" do
-      user = insert(:user, %{shared_inbox: "http://example.com/inbox"})
-
-      activity = %Activity{
-        data: %{"to" => [@as_public], "cc" => [user.follower_address]}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/inbox"
-    end
-
-    test "it returns sharedInbox for messages involving as:Public in cc" do
-      user = insert(:user, %{shared_inbox: "http://example.com/inbox"})
-
-      activity = %Activity{
-        data: %{"cc" => [@as_public], "to" => [user.follower_address]}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/inbox"
-    end
-
-    test "it returns sharedInbox for messages involving multiple recipients in to" do
-      user = insert(:user, %{shared_inbox: "http://example.com/inbox"})
-      user_two = insert(:user)
-      user_three = insert(:user)
-
-      activity = %Activity{
-        data: %{"cc" => [], "to" => [user.ap_id, user_two.ap_id, user_three.ap_id]}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/inbox"
-    end
-
-    test "it returns sharedInbox for messages involving multiple recipients in cc" do
-      user = insert(:user, %{shared_inbox: "http://example.com/inbox"})
-      user_two = insert(:user)
-      user_three = insert(:user)
-
-      activity = %Activity{
-        data: %{"to" => [], "cc" => [user.ap_id, user_two.ap_id, user_three.ap_id]}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/inbox"
-    end
-
-    test "it returns sharedInbox for messages involving multiple recipients in total" do
-      user =
-        insert(:user, %{
-          shared_inbox: "http://example.com/inbox",
-          inbox: "http://example.com/personal-inbox"
-        })
-
-      user_two = insert(:user)
-
-      activity = %Activity{
-        data: %{"to" => [user_two.ap_id], "cc" => [user.ap_id]}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/inbox"
-    end
-
-    test "it returns inbox for messages involving single recipients in total" do
-      user =
-        insert(:user, %{
-          shared_inbox: "http://example.com/inbox",
-          inbox: "http://example.com/personal-inbox"
-        })
-
-      activity = %Activity{
-        data: %{"to" => [user.ap_id], "cc" => []}
-      }
-
-      assert Publisher.determine_inbox(activity, user) == "http://example.com/personal-inbox"
     end
   end
 
