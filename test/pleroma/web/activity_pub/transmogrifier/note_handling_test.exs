@@ -17,6 +17,8 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
   import Mock
   import Pleroma.Factory
 
+  require Pleroma.Constants
+
   setup_all do
     Tesla.Mock.mock_global(fn env -> apply(HttpRequestMock, :request, [env]) end)
     :ok
@@ -274,6 +276,32 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
       {:ok, %Activity{data: data, local: false}} = Transmogrifier.handle_incoming(data)
 
       refute is_nil(data["cc"])
+    end
+
+    test "it fixes Pleroma unlisted" do
+      # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
+      user1 = insert(:user)
+      user2 = insert(:user)
+
+      data =
+        File.read!("test/fixtures/mastodon-post-activity.json")
+        |> Jason.decode!()
+        |> Map.put("actor", user1.ap_id)
+        |> Map.put("cc", [])
+        |> Map.put("to", [user2.ap_id, user1.follower_address])
+
+      object =
+        data["object"]
+        |> Map.put("attributedTo", user1.ap_id)
+        |> Map.put("cc", [Pleroma.Constants.as_public()])
+        |> Map.put("to", [user2.ap_id, user1.follower_address])
+        |> Map.put("id", user1.ap_id <> "/activities/12345678")
+
+      data = Map.put(data, "object", object)
+
+      {:ok, %Activity{} = activity} = Transmogrifier.handle_incoming(data)
+
+      assert "unlisted" == Pleroma.Web.ActivityPub.Visibility.get_visibility(activity)
     end
 
     test "it strips internal likes" do

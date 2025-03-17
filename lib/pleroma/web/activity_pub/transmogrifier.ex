@@ -118,7 +118,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
         Map.put(map, field, new_fval)
       else
-        map
+        Map.put(map, field, [])
       end
 
     normalise_addressing_public_list(map, fields)
@@ -207,6 +207,20 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   end
 
   def fix_in_reply_to(object, _options), do: object
+
+  # Pleroma sends unlisted posts without addressing public scope in the enclosing activity
+  # but we only use the ativity for access perm cheks, see:
+  # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
+  defp fix_create_visibility(%{"type" => "Create", "object" => %{"cc" => occ}} = activity) do
+    acc = activity["cc"]
+    if Pleroma.Constants.as_public() in occ and not (Pleroma.Constants.as_public() in acc) do
+      Map.put(activity, "cc", [Pleroma.Constants.as_public() | acc])
+    else
+      activity
+    end
+  end
+
+  defp fix_create_visibility(activity), do: activity
 
   def fix_quote_url(object, options \\ [])
 
@@ -513,6 +527,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
        )
        when objtype in ~w{Question Answer Audio Video Event Article Note Page} do
     fetch_options = Keyword.put(options, :depth, (options[:depth] || 0) + 1)
+    data = fix_create_visibility(data)
 
     object =
       data["object"]
