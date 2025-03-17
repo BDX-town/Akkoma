@@ -211,13 +211,12 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   # Pleroma sends unlisted posts without addressing public scope in the enclosing activity
   # but we only use the ativity for access perm cheks, see:
   # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
-  defp fix_create_visibility(%{"type" => "Create", "object" => %{"cc" => occ}} = activity) do
-    acc = activity["cc"]
-    if Pleroma.Constants.as_public() in occ and not (Pleroma.Constants.as_public() in acc) do
-      Map.put(activity, "cc", [Pleroma.Constants.as_public() | acc])
-    else
-      activity
-    end
+  defp fix_create_visibility(%{"type" => "Create", "object" => %{} = object} = activity) do
+    activity
+    |> Map.put("to", object["to"])
+    |> Map.put("cc", object["cc"])
+    |> Map.put("bto", object["bto"])
+    |> Map.put("bcc", object["bcc"])
   end
 
   defp fix_create_visibility(activity), do: activity
