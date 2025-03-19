@@ -41,7 +41,7 @@ sudo pacman -Syu
 
 ```shell
 sudo pacman -S git base-devel elixir cmake file
-sudo pacman -S --asdeps erlang-core erlang-ssl erlang-parsetools erlang-syntax_tools erlang-xmerl erlang-os_mon
+sudo pacman -S --asdeps erlang-headless
 ```
 
 ### Install PostgreSQL
