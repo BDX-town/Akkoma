@@ -135,6 +135,55 @@ defmodule Mix.Tasks.Pleroma.Database do
     |> select([o], o.id)
   end
 
+  defp query_followed_remote_user_apids() do
+    Pleroma.FollowingRelationship
+    |> join(:inner, [rel], ufing in User, on: rel.following_id == ufing.id)
+    |> join(:inner, [rel], ufer in User, on: rel.follower_id == ufer.id)
+    |> where([rel], rel.state == :follow_accept)
+    |> where([_rel, ufing, ufer], ufer.local and not ufing.local)
+    |> select([_rel, ufing], %{ap_id: ufing.ap_id})
+  end
+
+  defp parse_keep_followed_arg(options) do
+    case Keyword.get(options, :keep_followed) do
+      "full" -> :full
+      "posts" -> :posts
+      "none" -> false
+      nil -> false
+      _ -> raise "Invalid argument for keep_followed! Must be 'full', 'posts' or 'none'"
+    end
+  end
+
+  defp maybe_restrict_followed_activities(query, options) do
+    case Keyword.get(options, :keep_followed) do
+      :full ->
+        having(
+          query,
+          [a],
+          fragment(
+            "bool_and(?->>'actor' NOT IN ?)",
+            a.data,
+            subquery(query_followed_remote_user_apids())
+          )
+        )
+
+      :posts ->
+        having(
+          query,
+          [a],
+          not fragment(
+            "bool_or(?->>'actor' IN ? AND ?->>'type' = ANY('{Create,Announce}'))",
+            a.data,
+            subquery(query_followed_remote_user_apids()),
+            a.data
+          )
+        )
+
+      _ ->
+        query
+    end
+  end
+
   defp deletable_objects_keeping_threads(time_deadline, limit_cnt, options) do
     # We want to delete objects from threads where
     # 1. the newest post is still old
@@ -166,6 +215,7 @@ defmodule Mix.Tasks.Pleroma.Database do
       |> having([a], max(a.updated_at) < ^time_deadline)
       |> having([a], not fragment("bool_or(?)", a.local))
       |> having([_, b], fragment("max(?::text) is null", b.id))
+      |> maybe_restrict_followed_activities(options)
       |> maybe_limit(limit_cnt)
       |> select([a], fragment("? ->> 'context'::text", a.data))
 
@@ -195,6 +245,17 @@ defmodule Mix.Tasks.Pleroma.Database do
         [o],
         fragment("split_part(?->>'actor', '/', 3) != ?", o.data, ^Pleroma.Web.Endpoint.host())
       )
+      |> then(fn q ->
+        if Keyword.get(options, :keep_followed) do
+          where(
+            q,
+            [o],
+            fragment("?->>'actor'", o.data) not in subquery(query_followed_remote_user_apids())
+          )
+        else
+          q
+        end
+      end)
       |> maybe_limit(limit_cnt)
       |> select([o], o.id)
 
@@ -274,6 +335,7 @@ defmodule Mix.Tasks.Pleroma.Database do
         args,
         strict: [
           vacuum: :boolean,
+          keep_followed: :string,
           keep_threads: :boolean,
           keep_non_public: :boolean,
           prune_orphaned_activities: :boolean,
@@ -281,6 +343,13 @@ defmodule Mix.Tasks.Pleroma.Database do
           limit: :integer
         ]
       )
+
+    kf = parse_keep_followed_arg(options)
+    options = Keyword.put(options, :keep_followed, kf)
+
+    if kf == :full and not Keyword.get(options, :keep_threads) do
+      raise "keep_followed=full only works in conjunction with keep_thread!"
+    end
 
     start_pleroma()
 
@@ -292,6 +361,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     "Pruning objects older than #{deadline} days"
     |> maybe_concat(Keyword.get(options, :keep_non_public), ", keeping non public posts")
     |> maybe_concat(Keyword.get(options, :keep_threads), ", keeping threads intact")
+    |> maybe_concat(kf, ", keeping #{kf} activities of followed users")
     |> maybe_concat(Keyword.get(options, :prune_pinned), ", pruning pinned posts")
     |> maybe_concat(
       Keyword.get(options, :prune_orphaned_activities),
