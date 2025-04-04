@@ -120,6 +120,21 @@ defmodule Mix.Tasks.Pleroma.Database do
     del_single + del_array
   end
 
+  defp query_pinned_object_apids() do
+    Pleroma.User
+    |> select([u], %{ap_id: fragment("jsonb_object_keys(?)", u.pinned_objects)})
+  end
+
+  defp query_pinned_object_ids() do
+    # If this additional level of subquery is omitted and we directly supply AP ids
+    # to te final query, it appears to overexert PostgreSQL(17)'s planner leading
+    # to a very inefficient query with enormous memory and time consumption.
+    # By supplying database IDs it ends up quite cheap however.
+    Object
+    |> where([o], fragment("?->>'id' IN ?", o.data, subquery(query_pinned_object_apids())))
+    |> select([o], o.id)
+  end
+
   defp deletable_objects_keeping_threads(time_deadline, limit_cnt, options) do
     # We want to delete objects from threads where
     # 1. the newest post is still old
@@ -262,6 +277,7 @@ defmodule Mix.Tasks.Pleroma.Database do
           keep_threads: :boolean,
           keep_non_public: :boolean,
           prune_orphaned_activities: :boolean,
+          prune_pinned: :boolean,
           limit: :integer
         ]
       )
@@ -276,6 +292,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     "Pruning objects older than #{deadline} days"
     |> maybe_concat(Keyword.get(options, :keep_non_public), ", keeping non public posts")
     |> maybe_concat(Keyword.get(options, :keep_threads), ", keeping threads intact")
+    |> maybe_concat(Keyword.get(options, :prune_pinned), ", pruning pinned posts")
     |> maybe_concat(
       Keyword.get(options, :prune_orphaned_activities),
       ", pruning orphaned activities"
@@ -293,6 +310,13 @@ defmodule Mix.Tasks.Pleroma.Database do
       else
         deletable_objects_breaking_threads(time_deadline, limit_cnt, options)
       end
+      |> then(fn q ->
+        if Keyword.get(options, :prune_pinned) do
+          q
+        else
+          where(q, [o], o.id not in subquery(query_pinned_object_ids()))
+        end
+      end)
       |> Repo.delete_all(timeout: :infinity)
 
     Logger.info("Deleted #{del_obj} objects...")

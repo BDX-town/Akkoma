@@ -88,6 +88,74 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
       refute Object.get_by_id(note_remote_non_public_id)
     end
 
+    test "it retains pinned posts by default", %{old_insert_date: old_insert_date} do
+      insert(:note)
+
+      pin_user = insert(:user, local: false)
+
+      %{id: note_remote_pinned_id, data: note_remote_pinned_data} =
+        :note
+        |> insert(user: pin_user)
+        |> Ecto.Changeset.change(%{updated_at: old_insert_date})
+        |> Repo.update!()
+
+      User.add_pinned_object_id(pin_user, note_remote_pinned_data["id"])
+
+      note_remote_non_public =
+        %{id: note_remote_non_public_id, data: note_remote_non_public_data} =
+        :note
+        |> insert()
+
+      note_remote_non_public
+      |> Ecto.Changeset.change(%{
+        updated_at: old_insert_date,
+        data: note_remote_non_public_data |> update_in(["to"], fn _ -> [] end)
+      })
+      |> Repo.update!()
+
+      assert length(Repo.all(Object)) == 3
+
+      Mix.Tasks.Pleroma.Database.run(["prune_objects"])
+
+      assert length(Repo.all(Object)) == 2
+      assert Object.get_by_id(note_remote_pinned_id)
+      refute Object.get_by_id(note_remote_non_public_id)
+    end
+
+    test "it prunes pinned posts with --prune-pinned", %{old_insert_date: old_insert_date} do
+      insert(:note)
+
+      pin_user = insert(:user, local: false)
+
+      %{id: note_remote_pinned_id, data: note_remote_pinned_data} =
+        :note
+        |> insert(user: pin_user)
+        |> Ecto.Changeset.change(%{updated_at: old_insert_date})
+        |> Repo.update!()
+
+      User.add_pinned_object_id(pin_user, note_remote_pinned_data["id"])
+
+      note_remote_non_public =
+        %{id: note_remote_non_public_id, data: note_remote_non_public_data} =
+        :note
+        |> insert()
+
+      note_remote_non_public
+      |> Ecto.Changeset.change(%{
+        updated_at: old_insert_date,
+        data: note_remote_non_public_data |> update_in(["to"], fn _ -> [] end)
+      })
+      |> Repo.update!()
+
+      assert length(Repo.all(Object)) == 3
+
+      Mix.Tasks.Pleroma.Database.run(["prune_objects", "--prune-pinned"])
+
+      assert length(Repo.all(Object)) == 1
+      refute Object.get_by_id(note_remote_pinned_id)
+      refute Object.get_by_id(note_remote_non_public_id)
+    end
+
     test "it cleans up bookmarks", %{old_insert_date: old_insert_date} do
       user = insert(:user)
       {:ok, old_object_activity} = CommonAPI.post(user, %{status: "yadayada"})
