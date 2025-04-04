@@ -20,6 +20,10 @@ defmodule Mix.Tasks.Pleroma.Database do
   @shortdoc "A collection of database related tasks"
   @moduledoc File.read!("docs/docs/administration/CLI_tasks/database.md")
 
+  defp maybe_concat(str, condition, appendix) do
+    if condition, do: str <> appendix, else: str
+  end
+
   defp maybe_limit(query, limit_cnt) do
     if is_number(limit_cnt) and limit_cnt > 0 do
       limit(query, [], ^limit_cnt)
@@ -240,16 +244,9 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     {limit, options} = Keyword.pop(options, :limit, 0)
 
-    log_message = "Pruning orphaned activities"
-
-    log_message =
-      if limit > 0 do
-        log_message <> ", limiting deletion to #{limit} rows"
-      else
-        log_message
-      end
-
-    Logger.info(log_message)
+    "Pruning orphaned activities"
+    |> maybe_concat(limit > 0, ", limiting deletion to #{limit} rows")
+    |> Logger.info()
 
     deleted = prune_orphaned_activities(limit, options)
 
@@ -276,45 +273,19 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     limit_cnt = Keyword.get(options, :limit, 0)
 
-    log_message = "Pruning objects older than #{deadline} days"
-
-    log_message =
-      if Keyword.get(options, :keep_non_public) do
-        log_message <> ", keeping non public posts"
-      else
-        log_message
-      end
-
-    log_message =
-      if Keyword.get(options, :keep_threads) do
-        log_message <> ", keeping threads intact"
-      else
-        log_message
-      end
-
-    log_message =
-      if Keyword.get(options, :prune_orphaned_activities) do
-        log_message <> ", pruning orphaned activities"
-      else
-        log_message
-      end
-
-    log_message =
-      if Keyword.get(options, :vacuum) do
-        log_message <>
-          ", doing a full vacuum (you shouldn't do this as a recurring maintanance task)"
-      else
-        log_message
-      end
-
-    log_message =
-      if limit_cnt > 0 do
-        log_message <> ", limiting to #{limit_cnt} rows"
-      else
-        log_message
-      end
-
-    Logger.info(log_message)
+    "Pruning objects older than #{deadline} days"
+    |> maybe_concat(Keyword.get(options, :keep_non_public), ", keeping non public posts")
+    |> maybe_concat(Keyword.get(options, :keep_threads), ", keeping threads intact")
+    |> maybe_concat(
+      Keyword.get(options, :prune_orphaned_activities),
+      ", pruning orphaned activities"
+    )
+    |> maybe_concat(
+      Keyword.get(options, :vacuum),
+      ", doing a full vacuum (you shouldn't do this as a recurring maintanance task)"
+    )
+    |> maybe_concat(limit_cnt > 0, ", limiting to #{limit_cnt} rows")
+    |> Logger.info()
 
     {del_obj, _} =
       if Keyword.get(options, :keep_threads) do
