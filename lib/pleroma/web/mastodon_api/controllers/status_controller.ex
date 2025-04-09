@@ -172,14 +172,15 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
       |> put_application(conn)
 
     expires_in_seconds =
-      if is_nil(user.status_ttl_days),
-        do: nil,
-        else: 60 * 60 * 24 * user.status_ttl_days
+      Map.get(params, :expires_in) ||
+        (user.status_ttl_days && 60 * 60 * 24 * user.status_ttl_days)
 
     params =
-      if is_nil(expires_in_seconds),
-        do: params,
-        else: Map.put(params, :expires_in, expires_in_seconds)
+      case expires_in_seconds do
+        nil -> params
+        0 -> Map.delete(params, :expires_in)
+        _ -> Map.put(params, :expires_in, expires_in_seconds)
+      end
 
     with {:ok, activity} <- CommonAPI.post(user, params) do
       try_render(conn, "show.json",
