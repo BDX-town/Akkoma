@@ -509,6 +509,44 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     assert mention.url == recipient_ap_id
   end
 
+  test "inlined images are media proxied" do
+    clear_config([:media_proxy, :enabled], true)
+    user = insert(:user)
+
+    {:ok, activity} =
+      CommonAPI.post(user, %{
+        content_type: "text/html",
+        status: "hii <img src=\"https://example.org/a.png\" />"
+      })
+
+    activity = Repo.get(Activity, activity.id)
+    status = StatusView.render("show.json", activity: activity)
+
+    assert_schema(status, "Status", Pleroma.Web.ApiSpec.spec())
+
+    assert status[:content] =~
+             ~r/^hii <img src="https?:\/\/[^\/]+\/proxy\/[^\/]+\/aHR0cHM6Ly9leGFtcGxlLm9yZy9hLnBuZw\/a.png"/
+  end
+
+  test "inlined images using network-path ref are media proxied" do
+    clear_config([:media_proxy, :enabled], true)
+    user = insert(:user)
+
+    {:ok, activity} =
+      CommonAPI.post(user, %{
+        content_type: "text/html",
+        status: "hii <img src=\"//example.org/a.png\" />"
+      })
+
+    activity = Repo.get(Activity, activity.id)
+    status = StatusView.render("show.json", activity: activity)
+
+    assert_schema(status, "Status", Pleroma.Web.ApiSpec.spec())
+
+    assert status[:content] =~
+             ~r/^hii <img src="https?:\/\/[^\/]+\/proxy\/[^\/]+\/aHR0cHM6Ly9leGFtcGxlLm9yZy9hLnBuZw\/a.png"/
+  end
+
   test "create mentions from the 'tag' field" do
     recipient = insert(:user)
     cc = insert_pair(:user) |> Enum.map(& &1.ap_id)
