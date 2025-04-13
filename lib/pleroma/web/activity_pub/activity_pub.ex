@@ -509,6 +509,28 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     |> Repo.all()
   end
 
+  def fetch_objects_for_replies_collection(parent_ap_id, opts \\ %{}) do
+    opts =
+      opts
+      |> Map.put(:order_asc, true)
+      |> Map.put(:id_type, :integer)
+
+    from(o in Object,
+      where:
+        fragment("?->>'inReplyTo' = ?", o.data, ^parent_ap_id) and
+          fragment(
+            "(?->'to' \\? ?::text OR ?->'cc' \\? ?::text)",
+            o.data,
+            ^Pleroma.Constants.as_public(),
+            o.data,
+            ^Pleroma.Constants.as_public()
+          ) and
+          fragment("?->>'type' <> 'Answer'", o.data),
+      select: %{id: o.id, ap_id: fragment("?->>'id'", o.data)}
+    )
+    |> Pagination.fetch_paginated(opts, :keyset)
+  end
+
   @spec fetch_latest_direct_activity_id_for_context(String.t(), keyword() | map()) ::
           FlakeId.Ecto.CompatType.t() | nil
   def fetch_latest_direct_activity_id_for_context(context, opts \\ %{}) do

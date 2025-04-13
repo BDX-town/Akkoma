@@ -426,6 +426,75 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     end
   end
 
+  describe "/objects/:uuid/replies" do
+    test "it renders the top-level collection", %{
+      conn: conn
+    } do
+      user = insert(:user)
+      note = insert(:note_activity)
+      note = Pleroma.Activity.get_by_id_with_object(note.id)
+      uuid = String.split(note.object.data["id"], "/") |> List.last()
+
+      {:ok, _} =
+        CommonAPI.post(user, %{status: "reply1", in_reply_to_status_id: note.id})
+
+      conn =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/objects/#{uuid}/replies")
+
+      assert match?(
+               %{
+                 "id" => _,
+                 "type" => "OrderedCollection",
+                 "totalItems" => 1,
+                 "first" => %{
+                   "id" => _,
+                   "type" => "OrderedCollectionPage",
+                   "orderedItems" => [_]
+                 }
+               },
+               json_response(conn, 200)
+             )
+    end
+
+    test "it renders a collection page", %{
+      conn: conn
+    } do
+      user = insert(:user)
+      note = insert(:note_activity)
+      note = Pleroma.Activity.get_by_id_with_object(note.id)
+      uuid = String.split(note.object.data["id"], "/") |> List.last()
+
+      {:ok, r1} =
+        CommonAPI.post(user, %{status: "reply1", in_reply_to_status_id: note.id})
+
+      {:ok, r2} =
+        CommonAPI.post(user, %{status: "reply2", in_reply_to_status_id: note.id})
+
+      {:ok, _} =
+        CommonAPI.post(user, %{status: "reply3", in_reply_to_status_id: note.id})
+
+      conn =
+        conn
+        |> put_req_header("accept", "application/activity+json")
+        |> get("/objects/#{uuid}/replies?page=true&min_id=#{r1.object.id}&limit=1")
+
+      expected_uris = [r2.object.data["id"]]
+
+      assert match?(
+               %{
+                 "id" => _,
+                 "type" => "OrderedCollectionPage",
+                 "prev" => _,
+                 "next" => _,
+                 "orderedItems" => ^expected_uris
+               },
+               json_response(conn, 200)
+             )
+    end
+  end
+
   describe "/activities/:uuid" do
     test "it doesn't return a local-only activity", %{conn: conn} do
       user = insert(:user)

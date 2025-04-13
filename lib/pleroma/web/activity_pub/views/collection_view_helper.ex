@@ -29,7 +29,14 @@ defmodule Pleroma.Web.ActivityPub.CollectionViewHelper do
 
   defp maybe_omit_next(pagination, _items, nil), do: pagination
 
-  defp maybe_omit_next(pagination, items, limit) do
+  defp maybe_omit_next(pagination, items, limit) when is_binary(limit) do
+    case Integer.parse(limit) do
+      {limit, ""} -> maybe_omit_next(pagination, items, limit)
+      _ -> maybe_omit_next(pagination, items, nil)
+    end
+  end
+
+  defp maybe_omit_next(pagination, items, limit) when is_number(limit) do
     if Enum.count(items) < limit, do: Map.delete(pagination, "next"), else: pagination
   end
 
