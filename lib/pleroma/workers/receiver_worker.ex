@@ -43,6 +43,10 @@ defmodule Pleroma.Workers.ReceiverWorker do
       {:error, :ignore} ->
         {:cancel, :ignore}
 
+      {:error, :unsupported} ->
+        Logger.info("Received unsupported action: #{inspect(params)}")
+        {:cancel, :unsupported}
+
       # invalid data or e.g. deleting an object we don't know about anyway
       {:error, {:validate, issue}} ->
         Logger.info("Received invalid AP document: #{inspect(issue)}")

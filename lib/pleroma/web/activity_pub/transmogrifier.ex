@@ -686,6 +686,16 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
+  defp handle_incoming_normalised(
+         %{
+           "type" => "Undo",
+           "object" => %{"type" => "Delete"}
+         },
+         _options
+       ) do
+    {:error, :unsupported}
+  end
+
   # For Undos that don't have the complete object attached, try to find it in our database.
   defp handle_incoming_normalised(
          %{
@@ -727,7 +737,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
-  defp handle_incoming_normalised(_, _), do: :error
+  defp handle_incoming_normalised(_, _), do: {:error, :unsupported}
 
   @spec get_obj_helper(String.t(), Keyword.t()) :: {:ok, Object.t()} | nil
   def get_obj_helper(id, options \\ []) do

@@ -182,6 +182,10 @@ defmodule Pleroma.Object.Fetcher do
         log_fetch_error(id, e)
         {:reject, reason}
 
+      {:transmogrifier, {:error, reason}} = e ->
+        log_fetch_error(id, e)
+        {:error, reason}
+
       {:transmogrifier, reason} = e ->
         log_fetch_error(id, e)
         {:error, reason}
