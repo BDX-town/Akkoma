@@ -290,7 +290,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "orderedItems" => if(show_items, do: items, else: [])
     }
 
-    if offset < total do
+    if offset + 10 < total do
       Map.put(map, "next", "#{iri}?page=#{page + 1}")
     else
       map
