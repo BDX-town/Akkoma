@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.ActivityPub.CollectionViewHelper do
-  alias Pleroma.Web.ControllerHelper
+  alias Pleroma.Web.ActivityPub.Utils
 
   def collection_page_offset(collection, iri, page, show_items \\ true, total \\ nil) do
     offset = (page - 1) * 10
@@ -25,5 +25,28 @@ defmodule Pleroma.Web.ActivityPub.CollectionViewHelper do
     else
       map
     end
+  end
+
+  defp maybe_omit_next(pagination, _items, nil), do: pagination
+
+  defp maybe_omit_next(pagination, items, limit) do
+    if Enum.count(items) < limit, do: Map.delete(pagination, "next"), else: pagination
+  end
+
+  def collection_page_keyset(
+        display_items,
+        pagination,
+        limit \\ nil,
+        skip_ap_context \\ false
+      ) do
+    %{
+      "type" => "OrderedCollectionPage",
+      "orderedItems" => display_items
+    }
+    |> Map.merge(pagination)
+    |> maybe_omit_next(display_items, limit)
+    |> then(fn m ->
+      if skip_ap_context, do: m, else: Map.merge(m, Utils.make_json_ld_header())
+    end)
   end
 end

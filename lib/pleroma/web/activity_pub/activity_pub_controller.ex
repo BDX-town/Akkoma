@@ -287,8 +287,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
       |> put_view(UserView)
       |> render("activity_collection_page.json", %{
         activities: activities,
-        pagination: ControllerHelper.get_pagination_fields(conn, activities),
-        iri: "#{user.ap_id}/outbox"
+        pagination: ControllerHelper.get_pagination_fields(conn, activities)
       })
     end
   end
@@ -368,8 +367,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     |> put_view(UserView)
     |> render("activity_collection_page.json", %{
       activities: activities,
-      pagination: ControllerHelper.get_pagination_fields(conn, activities),
-      iri: "#{user.ap_id}/inbox"
+      pagination: ControllerHelper.get_pagination_fields(conn, activities)
     })
   end
 

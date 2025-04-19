@@ -8,6 +8,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.CollectionViewHelper
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.Utils
@@ -256,22 +257,15 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   def render("activity_collection_page.json", %{
         activities: activities,
-        iri: iri,
         pagination: pagination
       }) do
-    collection =
+    display_items =
       Enum.map(activities, fn activity ->
         {:ok, data} = Transmogrifier.prepare_outgoing(activity.data)
         data
       end)
 
-    %{
-      "type" => "OrderedCollectionPage",
-      "partOf" => iri,
-      "orderedItems" => collection
-    }
-    |> Map.merge(Utils.make_json_ld_header())
-    |> Map.merge(pagination)
+    CollectionViewHelper.collection_page_keyset(display_items, pagination)
   end
 
   def render("featured.json", %{

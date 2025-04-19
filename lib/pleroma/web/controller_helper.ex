@@ -66,10 +66,14 @@ defmodule Pleroma.Web.ControllerHelper do
         do: {{:max_id, max_id}, {:min_id, min_id}},
         else: {{:min_id, min_id}, {:max_id, max_id}}
 
+    id = Phoenix.Controller.current_url(conn)
+    base_id = %{URI.parse(id) | query: nil} |> URI.to_string()
+
     %{
       "next" => current_url(conn, Map.put(params, next_id, nid)),
       "prev" => current_url(conn, Map.put(params, prev_id, pid)),
-      "id" => current_url(conn)
+      "id" => id,
+      "partOf" => base_id
     }
   end
 
