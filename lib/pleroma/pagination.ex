@@ -98,6 +98,7 @@ defmodule Pleroma.Pagination do
       order_asc: :boolean
     }
 
+    params = Map.delete(params, :id_type)
     changeset = cast({%{}, param_types}, params, Map.keys(param_types))
     changeset.changes
   end
