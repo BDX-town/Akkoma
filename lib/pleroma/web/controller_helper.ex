@@ -54,34 +54,53 @@ defmodule Pleroma.Web.ControllerHelper do
   end
 
   @id_keys Pagination.page_keys() -- ["limit", "order"]
-  defp build_pagination_fields(conn, min_id, max_id, extra_params) do
+  defp build_pagination_fields(conn, min_id, max_id, extra_params, order) do
     params =
       conn.params
       |> Map.drop(Map.keys(conn.path_params) |> Enum.map(&String.to_existing_atom/1))
       |> Map.merge(extra_params)
       |> Map.drop(@id_keys)
 
+    {{next_id, nid}, {prev_id, pid}} =
+      if order == :desc,
+        do: {{:max_id, max_id}, {:min_id, min_id}},
+        else: {{:min_id, min_id}, {:max_id, max_id}}
+
     %{
-      "next" => current_url(conn, Map.put(params, :max_id, max_id)),
-      "prev" => current_url(conn, Map.put(params, :min_id, min_id)),
+      "next" => current_url(conn, Map.put(params, next_id, nid)),
+      "prev" => current_url(conn, Map.put(params, prev_id, pid)),
       "id" => current_url(conn)
     }
   end
 
-  def get_pagination_fields(conn, entries, extra_params \\ %{}) do
+  defp get_first_last_pagination_id(entries) do
     case List.last(entries) do
-      %{pagination_id: max_id} when not is_nil(max_id) ->
-        %{pagination_id: min_id} = List.first(entries)
+      %{pagination_id: last_id} when not is_nil(last_id) ->
+        %{pagination_id: first_id} = List.first(entries)
+        {first_id, last_id}
 
-        build_pagination_fields(conn, min_id, max_id, extra_params)
-
-      %{id: max_id} ->
-        %{id: min_id} = List.first(entries)
-
-        build_pagination_fields(conn, min_id, max_id, extra_params)
+      %{id: last_id} ->
+        %{id: first_id} = List.first(entries)
+        {first_id, last_id}
 
       _ ->
-        %{}
+        nil
+    end
+  end
+
+  def get_pagination_fields(conn, entries, extra_params \\ %{}, order \\ :desc)
+
+  def get_pagination_fields(conn, entries, extra_params, :desc) do
+    case get_first_last_pagination_id(entries) do
+      nil -> %{}
+      {min_id, max_id} -> build_pagination_fields(conn, min_id, max_id, extra_params, :desc)
+    end
+  end
+
+  def get_pagination_fields(conn, entries, extra_params, :asc) do
+    case get_first_last_pagination_id(entries) do
+      nil -> %{}
+      {max_id, min_id} -> build_pagination_fields(conn, min_id, max_id, extra_params, :asc)
     end
   end
 
