@@ -56,8 +56,8 @@ defmodule Pleroma.Web.ControllerHelper do
   @id_keys Pagination.page_keys() -- ["limit", "order"]
   defp build_pagination_fields(conn, min_id, max_id, extra_params, order) do
     params =
-      conn.params
-      |> Map.drop(Map.keys(conn.path_params) |> Enum.map(&String.to_existing_atom/1))
+      conn.body_params
+      |> Map.merge(conn.query_params)
       |> Map.merge(extra_params)
       |> Map.drop(@id_keys)
 
