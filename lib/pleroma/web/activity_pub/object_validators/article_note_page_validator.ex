@@ -85,7 +85,14 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidator do
        when is_list(replies),
        do: Map.put(data, "replies", replies)
 
+  defp fix_replies(%{"replies" => %{"first" => %{"orderedItems" => replies}}} = data)
+       when is_list(replies),
+       do: Map.put(data, "replies", replies)
+
   defp fix_replies(%{"replies" => %{"items" => replies}} = data) when is_list(replies),
+    do: Map.put(data, "replies", replies)
+
+  defp fix_replies(%{"replies" => %{"orderedItems" => replies}} = data) when is_list(replies),
     do: Map.put(data, "replies", replies)
 
   defp fix_replies(data), do: Map.delete(data, "replies")
