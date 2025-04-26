@@ -52,7 +52,7 @@ sudo apt install curl unzip build-essential autoconf m4 libncurses5-dev libssh-d
 
 Second, make sure that erlang and elixir (via asdf) is reachable from `sudo -Hu akkoma`:
 ```shell
-echo 'Defaults>akkoma secure_path="/sbin:/bin:/usr/sbin:/usr/bin:/var/lib/akkoma/.asdf/shims"' > /etc/sudoers.d/custom_path
+echo 'Defaults>akkoma secure_path="/var/lib/akkoma/.asdf/shims:/sbin:/bin:/usr/sbin:/usr/bin"' > /etc/sudoers.d/custom_path
 ```
 
 Then login to the `akkoma` user.
