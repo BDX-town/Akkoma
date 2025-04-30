@@ -35,7 +35,7 @@ Depending on instance configuration the same may be true for GET requests.
 ### FEP-c16b: Formatting MFM functions
 
 We set the optional extension term `htmlMfm: true` when using content type "text/x.misskeymarkdown".
-Incomming messages containing `htmlMfm: true` will not have their content re-parsed.
+Incoming messages containing `htmlMfm: true` will not have their content re-parsed.
 
 ## Nodeinfo
 

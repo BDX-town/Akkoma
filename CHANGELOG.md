@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Added
-- We mark our MFM posts as FEP-c16b compliant, and do not re-parsed when receiving an MFM post who is marked as FEP-c16b compliant.
+- We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
 
 ## 2025.03
 
