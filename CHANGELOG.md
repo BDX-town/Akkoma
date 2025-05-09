@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+### Fixed
+- Internal actors no longer pretend to have unresolvable follow(er|ing) collections
+
+### Changed
+- Internal and relay actors are now again represented with type "Application"
+
 ## 2025.03
 
 ## Added
