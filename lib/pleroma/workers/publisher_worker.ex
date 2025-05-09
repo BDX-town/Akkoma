@@ -9,7 +9,11 @@ defmodule Pleroma.Workers.PublisherWorker do
   use Pleroma.Workers.WorkerHelper, queue: "federator_outgoing"
 
   def backoff(%Job{attempt: attempt}) when is_integer(attempt) do
-    Pleroma.Workers.WorkerHelper.sidekiq_backoff(attempt, 5)
+    if attempt > 3 do
+      Pleroma.Workers.WorkerHelper.exponential_backoff(attempt, 9.5)
+    else
+      Pleroma.Workers.WorkerHelper.sidekiq_backoff(attempt, 6)
+    end
   end
 
   @impl Oban.Worker
