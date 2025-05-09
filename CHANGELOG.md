@@ -7,12 +7,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Added
+- Prometheus stats now exposes failed ActivityPub deliveries
+  which failed all attempts and the failure reason
+- status and user HTML pages now provide ActivityPub alternate links
+- the `prune_objects` mix task no longer deletes pinned posts by default
+- added `--prune-pinned` and `--keep-followed {posts,full,none}` options to the `prune_objects` mix task
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
+- fixed user-level default post expiry duration overriding `expires_in` values explicitly passed during post creation
+- fix crashes on non-UTF8 usernames for the API paths taking both nicknames and IDs
+- fixed divergences in fields used to determine visibility;
+  this lead e.g. to unlisted replies from Pleroma instances being partially treated as private posts
+- fixed our fetch actor advertising bogus follower and following collection ActivityPub IDs
+- fix network-path references not being handled by media proxy
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
+- `cleanup_attachments` is now enabled by default
+- shared inboxes are now generally preferred over personal inboxes, cutting down on duplicate publishing churn
+- instance actors are now really of type `Service`
+- ActivityPub delivery attempts are spaced out more giving up after 3h instead of ~20min before
 
 ## 2025.03
 
