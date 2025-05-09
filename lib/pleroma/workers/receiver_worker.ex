@@ -35,13 +35,13 @@ defmodule Pleroma.Workers.ReceiverWorker do
         {:discard, :origin_containment_failed}
 
       {:error, {:reject, reason}} ->
-        {:discard, reason}
+        {:cancel, reason}
 
       {:error, :already_present} ->
-        {:discard, :already_present}
+        {:cancel, :already_present}
 
       {:error, :ignore} ->
-        {:discard, :ignore}
+        {:cancel, :ignore}
 
       # invalid data or e.g. deleting an object we don't know about anyway
       {:error, {:validate, issue}} ->
