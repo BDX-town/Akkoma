@@ -7,7 +7,24 @@ defmodule Pleroma.Workers.ReceiverWorker do
 
   alias Pleroma.Web.Federator
 
-  use Pleroma.Workers.WorkerHelper, queue: "federator_incoming"
+  use Pleroma.Workers.WorkerHelper,
+    queue: "federator_incoming",
+    unique: [
+      keys: [:op, :id],
+      # all states except :discarded
+      states: [:scheduled, :available, :executing, :retryable, :completed, :cancelled]
+    ]
+
+  def enqueue(op, %{"id" => _} = params, worker_args), do: do_enqueue(op, params, worker_args)
+
+  def enqueue(op, %{"params" => %{"id" => id}} = params, worker_args) when is_binary(id) do
+    do_enqueue(op, Map.put(params, "id", id), worker_args)
+  end
+
+  def enqueue(op, params, worker_args) do
+    # should be rare if it happens at all (transient activity)
+    do_enqueue(op, Map.put(params, "id", Ecto.UUID.generate()), worker_args)
+  end
 
   @impl Oban.Worker
   def perform(%Job{args: %{"op" => "incoming_ap_doc", "params" => params}}) do
