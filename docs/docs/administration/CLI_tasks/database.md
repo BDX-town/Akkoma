@@ -48,10 +48,15 @@ This will prune remote posts older than 90 days (configurable with [`config :ple
 
 ### Options
 
-- `--keep-threads` - Don't prune posts when they are part of a thread where at least one post has seen local interaction (e.g. one of the posts is a local post, or is favourited by a local user, or has been repeated by a local user...). It also wont delete posts when at least one of the posts in that thread is kept (e.g. because one of the posts has seen recent activity).
+- `--keep-followed <mode>` - If set to `posts` all posts and boosts of users with local follows will be kept.  
+    If set to `full` it will additionally keep any posts such users interacted with; this requires `--keep-threads`.  
+    By default this is set to `none` and followed users are not treated special.
+- `--keep-threads` - Don't prune posts when they are part of a thread where at least one post has seen local interaction (e.g. one of the posts is a local post, or is favourited by a local user, or has been repeated by a local user...). It also won’t delete posts when at least one of the posts in the thread has seen recent activity or is kept due to `--keep-followed`.
 - `--keep-non-public` - Keep non-public posts like DM's and followers-only, even if they are remote.
 - `--limit` - limits how many remote posts get pruned. This limit does **not** apply to any of the follow up jobs. If wanting to keep the database load in check it is thus advisable to run the standalone `prune_orphaned_activities` task with a limit afterwards instead of passing `--prune-orphaned-activities` to this task.
 - `--prune-orphaned-activities` - Also prune orphaned activities afterwards. Activities are things like Like, Create, Announce, Flag (aka reports)... They can significantly help reduce the database size.
+- `--prune-pinned` - Also prune pinned posts; keeping pinned posts does not suffice to protect their threads from pruning, even when using `--keep-threads`.  
+    Note, if using this option and pinned posts are pruned, they and their threads will just be refetched on the next user update. Therefore it usually doesn't bring much gain while incurring a heavy fetch load after pruning.
 - `--vacuum` - Run `VACUUM FULL` after the objects are pruned. This should not be used on a regular basis, but is useful if your instance has been running for a long time before pruning.
 
 ## Prune orphaned activities from the database
