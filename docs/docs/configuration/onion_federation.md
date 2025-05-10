@@ -5,7 +5,7 @@ In addition, federating with such instances will also help furthering that goal.
 This is a guide to show you how it can be easily done.
 
 This guide assumes you already got Akkoma working, and that it's running on the default port 4000.
-This guide also assumes you're using Nginx as the reverse proxy.
+This guide also assumes you're using nginx as the reverse proxy.
 
 To install Tor on Debian / Ubuntu:
 ```
@@ -74,7 +74,7 @@ config :pleroma, :http_security,
   enabled: false
 ```
 
-In the Nginx config, add the following into the `location /` block:
+In the nginx config, add the following into the `location /` block:
 ```nginx
         add_header X-XSS-Protection "0";
         add_header X-Permitted-Cross-Domain-Policies none;
@@ -90,7 +90,7 @@ listen 127.0.0.1:8099;
 
 Set the `server_name` to your onion address.
 
-Reload Nginx:
+Reload nginx:
 ```
 systemctl reload nginx
 ```

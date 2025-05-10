@@ -26,7 +26,7 @@ akkoma javascript.
 
 Once that's out of the way, we can point our webserver at varnish. This
 
-=== "Nginx"
+=== "nginx"
 
     upstream phoenix {
         server 127.0.0.1:6081 max_fails=5 fail_timeout=60s;

@@ -23,7 +23,7 @@
 8. If you installed a newer Akkoma version, you should run the database migrations `./bin/pleroma_ctl migrate`[²].
 9. Restart the Akkoma service.
 10. Run `sudo -Hu postgres vacuumdb --all --analyze-in-stages`. This will quickly generate the statistics so that postgres can properly plan queries.
-11. If setting up on a new server, configure Nginx by using the `installation/nginx/akkoma.nginx` configuration sample or reference the Akkoma installation guide which contains the Nginx configuration instructions.
+11. If setting up on a new server, configure nginx by using the `installation/nginx/akkoma.nginx` configuration sample or reference the Akkoma installation guide which contains the nginx configuration instructions.
 
 [¹]: We assume the database name and user are both "akkoma". If not, you can find the correct name in your configuration files.  
 [²]: If you have a from source installation, the command is `MIX_ENV=prod mix ecto.migrate`. Note that we prefix with `MIX_ENV=prod` to use the `config/prod.secret.exs` configuration file.  

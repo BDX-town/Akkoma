@@ -130,7 +130,7 @@ config :pleroma, :http_security,
   enabled: false
 ```
 
-In the Nginx config, add the following into the `location /` block:
+In the nginx config, add the following into the `location /` block:
 ```nginx
         add_header X-XSS-Protection "0";
         add_header X-Permitted-Cross-Domain-Policies none;
@@ -146,7 +146,7 @@ listen 127.0.0.1:14447;
 
 Set `server_name` to your i2p address.
 
-Reload Nginx:
+Reload nginx:
 ```
 systemctl restart i2pd.service --no-block
 systemctl reload nginx.service
