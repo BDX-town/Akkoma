@@ -151,7 +151,7 @@ Please note that the Akkoma developers consider custom MRF policy modules to fal
 
 ### MRF policies descriptions
 
-If MRF policy depends on config, it can be added into MRF tab to adminFE by adding `config_description/0` method, which returns a map with a specific structure. See existing MRF's like `lib/pleroma/web/activity_pub/mrf/activity_expiration_policy.ex` for examples. Note that more complex inputs, like tuples or maps, may need extra changes in the adminFE and just adding it to `config_description/0` may not be enough to get these inputs working from the adminFE.
+If MRF policy depends on config, it can be added into MRF tab to admin-fe by adding `config_description/0` method, which returns a map with a specific structure. See existing MRF's like `lib/pleroma/web/activity_pub/mrf/activity_expiration_policy.ex` for examples. Note that more complex inputs, like tuples or maps, may need extra changes in the admin-fe and just adding it to `config_description/0` may not be enough to get these inputs working from the admin-fe.
 
 Example:
 

@@ -291,11 +291,11 @@ config :pleroma, :mrf_reject_newly_created_account_notes, age: 86400
 
 ### :frontend_configurations
 
-This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [Akkoma-FE configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
+This can be used to configure a keyword list that keeps the configuration data for any kind of frontend. By default, settings for `pleroma_fe` and `masto_fe` are configured. You can find the documentation for `pleroma_fe` configuration into [akkoma-fe configuration and customization for instance administrators](https://docs-fe.akkoma.dev/stable/CONFIGURATION/#options).
 
 Frontends can access these settings at `/api/v1/pleroma/frontend_configurations`
 
-To add your own configuration for Akkoma-FE, use it like this:
+To add your own configuration for akkoma-fe, use it like this:
 
 ```elixir
 config :pleroma, :frontend_configurations,
@@ -340,7 +340,7 @@ config :pleroma, :frontends,
 * `:primary` - The frontend that will be served at `/`
 * `:admin` - The frontend that will be served at `/pleroma/admin`
 * `:swagger` - Config for developers to act as an API reference to be served at `/pleroma/swaggerui/` (trailing slash _needed_). Disabled by default.
-* `:mastodon` - The mastodon-fe configuration. This shouldn't need to be changed. This is served at `/web` when installed.
+* `:mastodon` - The masto-fe configuration. This shouldn't need to be changed. This is served at `/web` when installed.
 
 ### :static\_fe
 
@@ -358,11 +358,11 @@ relates to mascots on the mastodon frontend
 * `mascots`: KeywordList of mascots, each element __MUST__ contain both a `url` and a
   `mime_type` key.
 * `default_mascot`: An element from `mascots` - This will be used as the default mascot
-  on MastoFE (default: `:pleroma_fox_tan`).
+  on masto-fe (default: `:pleroma_fox_tan`).
 
 ### :manifest
 
-This section describe PWA manifest instance-specific values. Currently this option relate only for MastoFE.
+This section describe PWA manifest instance-specific values. Currently this option relate only for masto-fe.
 
 * `icons`: Describe the icons of the app, this a list of maps describing icons in the same way as the
   [spec](https://www.w3.org/TR/appmanifest/#imageresource-and-its-members) describes it.
