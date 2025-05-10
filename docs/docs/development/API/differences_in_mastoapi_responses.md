@@ -1,10 +1,10 @@
 # Differences in Mastodon API responses from vanilla Mastodon
 
-A Akkoma instance can be identified by "<Mastodon version> (compatible; Akkoma <version>)" present in `version` field in response from `/api/v1/instance`
+An Akkoma instance can be identified by "<Mastodon version> (compatible; Akkoma <version>)" present in `version` field in response from `/api/v1/instance`
 
 ## Flake IDs
 
-Akkoma uses 128-bit ids as opposed to Mastodon's 64 bits. However, just like Mastodon's ids, they are lexically sortable strings
+Akkoma uses 128-bit IDs as opposed to Mastodon's 64 bits. However, just like Mastodon's IDs, they are lexically sortable strings
 
 ## Timelines
 
@@ -101,11 +101,11 @@ Endpoints which accept `with_relationships` parameter:
 
 Has these additional fields under the `pleroma` object:
 
-- `ap_id`: nullable URL string, ActivityPub id of the user
+- `ap_id`: nullable URL string, ActivityPub ID of the user
 - `background_image`: nullable URL string, background image of the user
 - `tags`: Lists an array of tags for the user
 - `relationship` (object): Includes fields as documented for Mastodon API https://docs.joinmastodon.org/entities/relationship/
-- `is_moderator`: boolean, nullable,  true if user is a moderator
+- `is_moderator`: boolean, nullable, true if user is a moderator
 - `is_admin`: boolean, nullable, true if user is an admin
 - `confirmation_pending`: boolean, true if a new user account is waiting on email confirmation to be activated
 - `hide_favorites`: boolean, true when the user has hiding favorites enabled
@@ -131,8 +131,8 @@ Has these additional fields under the `akkoma` object:
 
 Has these additional fields under the `pleroma` object:
 
-- `show_role`: boolean, nullable, true when the user wants his role (e.g admin, moderator) to be shown
-- `no_rich_text` - boolean, nullable, true when html tags are stripped from all statuses requested from the API
+- `show_role`: boolean, nullable, true when the user wants his role (e.g. admin, moderator) to be shown
+- `no_rich_text` - boolean, nullable, true when HTML tags are stripped from all statuses requested from the API
 - `discoverable`: boolean, true when the user allows external services (search bots) etc. to index / list the account (regardless of this setting, user will still appear in regular search results)
 - `actor_type`: string, the type of this account.
 
@@ -200,7 +200,7 @@ An endpoint to delete multiple statuses by IDs.
 
 Required parameters:
 
-- `ids`: array of activity ids
+- `ids`: array of activity IDs
 
 Usage example: `DELETE /api/v1/notifications/destroy_multiple/?ids[]=1&ids[]=2`.
 
@@ -261,7 +261,7 @@ All images (avatar, banner and background) can be reset to the default by sendin
 
 ### Akkoma Settings Store
 
-Akkoma has mechanism that allows frontends to save blobs of json for each user on the backend. This can be used to save frontend-specific settings for a user that the backend does not need to know about.
+Akkoma has a mechanism that allows frontends to save blobs of json for each user on the backend. This can be used to save frontend-specific settings for a user that the backend does not need to know about.
 
 The parameter should have a form of `{frontend_name: {...}}`, with `frontend_name` identifying your type of client, e.g. `pleroma_fe`. It will overwrite everything under this property, but will not overwrite other frontend's settings.
 
@@ -340,7 +340,7 @@ Permits these additional alert types:
 
 Has these additional fields under the `pleroma` object:
 
-- `unread_count`: contains number unread notifications
+- `unread_count`: contains number of unread notifications
 
 ## Streaming
 
@@ -352,7 +352,7 @@ For viewing remote server timelines, there are `public:remote` and `public:remot
 
 Akkoma streams follow relationships updates as `pleroma:follow_relationships_update` events to the `user` stream.
 
-The message payload consist of:
+The message payload consists of:
 
 - `state`: a relationship state, one of `follow_pending`, `follow_accept` or `follow_reject`.
 

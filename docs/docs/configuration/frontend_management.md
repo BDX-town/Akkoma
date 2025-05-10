@@ -2,7 +2,7 @@
 
 Frontends in Akkoma are swappable, you can pick which you'd like.
 
-For a basic setup, you can set a frontends for the key `primary` and `admin` and the options of `name` and `ref`. This will then make Akkoma serve the frontend from a folder constructed by concatenating the instance static path, `frontends` and the name and ref.
+For a basic setup, you can set a frontend for the key `primary` and `admin` and the options of `name` and `ref`. This will then make Akkoma serve the frontend from a folder constructed by concatenating the instance static path, `frontends` and the name and ref.
 
 The key `primary` refers to the frontend that will be served by default for general requests. The key `admin` refers to the frontend that will be served at the `/pleroma/admin` path.
 
@@ -36,13 +36,13 @@ You can also replace the default "no frontend" page by placing an `index.html` f
 
 ## masto-fe
 
-Akkoma supports both [glitchsoc](https://github.com/glitch-soc/mastodon)'s more "vanilla" mastodon frontend,
+Akkoma supports both [glitch-soc](https://github.com/glitch-soc/mastodon)'s more "vanilla" mastodon frontend,
 as well as [fedibird](https://github.com/fedibird/mastodon)'s extended frontend which has near-feature-parity with akkoma (with quoting and reactions).
 
 To enable either one, you must run the `frontend.install` task for either `masto-fe` or `fedibird-fe` (both `--ref akkoma`), then make sure
 `:pleroma, :frontends, :mastodon` references the one you want.
 
-## Swagger (openAPI) documentation viewer
+## Swagger (OpenAPI) documentation viewer
 
 If you're a developer and you'd like a human-readable rendering of the
 API documentation, you can enable [Swagger UI](https://github.com/swagger-api/swagger-ui).

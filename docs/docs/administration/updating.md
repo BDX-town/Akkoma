@@ -33,8 +33,8 @@ su -s "$SHELL" akkoma
 ./bin/pleroma_ctl frontend install pleroma-fe --ref stable
 ```
 
-If you selected an alternate flavour on installation, 
-you _may_ need to specify `--flavour`, in the same way as 
+If you selected an alternate flavour on installation,
+you _may_ need to specify `--flavour`, in the same way as
 [when installing](../../installation/otp_en#detecting-flavour).
 
 ## For from source installations (using git)

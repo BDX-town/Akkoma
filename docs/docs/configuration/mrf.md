@@ -11,7 +11,7 @@ Possible uses include:
 * removing media from messages
 * sending only public messages to a specific instance
 
-The MRF provides user-configurable policies. The default policy is `NoOpPolicy`, which disables the MRF functionality. Akkoma also includes an easy to use policy called `SimplePolicy` which maps messages matching certain pre-defined criterion to actions built into the policy module.
+The MRF provides user-configurable policies. The default policy is `NoOpPolicy`, which disables the MRF functionality. Akkoma also includes an easy-to-use policy called `SimplePolicy` which maps messages matching certain pre-defined criterion to actions built into the policy module.
 
 It is possible to use multiple, active MRF policies at the same time.
 
@@ -29,7 +29,7 @@ config :pleroma, :mrf,
 
 Once `SimplePolicy` is enabled, you can configure various groups in the `:mrf_simple` config object. These groups are:
 
-* `reject`: Servers in this group will have their messages rejected. Also outbound messages will not be sent to these servers.
+* `reject`: Servers in this group will have their messages rejected. Also, outbound messages will not be sent to these servers.
 * `accept`: If not empty, only messages from these instances will be accepted (whitelist federation).
 * `media_nsfw`: Servers in this group will have the #nsfw tag and sensitive setting injected into incoming messages which contain media.
 * `media_removal`: Servers in this group will have media stripped from incoming messages.

@@ -1,4 +1,4 @@
-# Transfering the config to/from the database
+# Transferring the config to/from the database
 
 {! administration/CLI_tasks/general_cli_task_info.include !}
 
@@ -34,9 +34,9 @@
 
 Options:
 
-- `<path>` - where to save migrated config. E.g. `--path=/tmp`. If file saved into non standart folder, you must manually copy file into directory where Pleroma can read it. For OTP install path will be `PLEROMA_CONFIG_PATH` or `/etc/akkoma`. For installation from source - `config` directory in the akkoma folder.
-- `<env>` - environment, for which is migrated config. By default is `prod`.
-- To delete transferred settings from database optional flag `-d` can be used
+- `<path>` - where to save migrated config. E.g. `--path=/tmp`. If the file was saved into a non-standard directory, you must manually copy it into a location where Pleroma can read it. For OTP the install path will be `PLEROMA_CONFIG_PATH` or `/etc/akkoma`. For installation from source it’s the `config` directory in the akkoma folder.
+- `<env>` - environment, for which is migrated config. By default, it’s `prod`.
+- To delete transferred settings from database the optional flag `-d` can be used
 
 === "OTP"
     ```sh
@@ -48,7 +48,7 @@ Options:
     mix pleroma.config migrate_from_db [--env=<env>] [-d] [--path=<path>]
     ```
 
-## Dump all of the config settings defined in the database
+## Dump all config settings defined in the database
 
 === "OTP"
 
@@ -172,7 +172,7 @@ it may be easier to dump the values to JSON and then modify them in a text edito
 === "From Source"
 
     ```sh
-    mix pleroma.config dump_to_file group key path 
+    mix pleroma.config dump_to_file group key path
     # For example, to dump the MRF simple configuration:
     mix pleroma.config dump_to_file pleroma mrf_simple /tmp/mrf_simple.json
     ```
