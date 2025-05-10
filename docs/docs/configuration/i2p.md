@@ -15,7 +15,8 @@ One using the config, and one using external software (fedproxy). The external s
 
 ### Using the Config
 
-**Warning:** So far, everytime I followed this way of federating using I2P, the rest of my federation stopped working. I'm leaving this here in case it will help with making it work.
+!!! warning
+    So far, everytime I followed this way of federating using I2P, the rest of my federation stopped working. I'm leaving this here in case it will help with making it work.
 
 Assuming you're running in prod, `cd` to your Akkoma folder and append the following to `config/prod.secret.exs`:
 ```

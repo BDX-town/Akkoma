@@ -27,7 +27,8 @@ This file will indeed contain a URL template of the form `https://example.org/.w
 
 ## Configuring your Akkoma instance
 
-**_DO NOT ATTEMPT TO CONFIGURE YOUR INSTANCE THIS WAY IF YOU DID NOT UNDERSTAND THE ABOVE_**
+!!! danger
+    DO NOT ATTEMPT TO CONFIGURE YOUR INSTANCE THIS WAY IF YOU DID NOT UNDERSTAND THE ABOVE
 
 ### Configuring Akkoma
 
