@@ -58,7 +58,7 @@ Other than things bundled in the OTP release Akkoma depends on:
 Per [`docs/installation/optional/media_graphics_packages.md`](optional/media_graphics_packages.md):
   * ImageMagick
   * ffmpeg
-  * exiftool
+  * ExifTool
 
 === "Alpine"
     ```
