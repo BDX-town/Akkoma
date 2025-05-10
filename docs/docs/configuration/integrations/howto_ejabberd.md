@@ -1,6 +1,6 @@
-# Configuring Ejabberd (XMPP Server) to use Akkoma for authentication
+# Configuring ejabberd (XMPP Server) to use Akkoma for authentication
 
-If you want to give your Akkoma users an XMPP (chat) account, you can configure [Ejabberd](https://github.com/processone/ejabberd) to use your Akkoma server for user authentication, automatically giving every local user an XMPP account.
+If you want to give your Akkoma users an XMPP (chat) account, you can configure [ejabberd](https://github.com/processone/ejabberd) to use your Akkoma server for user authentication, automatically giving every local user an XMPP account.
 
 In general, you just have to follow the configuration described at [https://docs.ejabberd.im/admin/configuration/authentication/#external-script](https://docs.ejabberd.im/admin/configuration/authentication/#external-script). Please read this section carefully. 
 
@@ -23,7 +23,7 @@ auth_use_cache: false
 
 Restart / reload your ejabberd service.
 
-After restarting your Ejabberd server, your users should now be able to connect with their Akkoma credentials.
+After restarting your ejabberd server, your users should now be able to connect with their Akkoma credentials.
 
 
 ```python
