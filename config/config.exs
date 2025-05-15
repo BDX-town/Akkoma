@@ -194,7 +194,10 @@ config :pleroma, :instance,
   name: "Akkoma",
   email: "example@example.com",
   notify_email: "noreply@example.com",
+  # allowed to use HTML (if short_description is set)
   description: "Akkoma: The cooler fediverse server",
+  # only plain text (defaults to description)
+  short_description: nil,
   background_image: "/images/city.jpg",
   instance_thumbnail: "/instance/thumbnail.jpeg",
   limit: 5_000,

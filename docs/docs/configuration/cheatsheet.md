@@ -12,7 +12,12 @@ To add configuration to your config file, you can copy it from the base config. 
 * `name`: The instance’s name.
 * `email`: Email used to reach an Administrator/Moderator of the instance.
 * `notify_email`: Email used for notifications.
-* `description`: The instance’s description, can be seen in nodeinfo and `/api/v1/instance`.
+* `short_description`: A brief, plain-text-only instance description.
+    Can be seen in nodeinfo and `/api/v1/instance`.
+    Defaults to `description` if unset
+* `description`: The instance’s more detailed description.
+    This is allowed to use HTML if `short_description` is set.
+    Can be seen in `api/v1/instance`.
 * `limit`: Posts character limit (CW/Subject included in the counter).
 * `description_limit`: The character limit for image descriptions.
 * `remote_limit`: Hard character limit beyond which remote posts will be dropped.
