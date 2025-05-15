@@ -9,6 +9,12 @@ defmodule Pleroma.Web.Nodeinfo.Nodeinfo do
   alias Pleroma.Web.Federator.Publisher
   alias Pleroma.Web.MastodonAPI.InstanceView
 
+  defp description() do
+    # The text in nodeinfo should be plain text and preferably not too long
+    Config.get([:instance, :short_description]) ||
+      Config.get([:instance, :description])
+  end
+
   # returns a nodeinfo 2.0 map, since 2.1 just adds a repository field
   # under software.
   def get_nodeinfo("2.0") do
@@ -43,7 +49,7 @@ defmodule Pleroma.Web.Nodeinfo.Nodeinfo do
       },
       metadata: %{
         nodeName: Config.get([:instance, :name]),
-        nodeDescription: Config.get([:instance, :description]),
+        nodeDescription: description(),
         private: !Config.get([:instance, :public], true),
         suggestions: %{
           enabled: false
