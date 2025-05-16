@@ -231,8 +231,8 @@
 					</div>
 
           <%= for %{data: mention, object: object, from: from} <- @mentions do %>
-					<%# mention START %>
-					<%# user card START %>
+					<%!-- mention START --%>
+					<%!-- user card START --%>
 					<div style="background-color:transparent;">
 						<div class="block-grid mixed-two-up no-stack"
 							style="Margin: 0 auto; min-width: 320px; max-width: 590px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: <%= @styling.content_background_color%>;">
@@ -291,7 +291,7 @@
 							</div>
 						</div>
 					</div>
-					<%# user card END %>
+					<%!-- user card END --%>
 
 					<div style="background-color:transparent;">
 						<div class="block-grid"
@@ -333,12 +333,12 @@
 							</div>
 						</div>
 					</div>
-					<%# mention END %>
+					<%!-- mention END --%>
           <% end %>
 
           <%= if @followers != [] do %>
 
-          <%# new followers header START %>
+          <%!-- new followers header START --%>
 					<div style="background-color:transparent;">
 						<div class="block-grid"
 							style="Margin: 0 auto; min-width: 320px; max-width: 590px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: <%= @styling.content_background_color%>;">
@@ -397,10 +397,10 @@
 							</div>
 						</div>
 					</div>
-          <%# new followers header END %>
+          <%!-- new followers header END --%>
 
         <%= for %{data: follow, from: from} <- @followers do %>
-					<%# user card START %>
+					<%!-- user card START --%>
 					<div style="background-color:transparent;">
 						<div class="block-grid mixed-two-up no-stack"
 							style="Margin: 0 auto; min-width: 320px; max-width: 590px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: <%= @styling.content_background_color%>;">
@@ -459,13 +459,13 @@
 							</div>
 						</div>
 					</div>
-					<%# user card END %>
+					<%!-- user card END --%>
         <% end %>
 
 
           <% end %>
 
-          <%# divider start %>
+          <%!-- divider start --%>
 					<div style="background-color:transparent;">
 						<div class="block-grid"
 							style="Margin: 0 auto; min-width: 320px; max-width: 590px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: <%= @styling.content_background_color%>;">
@@ -514,7 +514,7 @@
 						</div>
 					</div>
 
-          <%# divider end %>
+          <%!-- divider end --%>
 
 
 					<div style="background-color:transparent;">
