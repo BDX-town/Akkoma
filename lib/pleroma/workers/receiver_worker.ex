@@ -80,4 +80,8 @@ defmodule Pleroma.Workers.ReceiverWorker do
       # reraise to let oban handle transaction conflicts without deductig an attempt
       reraise err, __STACKTRACE__
   end
+
+  def backoff(%Job{attempt: attempt}) when is_integer(attempt) do
+    Pleroma.Workers.WorkerHelper.sidekiq_backoff(attempt, 5)
+  end
 end
