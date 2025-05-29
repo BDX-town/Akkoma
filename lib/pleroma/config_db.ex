@@ -303,7 +303,9 @@ defmodule Pleroma.ConfigDB do
   end
 
   def to_elixir_types(%{"tuple" => entity}) do
-    Enum.reduce(entity, {}, &Tuple.append(&2, to_elixir_types(&1)))
+    entity
+    |> Enum.map(&to_elixir_types(&1))
+    |> List.to_tuple()
   end
 
   def to_elixir_types(entity) when is_map(entity) do

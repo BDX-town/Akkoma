@@ -18,7 +18,7 @@ around 4 gigabytes. Like [RUM](./cheatsheet.md#rum-indexing-for-full-text-search
 higher performance and ordering by timestamp in a reasonable amount of time.
 Additionally, the search results seem to be more accurate.
 
-Due to high memory usage, it may be best to set it up on a different machine, if running pleroma on a low-resource
+Due to high memory usage, it may be best to set it up on a different machine, if running akkoma on a low-resource
 computer, and use private key authentication to secure the remote search instance.
 
 To use [meilisearch](https://www.meilisearch.com/), set the search module to `Pleroma.Search.Meilisearch`:
@@ -26,8 +26,8 @@ To use [meilisearch](https://www.meilisearch.com/), set the search module to `Pl
 > config :pleroma, Pleroma.Search, module: Pleroma.Search.Meilisearch
 
 You then need to set the address of the meilisearch instance, and optionally the private key for authentication. You might
-also want to change the `initial_indexing_chunk_size` to be smaller if you're server is not very powerful, but not higher than `100_000`,
-because meilisearch will refuse to process it if it's too big. However, in general you want this to be as big as possible, because meilisearch
+also want to change the `initial_indexing_chunk_size` to be smaller if your server is not very powerful, but not higher than `100_000`,
+because Meilisearch will refuse to process it if it's too big. However, in general you want this to be as big as possible, because Meilisearch
 indexes faster when it can process many posts in a single batch.
 
 > config :pleroma, Pleroma.Search.Meilisearch,
@@ -36,7 +36,7 @@ indexes faster when it can process many posts in a single batch.
 >    search_key: "search key",
 >    initial_indexing_chunk_size: 100_000
 
-Information about setting up meilisearch can be found in the
+Information about setting up Meilisearch can be found in the
 [official documentation](https://docs.meilisearch.com/learn/getting_started/installation.html).
 You probably want to start it with `MEILI_NO_ANALYTICS=true` environment variable to disable analytics.
 At least version 0.25.0 is required, but you are strongly adviced to use at least 0.26.0, as it introduces
@@ -93,7 +93,7 @@ To start the initial indexing, run the `index` command:
     ```
 
 This will show you the total amount of posts to index, and then show you the amount of posts indexed currently, until the numbers eventually
-become the same. The posts are indexed in big batches and meilisearch will take some time to actually index them, even after you have
+become the same. The posts are indexed in big batches and Meilisearch will take some time to actually index them, even after you have
 inserted all the posts into it. Depending on the amount of posts, this may be as long as several hours. To get information about the status
 of indexing and how many posts have actually been indexed, use the `stats` command:
 
@@ -131,9 +131,9 @@ depends on the amount of text in posts.
 
 **Note: This requires at least ElasticSearch 7**
 
-As with meilisearch, this can be rather memory-hungry, but it is very good at what it does.
+As with Meilisearch, this can be rather memory-hungry, but it is very good at what it does.
 
-To use [elasticsearch](https://www.elastic.co/), set the search module to `Pleroma.Search.Elasticsearch`:
+To use [Elasticsearch](https://www.elastic.co/), set the search module to `Pleroma.Search.Elasticsearch`:
 
 > config :pleroma, Pleroma.Search, module: Pleroma.Search.Elasticsearch
 
@@ -146,7 +146,7 @@ You then need to set the URL and authentication credentials if relevant.
 
 ### Initial indexing
 
-After setting up the configuration, you'll want to index all of your already existsing posts. You'll only have to do it one time, but it might take a while, depending on the amount of posts your instance has seen. 
+After setting up the configuration, you'll want to index all of your already existsing posts. You'll only have to do it one time, but it might take a while, depending on the amount of posts your instance has seen.
 
 The sequence of actions is as follows:
 

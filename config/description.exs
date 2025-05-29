@@ -566,7 +566,16 @@ config :pleroma, :config_description, [
         key: :description,
         type: :string,
         description:
-          "The instance's description. It can be seen in nodeinfo and `/api/v1/instance`",
+          "The instance's description. It may use HTML and can be seen in `/api/v1/instance` and nodeifno if no short description is set",
+        suggestions: [
+          "Very cool instance"
+        ]
+      },
+      %{
+        key: :short_description,
+        type: :string,
+        description:
+          "A brief instance description. It must be plain text and can be seen in `/api/v1/instance` and nodeinfo",
         suggestions: [
           "Very cool instance"
         ]

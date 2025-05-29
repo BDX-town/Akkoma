@@ -8,19 +8,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
+- Prometheus stats now exposes failed ActivityPub deliveries
+  which failed all attempts and the failure reason
+- status and user HTML pages now provide ActivityPub alternate links
+- the `prune_objects` mix task no longer deletes pinned posts by default
+- added `--prune-pinned` and `--keep-followed {posts,full,none}` options to the `prune_objects` mix task
+
+### Fixed
+- Internal actors no longer pretend to have unresolvable follow(er|ing) collections
+- fixed user-level default post expiry duration overriding `expires_in` values explicitly passed during post creation
+- fix crashes on non-UTF8 usernames for the API paths taking both nicknames and IDs
+- fixed divergences in fields used to determine visibility;
+  this lead e.g. to unlisted replies from Pleroma instances being partially treated as private posts
+- fixed our fetch actor advertising bogus follower and following collection ActivityPub IDs
+- fix network-path references not being handled by media proxy
+
+### Changed
+- Internal and relay actors are now again represented with type "Application"
+- `cleanup_attachments` is now enabled by default
+- shared inboxes are now generally preferred over personal inboxes, cutting down on duplicate publishing churn
+- instance actors are now really of type `Service`
+- ActivityPub delivery attempts are spaced out more giving up after 3h instead of ~20min before
 
 ## 2025.03
 
-## Added
+### Added
 - Oban (worker) dashboard at `/akkoma/oban`
 
-## Fixed
+### Fixed
 - fixed some holes in SigningKey verification potentially allowing they key-user mapping to be poisoned
 - frontend ZIP files can no longer traverse to paths outside their install dir
 - fixed user updates trying but failing to renew signing key information
 - fixed signing key refresh on key rotation
 
-## Changed
+### Changed
 - Dropped obsolete `ap_enabled` indicator from user table and associated buggy logic
 - The remote user count in prometheus metrics is now an estimate instead of an exact number
   since the latter proved unreasonably costly to obtain for a merely nice-to-have statistic
@@ -34,12 +55,12 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2025.01
 
-## Added
+### Added
 - New config option `:instance, :cleanup_attachments_delay`
 - It is now possible to display custom source URLs in akkoma-fe;
   the settings are part of the frontend configuration
 
-## Fixed
+### Fixed
 - Media proxy no longer attempts to proxy embedded images
 - Fix significant uneccessary overhead of attachment cleanup;
   it no longer attempts to cleanup attachments of deleted remote posts
@@ -48,24 +69,24 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - ObjectAge policy no longer leaks belated DMs and follower-only posts
 - the NodeINfo endpoint now uses the correct content type
 
-## Changed
+### Changed
 - Anonymous objects now federate completely without an id
   adopting a proposed AP spec errata and restoring federation
   with e.g. IceShrimp.NET and fedify-based implementations
 
 ## 3.13.3 
 
-## BREAKING
+### BREAKING
 - Minimum PostgreSQL version is raised to 12
 - Swagger UI moved from `/akkoma/swaggerui/` to `/pleroma/swaggerui/`
 
-## Added
+### Added
 - Implement [FEP-67ff](https://codeberg.org/fediverse/fep/src/branch/main/fep/67ff/fep-67ff.md) (federation documentation)
 - Meilisearch: it is now possible to use separate keys for search and admin actions
 - New standalone `prune_orphaned_activities` mix task with configurable batch limit
 - The `prune_objects` mix task now accepts a `--limit` parameter for initial object pruning
 
-## Fixed
+### Fixed
 - Meilisearch: order of results returned from our REST API now actually matches how Meilisearch ranks results
 - Emoji are now federated as anonymous objects, fixing issues with
   some strict servers e.g. rejecting e.g. remote emoji reactions
@@ -73,25 +94,25 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - Single-selection polls no longer expose the voter_count; MastoAPI demands it be null
   and this confused some clients leading to vote distributions >100%
 
-## Changed
+### Changed
 - Refactored Rich Media to cache the content in the database. Fetching operations that could block status rendering have been eliminated.
 
 ## 2024.04.1 (Security)
 
-## Fixed
+### Fixed
 - Issue allowing non-owners to use media objects in posts
 - Issue allowing use of non-media objects as attachments and crashing timeline rendering
 - Issue allowing webfinger spoofing in certain situations
 
 ## 2024.04
 
-## Added
+### Added
 - Support for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) (proxy objects)
 - Verified support for elixir 1.16
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool.ReadDescription` returns description values to the FE so they can pre fill the image description field
   NOTE: this filter MUST be placed before `Exiftool.StripMetadata` to work
 
-## Changed
+### Changed
 - Inbound pipeline error handing was modified somewhat, which should lead to less incomprehensible log spam. Hopefully.
 - Uploadfilter `Pleroma.Upload.Filter.Exiftool` was replaced by `Pleroma.Upload.Filter.Exiftool.StripMetadata`;
   the latter strips all non-essential metadata by default but can be configured.
@@ -100,7 +121,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - MRF.InlineQuotePolicy now prefers to insert display URLs instead of ActivityPub IDs
 - Old accounts are no longer listed in WebFinger as aliases; this was breaking spec
 
-## Fixed
+### Fixed
 - Issue preventing fetching anything from IPv6-only instances
 - Issue allowing post content to leak via opengraph tags despite :estrict\_unauthenticated being set
 - Move activities no longer operate on stale user data
@@ -116,17 +137,17 @@ Hotfix: Federation could break if a null value found its way into `should_federa
   JSON-LD-compacted forms of public scope; affected e.g. federation with bovine
 - Ratelimits encountered when fetching objects are now respected; 429 responses will cause a backoff when we get one.
 
-## Removed
+### Removed
 - ActivityPub Client-To-Server write API endpoints have been disabled;
   read endpoints are planned to be removed next release unless a clear need is demonstrated
 
 ## 2024.03
 
-## Added
+### Added
 - CLI tasks best-effort checking for past abuse of the recent spoofing exploit
 - new `:mrf_steal_emoji, :download_unknown_size` option; defaults to `false`
 
-## Changed
+### Changed
 - `Pleroma.Upload, :base_url` now MUST be configured explicitly if used;
   use of the same domain as the instance is **strongly** discouraged
 - `:media_proxy, :base_url` now MUST be configured explicitly if used;
@@ -142,7 +163,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - Uploads, emoji and media proxy now restrict Content-Type headers to a safe subset
 - Akkoma will no longer fetch and parse objects hosted on the same domain
 
-## Fixed
+### Fixed
 - Critical security issue allowing Akkoma to be used as a vector for
   (depending on configuration) impersonation of other users or creation
   of bogus users and posts on the upload domain
@@ -155,7 +176,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - our litepub JSON-LD schema is now served with the correct content type
 - remote APNG attachments are now recognised as images
 
-## Upgrade Notes
+### Upgrade Notes
 
 - As mentioned in "Changed", `Pleroma.Upload, :base_url` **MUST** be configured. Uploads will fail without it.
   - Akkoma will refuse to start if this is not set.
@@ -163,20 +184,20 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2024.02
 
-## Added
+### Added
 - Full compatibility with Erlang OTP26
 - handling of GET /api/v1/preferences
 - Akkoma API is now documented
 - ability to auto-approve follow requests from users you are already following
 - The SimplePolicy MRF can now strip user backgrounds from selected remote hosts
 
-## Changed
+### Changed
 - OTP builds are now built on erlang OTP26
 - The base Phoenix framework is now updated to 1.7
 - An `outbox` field has been added to actor profiles to comply with AP spec
 - User profile backgrounds do now federate with other Akkoma instances and Sharkey
 
-## Fixed
+### Fixed
 - Documentation issue in which a non-existing nginx file was referenced
 - Issue where a bad inbox URL could break federation
 - Issue where hashtag rel values would be scrubbed
@@ -184,7 +205,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2023.08
 
-## Added
+### Added
 
 - Added a new configuration option to the MediaProxy feature that allows the blocking of specific domains from using the media proxy or being explicitly allowed by the Content-Security-Policy.
   - Please make sure instances you wanted to block media from are not in the MediaProxy `whitelist`, and instead use `blocklist`.
@@ -197,7 +218,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
   - OTP26 is currently "unsupported". It will probably work, but due to the way
     it handles map ordering, the test suite will not pass for it as yet.
 
-## Changed
+### Changed
 
 - Alpine OTP builds are now from alpine 3.18, which is OpenSSLv3 compatible.
   If you use alpine OTP builds you will have to update your local system.
@@ -208,19 +229,19 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - Blocks/Mutes now return from max ID to min ID, in line with mastodon.
 - The AnonymizeFilename filter is now enabled by default.
 
-## Fixed
+### Fixed
 
 - Deactivated users can no longer show up in the emoji reaction list
 - Embedded posts can no longer bypass `:restrict\_unauthenticated`
 - GET/HEAD requests will now work when requesting AWS-based instances.
 
-## Security
+### Security
 
 - Add `no_new_privs` hardening to OpenRC and systemd service files
 - XML parsers cannot load any entities (thanks @Mae@is.badat.dev!)
 - Reduced permissions of config files and directories, distros requiring greater permissions like group-read need to pre-create the directories
 
-## Removed
+### Removed
 
 - Builds for debian oldstable (bullseye)
   - If you are on oldstable you should NOT attempt to update OTP builds without
@@ -228,7 +249,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2023.05
 
-## Added
+### Added
 - Custom options for users to accept/reject private messages
   - options: everybody, nobody, people\_i\_follow
 - MRF to reject notes from accounts newer than a given age
@@ -236,16 +257,16 @@ Hotfix: Federation could break if a null value found its way into `should_federa
     post gets boosted outside of your local bubble and people your instance
     does not know about reply to it.
 
-## Fixed
+### Fixed
 - Support for `streams` public key URIs
 - Bookmarks are cleaned up on DB prune now
 
-## Security
+### Security
 - Fixed mediaproxy being a bit of a silly billy
 
 ## 2023.04
 
-## Added
+### Added
 - Nodeinfo keys for unauthenticated timeline visibility
 - Option to disable federated timeline
 - Option to make the bubble timeline publicly accessible
@@ -259,7 +280,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2023.03
 
-## Fixed
+### Fixed
 - Allowed contentMap to be updated on edit
 - Filter creation now accepts expires\_at
 
@@ -319,7 +340,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 
 ## 2022.12
 
-## Added
+### Added
 - Config: HTTP timeout options, :pool\_timeout and :receive\_timeout
 - Added statistic gathering about instances which do/don't have signed fetches when they request from us
 - Ability to set a default post expiry time, after which the post will be deleted. If used in concert with ActivityExpiration MRF, the expiry which comes _sooner_ will be applied.
@@ -329,7 +350,7 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - Option to extend `reject` in MRF-Simple to apply to entire threads, where the originating instance is rejected
 - Extra information to failed HTTP requests
 
-## Changed
+### Changed
 - MastoAPI: Accept BooleanLike input on `/api/v1/accounts/:id/follow` (fixes follows with mastodon.py)
 - Relays from akkoma are now off by default
 - NormalizeMarkup MRF is now on by default
@@ -338,30 +359,30 @@ Hotfix: Federation could break if a null value found its way into `should_federa
 - Overhauled static-fe view for logged-out users
 - Blocked instances will now not be sent _any_ requests, even fetch ones that would get rejected by MRF anyhow
 
-## Removed
+### Removed
 - FollowBotPolicy
 - Passing of undo/block into MRF
 
-## Upgrade Notes
+### Upgrade Notes
 - If you have an old instance, you will probably want to run `mix pleroma.database prune_task` in the foreground to catch it up with the history of your instance.
 
 ## 2022.11
 
-## Added
+### Added
 - Officially supported docker release
 - Ability to remove followers unilaterally without a block
 - Scraping of nodeinfo from remote instances to display instance info
 - `requested_by` in relationships when the user has requested to follow you
 
-## Changed
+### Changed
 - Follows no longer override domain blocks, a domain block is final
 - Deletes are now the lowest priority to publish and will be handled after creates
 - Domain blocks are now subdomain-matches by default
 
-## Fixed
+### Fixed
 - Registrations via ldap are now compatible with the latest OTP24
 
-## Update notes
+### Update notes
 - If you use LDAP and run from source, please update your elixir/erlang
   to the latest. The changes in OTP24.3 are breaking.
 - You can now remove the leading `*.` from domain blocks, but you do not have to.
@@ -1681,7 +1702,7 @@ curl -Lo ./bin/pleroma_ctl 'https://git.pleroma.social/pleroma/pleroma/raw/devel
 - User-Agent is now sent correctly for all HTTP requests.
 - MRF: Simple policy now properly delists imported or relayed statuses
 
-## Removed
+### Removed
 - Configuration: `config :pleroma, :fe` in favor of the more flexible `config :pleroma, :frontend_configurations`
 
 ## [0.9.99999] - 2019-05-31

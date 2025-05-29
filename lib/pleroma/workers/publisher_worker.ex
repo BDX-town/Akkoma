@@ -9,7 +9,11 @@ defmodule Pleroma.Workers.PublisherWorker do
   use Pleroma.Workers.WorkerHelper, queue: "federator_outgoing"
 
   def backoff(%Job{attempt: attempt}) when is_integer(attempt) do
-    Pleroma.Workers.WorkerHelper.sidekiq_backoff(attempt, 5)
+    if attempt > 3 do
+      Pleroma.Workers.WorkerHelper.exponential_backoff(attempt, 9.5)
+    else
+      Pleroma.Workers.WorkerHelper.sidekiq_backoff(attempt, 6)
+    end
   end
 
   @impl Oban.Worker
@@ -30,7 +34,6 @@ defmodule Pleroma.Workers.PublisherWorker do
   end
 
   def perform(%Job{args: %{"op" => "publish_one", "module" => module_name, "params" => params}}) do
-    params = Map.new(params, fn {k, v} -> {String.to_atom(k), v} end)
-    Federator.perform(:publish_one, String.to_atom(module_name), params)
+    Federator.perform(:publish_one, String.to_existing_atom(module_name), params)
   end
 end

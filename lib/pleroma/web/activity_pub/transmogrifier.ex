@@ -118,7 +118,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
         Map.put(map, field, new_fval)
       else
-        map
+        Map.put(map, field, [])
       end
 
     normalise_addressing_public_list(map, fields)
@@ -207,6 +207,19 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   end
 
   def fix_in_reply_to(object, _options), do: object
+
+  # Pleroma sends unlisted posts without addressing public scope in the enclosing activity
+  # but we only use the ativity for access perm cheks, see:
+  # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
+  defp fix_create_visibility(%{"type" => "Create", "object" => %{} = object} = activity) do
+    activity
+    |> Map.put("to", object["to"])
+    |> Map.put("cc", object["cc"])
+    |> Map.put("bto", object["bto"])
+    |> Map.put("bcc", object["bcc"])
+  end
+
+  defp fix_create_visibility(activity), do: activity
 
   def fix_quote_url(object, options \\ [])
 
@@ -513,6 +526,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
        )
        when objtype in ~w{Question Answer Audio Video Event Article Note Page} do
     fetch_options = Keyword.put(options, :depth, (options[:depth] || 0) + 1)
+    data = fix_create_visibility(data)
 
     object =
       data["object"]
@@ -672,6 +686,16 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
+  defp handle_incoming_normalised(
+         %{
+           "type" => "Undo",
+           "object" => %{"type" => "Delete"}
+         },
+         _options
+       ) do
+    {:error, :unsupported}
+  end
+
   # For Undos that don't have the complete object attached, try to find it in our database.
   defp handle_incoming_normalised(
          %{
@@ -713,7 +737,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
-  defp handle_incoming_normalised(_, _), do: :error
+  defp handle_incoming_normalised(_, _), do: {:error, :unsupported}
 
   @spec get_obj_helper(String.t(), Keyword.t()) :: {:ok, Object.t()} | nil
   def get_obj_helper(id, options \\ []) do
