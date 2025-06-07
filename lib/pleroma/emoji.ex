@@ -76,9 +76,6 @@ defmodule Pleroma.Emoji do
     :ets.tab2list(@ets)
   end
 
-  @doc "Clear out old emojis"
-  def clear_all, do: :ets.delete_all_objects(@ets)
-
   @doc false
   def init(_) do
     @ets = :ets.new(@ets, @ets_options)
@@ -109,7 +106,10 @@ defmodule Pleroma.Emoji do
     {:ok, state}
   end
 
+  defp update_emojis([]), do: true
+
   defp update_emojis(emojis) do
+    :ets.delete_all_objects(@ets)
     :ets.insert(@ets, emojis)
   end
 
