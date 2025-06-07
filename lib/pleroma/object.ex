@@ -365,28 +365,6 @@ defmodule Pleroma.Object do
     String.starts_with?(id, Pleroma.Web.Endpoint.url() <> "/")
   end
 
-  def replies(object, opts \\ []) do
-    object = Object.normalize(object, fetch: false)
-
-    query =
-      Object
-      |> where(
-        [o],
-        fragment("(?)->>'inReplyTo' = ?", o.data, ^object.data["id"])
-      )
-      |> order_by([o], asc: o.id)
-
-    if opts[:self_only] do
-      actor = object.data["actor"]
-      where(query, [o], fragment("(?)->>'actor' = ?", o.data, ^actor))
-    else
-      query
-    end
-  end
-
-  def self_replies(object, opts \\ []),
-    do: replies(object, Keyword.put(opts, :self_only, true))
-
   def tags(%Object{data: %{"tag" => tags}}) when is_list(tags), do: tags
 
   def tags(_), do: []

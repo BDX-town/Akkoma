@@ -49,8 +49,38 @@ defmodule Pleroma.Web.ActivityPub.ObjectViewTest do
       replies_uris = [self_reply1.object.data["id"]]
       result = ObjectView.render("object.json", %{object: refresh_record(activity)})
 
-      assert %{"type" => "Collection", "items" => ^replies_uris} =
+      assert %{
+               "type" => "OrderedCollection",
+               "id" => _,
+               "first" => %{"orderedItems" => ^replies_uris}
+             } =
                get_in(result, ["object", "replies"])
+    end
+
+    test "renders a replies collection on its own" do
+      user = insert(:user)
+      activity = insert(:note_activity, user: user)
+      activity = Pleroma.Activity.get_by_id_with_object(activity.id)
+
+      {:ok, r1} =
+        CommonAPI.post(user, %{status: "reply1", in_reply_to_status_id: activity.id})
+
+      {:ok, r2} =
+        CommonAPI.post(user, %{status: "reply1", in_reply_to_status_id: activity.id})
+
+      replies_uris = [r1.object.data["id"], r2.object.data["id"]]
+
+      result =
+        ObjectView.render("object_replies.json", %{
+          render_params: %{object_ap_id: activity.object.data["id"]}
+        })
+
+      %{
+        "type" => "OrderedCollection",
+        "id" => _,
+        "totalItems" => 2,
+        "first" => %{"orderedItems" => ^replies_uris}
+      } = result
     end
   end
 

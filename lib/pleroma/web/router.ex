@@ -824,6 +824,7 @@ defmodule Pleroma.Web.Router do
     get("/users/:nickname/outbox", ActivityPubController, :outbox)
     post("/users/:nickname/inbox", ActivityPubController, :inbox)
     get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
+    get("/objects/:uuid/replies", ActivityPubController, :object_replies)
   end
 
   scope "/relay", Pleroma.Web.ActivityPub do

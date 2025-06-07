@@ -8,6 +8,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.CollectionViewHelper
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.Utils
@@ -141,7 +142,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         0
       end
 
-    collection(following, "#{user.ap_id}/following", page, showing_items, total)
+    CollectionViewHelper.collection_page_offset(
+      following,
+      "#{user.ap_id}/following",
+      page,
+      showing_items,
+      total
+    )
     |> Map.merge(Utils.make_json_ld_header())
   end
 
@@ -166,7 +173,12 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "totalItems" => total,
       "first" =>
         if showing_items do
-          collection(following, "#{user.ap_id}/following", 1, !user.hide_follows)
+          CollectionViewHelper.collection_page_offset(
+            following,
+            "#{user.ap_id}/following",
+            1,
+            !user.hide_follows
+          )
         else
           "#{user.ap_id}/following?page=1"
         end
@@ -189,7 +201,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         0
       end
 
-    collection(followers, "#{user.ap_id}/followers", page, showing_items, total)
+    CollectionViewHelper.collection_page_offset(
+      followers,
+      "#{user.ap_id}/followers",
+      page,
+      showing_items,
+      total
+    )
     |> Map.merge(Utils.make_json_ld_header())
   end
 
@@ -213,7 +231,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "type" => "OrderedCollection",
       "first" =>
         if showing_items do
-          collection(followers, "#{user.ap_id}/followers", 1, showing_items, total)
+          CollectionViewHelper.collection_page_offset(
+            followers,
+            "#{user.ap_id}/followers",
+            1,
+            showing_items,
+            total
+          )
         else
           "#{user.ap_id}/followers?page=1"
         end
@@ -233,22 +257,15 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   def render("activity_collection_page.json", %{
         activities: activities,
-        iri: iri,
         pagination: pagination
       }) do
-    collection =
+    display_items =
       Enum.map(activities, fn activity ->
         {:ok, data} = Transmogrifier.prepare_outgoing(activity.data)
         data
       end)
 
-    %{
-      "type" => "OrderedCollectionPage",
-      "partOf" => iri,
-      "orderedItems" => collection
-    }
-    |> Map.merge(Utils.make_json_ld_header())
-    |> Map.merge(pagination)
+    CollectionViewHelper.collection_page_keyset(display_items, pagination)
   end
 
   def render("featured.json", %{
@@ -274,27 +291,6 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   defp maybe_put_total_items(map, true, total) do
     Map.put(map, "totalItems", total)
-  end
-
-  def collection(collection, iri, page, show_items \\ true, total \\ nil) do
-    offset = (page - 1) * 10
-    items = Enum.slice(collection, offset, 10)
-    items = Enum.map(items, fn user -> user.ap_id end)
-    total = total || length(collection)
-
-    map = %{
-      "id" => "#{iri}?page=#{page}",
-      "type" => "OrderedCollectionPage",
-      "partOf" => iri,
-      "totalItems" => total,
-      "orderedItems" => if(show_items, do: items, else: [])
-    }
-
-    if offset < total do
-      Map.put(map, "next", "#{iri}?page=#{page + 1}")
-    else
-      map
-    end
   end
 
   defp maybe_make_image(func, key, user) do
