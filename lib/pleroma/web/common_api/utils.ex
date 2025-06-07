@@ -242,13 +242,13 @@ defmodule Pleroma.Web.CommonAPI.Utils do
 
   def add_attachments(text, attachments) do
     attachment_text = Enum.map(attachments, &build_attachment_link/1)
-    Enum.join([text | attachment_text], "<br>")
+    Enum.join([text | attachment_text], "<br/>")
   end
 
   defp build_attachment_link(%{"url" => [%{"href" => href} | _]} = attachment) do
     name = attachment["name"] || URI.decode(Path.basename(href))
     href = MediaProxy.url(href)
-    "<a href=\"#{href}\" class='attachment'>#{shortname(name)}</a>"
+    "<a href=\"#{href}\">#{shortname(name)}</a>"
   end
 
   defp build_attachment_link(_), do: ""
