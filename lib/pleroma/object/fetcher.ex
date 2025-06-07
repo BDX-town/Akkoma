@@ -233,9 +233,9 @@ defmodule Pleroma.Object.Fetcher do
     signature =
       InternalFetchActor.get_actor()
       |> Signature.sign(%{
-        "(request-target)": "get #{uri.path}",
-        host: uri.host,
-        date: date
+        "(request-target)" => "get #{uri.path}",
+        "host" => uri.host,
+        "date" => date
       })
 
     {"signature", signature}

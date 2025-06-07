@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - status and user HTML pages now provide ActivityPub alternate links
 - the `prune_objects` mix task no longer deletes pinned posts by default
 - added `--prune-pinned` and `--keep-followed {posts,full,none}` options to the `prune_objects` mix task
+- timestamps of incoming HTTP signatures are now verified.
+  By default up to two hour old signatures and a maximal clock skew
+  of 40 min for future timestamps or explicit expiry deadlines are accepted
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -21,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   this lead e.g. to unlisted replies from Pleroma instances being partially treated as private posts
 - fixed our fetch actor advertising bogus follower and following collection ActivityPub IDs
 - fix network-path references not being handled by media proxy
+- federation with bridgy now works
+- remote signing keys are no longer refreshed multiple times per incoming request
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
@@ -28,6 +33,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - shared inboxes are now generally preferred over personal inboxes, cutting down on duplicate publishing churn
 - instance actors are now really of type `Service`
 - ActivityPub delivery attempts are spaced out more giving up after 3h instead of ~20min before
+- inboxes now fake a succcess reply on incoming Delete documents whose signing key is unknown but gone;
+  this prevents older Mastodon from repeatedly trying to deliver Deletes of actors we never knew anyway
 
 ## 2025.03
 
