@@ -602,7 +602,7 @@ config :pleroma, Oban,
 config :pleroma, :workers,
   retries: [
     federator_incoming: 5,
-    federator_outgoing: 5,
+    federator_outgoing: 6,
     search_indexing: 2,
     rich_media_backfill: 1
   ],
