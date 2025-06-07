@@ -4,6 +4,14 @@ labels:
 depends_on:
   - test
 
+when:
+  event:
+    - push
+    - tag
+  branch:
+    - develop
+    - stable
+
 variables:
   - &scw-secrets
     SCW_ACCESS_KEY:
@@ -42,7 +50,6 @@ steps:
   # Canonical arm64
   debian-bookworm:
     image: hexpm/elixir:1.15.4-erlang-26.0.2-debian-bookworm-20230612
-    <<: *on-release
     environment:
       MIX_ENV: prod
       DEBIAN_FRONTEND: noninteractive
@@ -58,7 +65,6 @@ steps:
 
   release-debian-bookworm:
     image: akkoma/releaser:arm64
-    <<: *on-release
     environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-arm64.zip

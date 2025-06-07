@@ -5,6 +5,13 @@ depends_on:
   - test
   - build-amd64
 
+when:
+  event:
+    - push
+  branch:
+    - develop
+    - stable
+
 variables:
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
   - &on-release
@@ -44,7 +51,6 @@ variables:
 
 steps:
   docs:
-    <<: *on-point-release
     environment:
       CI: "true"
       SCW_ACCESS_KEY:
