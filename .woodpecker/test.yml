@@ -1,16 +1,15 @@
 labels:
   platform: linux/amd64
 
-depends_on:
-  - lint
-
 matrix:
   # test the lowest and highest versions
   include:
     - ELIXIR_VERSION: 1.14
       OTP_VERSION: 25
+      LINT: NO
     - ELIXIR_VERSION: 1.18
       OTP_VERSION: 27
+      LINT: YES
 
 variables:
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
@@ -70,11 +69,13 @@ steps:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       DB_HOST: postgres
+      LINT: ${LINT}
     commands:
       - mix local.hex --force
       - mix local.rebar --force
       - mix deps.get
       - mix compile
+      - test "${LINT}" = "NO" || mix format --check-formatted
       - mix ecto.drop -f -q
       - mix ecto.create
       - mix ecto.migrate
