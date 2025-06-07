@@ -6,12 +6,6 @@ depends_on:
 
 matrix:
   # test the lowest and highest versions
-  ELIXIR_VERSION:
-    - 1.14
-    - 1.18
-  OTP_VERSION:
-    - 25
-    - 27
   include:
     - ELIXIR_VERSION: 1.14
       OTP_VERSION: 25
