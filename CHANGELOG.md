@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - ActivityPub delivery attempts are spaced out more giving up after 3h instead of ~20min before
 - inboxes now fake a succcess reply on incoming Delete documents whose signing key is unknown but gone;
   this prevents older Mastodon from repeatedly trying to deliver Deletes of actors we never knew anyway
+- The config option `config :pleroma, :http, :pool_max_idle_time` was removed; it never actually
+  did anything and was redundant with `config :pleroma, :http, :pool_timeout` which actually works.
 
 ## 2025.03
 

@@ -6,7 +6,7 @@ defmodule Pleroma.HTTP.AdapterHelper do
   @moduledoc """
   Configure Tesla.Client with default and customized adapter options.
   """
-  @defaults [name: MyFinch, pool_timeout: 5_000, receive_timeout: 5_000]
+  @defaults [name: MyFinch, pool_timeout: 60_000, receive_timeout: 15_000]
 
   @type proxy_type() :: :socks4 | :socks5
   @type host() :: charlist() | :inet.ip_address()
