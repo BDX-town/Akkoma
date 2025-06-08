@@ -163,19 +163,27 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     assert conn.assigns.signature_user == nil
   end
 
-  test "fails on rejected keys", %{user: user} do
-    conn =
-      build_conn(:post, "/inbox", %{"type" => "Note"})
-      |> put_format("activity+json")
-      |> assign(:rejected_key_id, true)
-      |> put_req_header(
-        "signature",
-        "keyId=\"#{user.signing_key.key_id}\""
-      )
-      |> HTTPSignaturePlug.call(%{})
+  test "fakes accept for POST on rejected keys", %{user: user} do
+    build_conn(:post, "/inbox", %{"type" => "Note"})
+    |> put_format("activity+json")
+    |> assign(:rejected_key_id, true)
+    |> put_req_header(
+      "signature",
+      "keyId=\"#{user.signing_key.key_id}\""
+    )
+    |> HTTPSignaturePlug.call(%{})
+    |> response(202)
+  end
 
-    refute conn.halted
-    assert conn.assigns.valid_signature == false
-    assert conn.assigns.signature_user == nil
+  test "fakes not found for GET on rejected keys", %{user: user} do
+    build_conn(:get, "/doesntmattter", %{"user" => user.ap_id})
+    |> put_format("activity+json")
+    |> assign(:rejected_key_id, true)
+    |> put_req_header(
+      "signature",
+      "keyId=\"#{user.signing_key.key_id}\""
+    )
+    |> HTTPSignaturePlug.call(%{})
+    |> response(404)
   end
 end
