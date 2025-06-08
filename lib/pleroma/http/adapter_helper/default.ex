@@ -10,7 +10,7 @@ defmodule Pleroma.HTTP.AdapterHelper.Default do
   @spec options(keyword(), URI.t()) :: keyword()
   def options(opts, _uri) do
     proxy = Pleroma.Config.get([:http, :proxy_url])
-    pool_timeout = Pleroma.Config.get([:http, :pool_timeout], 5000)
+    pool_timeout = Pleroma.Config.get([:http, :pool_timeout], 60_000)
     receive_timeout = Pleroma.Config.get([:http, :receive_timeout], 15_000)
 
     opts

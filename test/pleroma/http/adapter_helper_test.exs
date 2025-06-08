@@ -50,7 +50,7 @@ defmodule Pleroma.HTTP.AdapterHelperTest do
   describe "timeout settings" do
     test "should default to 5000/15000" do
       options = AdapterHelper.options(%URI{host: ~c"somewhere"})
-      assert options[:pool_timeout] == 5000
+      assert options[:pool_timeout] == 60_000
       assert options[:receive_timeout] == 15_000
     end
 
