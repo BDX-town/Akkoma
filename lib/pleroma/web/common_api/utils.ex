@@ -73,18 +73,29 @@ defmodule Pleroma.Web.CommonAPI.Utils do
     )
   end
 
-  def get_to_and_cc_for_visibility(visibility, follower_collection, parent_actor, mentions)
-      when visibility in ["public", "local"] do
-    scope_addr =
-      case visibility do
-        "public" -> Pleroma.Constants.as_public()
-        "local" -> Utils.as_local_public()
-      end
+  def get_to_and_cc_for_visibility("public", follower_collection, parent_actor, mentions) do
+    scope_addr = Pleroma.Constants.as_public()
 
     to =
       if parent_actor,
         do: Enum.uniq([parent_actor, scope_addr | mentions]),
         else: [scope_addr | mentions]
+
+    {to, [follower_collection]}
+  end
+
+  def get_to_and_cc_for_visibility("local", follower_collection, parent_actor, mentions) do
+    recipients =
+      if parent_actor,
+        do: Enum.uniq([parent_actor | mentions]),
+        else: mentions
+
+    to = [
+      Utils.as_local_public()
+      | Enum.filter(recipients, fn addr ->
+          String.starts_with?(addr, Pleroma.Web.Endpoint.url() <> "/")
+        end)
+    ]
 
     {to, [follower_collection]}
   end
