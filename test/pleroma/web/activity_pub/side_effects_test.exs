@@ -684,13 +684,15 @@ defmodule Pleroma.Web.ActivityPub.SideEffectsTest do
       {:ok, post} = CommonAPI.post(poster, %{status: "hey"})
       {:ok, private_post} = CommonAPI.post(poster, %{status: "hey", visibility: "private"})
 
-      {:ok, announce_data, _meta} = Builder.announce(user, post.object, public: true)
+      {:ok, announce_data, _meta} = Builder.announce(user, post.object, visibility: "public")
 
       {:ok, private_announce_data, _meta} =
-        Builder.announce(user, private_post.object, public: false)
+        Builder.announce(user, private_post.object, visibility: "private")
 
       {:ok, relay_announce_data, _meta} =
-        Builder.announce(Pleroma.Web.ActivityPub.Relay.get_actor(), post.object, public: true)
+        Builder.announce(Pleroma.Web.ActivityPub.Relay.get_actor(), post.object,
+          visibility: "public"
+        )
 
       {:ok, announce, _meta} = ActivityPub.persist(announce_data, local: true)
       {:ok, private_announce, _meta} = ActivityPub.persist(private_announce_data, local: true)
