@@ -95,6 +95,20 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     end
   end
 
+  defp maybe_halt(conn, {:reject, _}) do
+    cond do
+      conn.method == "POST" ->
+        conn
+        |> resp(202, "Accepted")
+        |> halt()
+
+      true ->
+        conn
+        |> resp(404, "Not found")
+        |> halt()
+    end
+  end
+
   defp maybe_halt(conn, _), do: conn
 
   defp assign_valid_signature(%{assigns: %{valid_signature: true}} = conn, _),
