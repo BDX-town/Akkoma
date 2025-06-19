@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### REMOVED
+- Dropped `accepts_chat_messages` column from users table in database;
+  it has been unused for almost 3 years
+
 ### Added
 - We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
 - Prometheus stats now exposes failed ActivityPub deliveries
