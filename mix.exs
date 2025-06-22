@@ -8,7 +8,6 @@ defmodule Pleroma.Mixfile do
       elixir: "~> 1.14.1 or ~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
-      elixirc_options: [warnings_as_errors: warnings_as_errors()],
       xref: [exclude: [:eldap]],
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -89,8 +88,6 @@ defmodule Pleroma.Mixfile do
   defp elixirc_paths(:benchmark), do: ["lib", "benchmarks", "priv/scrubbers"]
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
-
-  defp warnings_as_errors, do: System.get_env("CI") == "true"
 
   # Specifies OAuth dependencies.
   defp oauth_deps do
@@ -235,6 +232,13 @@ defmodule Pleroma.Mixfile do
       copyright: &add_copyright/1,
       "copyright.bump": &bump_copyright/1
     ]
+    |> then(fn a ->
+      if System.get_env("CI") == "true" do
+        [{:compile, "compile --warnings-as-errors"} | a]
+      else
+        a
+      end
+    end)
   end
 
   # Builds a version string made of:
