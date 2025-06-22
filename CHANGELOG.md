@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### REMOVED
+- Dropped `accepts_chat_messages` column from users table in database;
+  it has been unused for almost 3 years
+
 ### Added
 - We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
 - Prometheus stats now exposes failed ActivityPub deliveries
@@ -16,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - timestamps of incoming HTTP signatures are now verified.
   By default up to two hour old signatures and a maximal clock skew
   of 40 min for future timestamps or explicit expiry deadlines are accepted
+- Added `short_description` field to `api/v1/instance` for Mastodon compatibility; the corresponding
+  new setting `:pleroma, :instance, :short_description` is also preferred for nodeinfo use
+- Note AP objects now expose full `replies` collections and those collections can be accessed on their own;
+  previously only self-replies were inlined as an anonymous collection into the Note object
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -27,17 +35,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - fix network-path references not being handled by media proxy
 - federation with bridgy now works
 - remote signing keys are no longer refreshed multiple times per incoming request
+- fix digest emails never being sent and clogging the job queue even if not enabled
+- `api/v1/instance`’s `uri` field now correctly shows the bare WebFinger domain
+- fixed bug leading to `content` and thw `contentMap` entry of the primary language to sometimes diverge
+- reloading emoji with a broken `pack.json` file being on disk no longer crashes the whole server
+- fixed blocked servers being able to access local objects when authorized fetch isn’t enabled
+  even when the remote server identifies itselfs
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
 - `cleanup_attachments` is now enabled by default
 - shared inboxes are now generally preferred over personal inboxes, cutting down on duplicate publishing churn
 - instance actors are now really of type `Service`
-- ActivityPub delivery attempts are spaced out more giving up after 3h instead of ~20min before
+- ActivityPub delivery attempts are spaced out more and increased by one
+  now giving up after 24h instead of ~20min by default before
 - inboxes now fake a succcess reply on incoming Delete documents whose signing key is unknown but gone;
   this prevents older Mastodon from repeatedly trying to deliver Deletes of actors we never knew anyway
 - The config option `config :pleroma, :http, :pool_max_idle_time` was removed; it never actually
   did anything and was redundant with `config :pleroma, :http, :pool_timeout` which actually works.
+- repeated attempt to process incoming ActivityPub objects are spaced out more, allowing unreachable remotes
+  more time to come back up when e.g. processing repeats of a post not yet locally known
+- `/api/v1/statuses/:id/reblog` now honours all possible visibilities except `list` and `conversation`
+  instead of mapping them down to a boolean private/public
+
 
 ## 2025.03
 

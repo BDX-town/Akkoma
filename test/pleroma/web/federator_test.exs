@@ -135,8 +135,8 @@ defmodule Pleroma.Web.FederatorTest do
       assert {:cancel, :already_present} = ObanHelpers.perform(job)
     end
 
-    test "properly processes objects with the htmlMfm attribute true" do
-      params = %{
+    defp mfm_activity(object_overrides \\ %{}) do
+      %{
         "@context" => "https://www.w3.org/ns/activitystreams",
         "actor" => "http://mastodon.example.org/users/admin",
         "type" => "Create",
@@ -145,17 +145,20 @@ defmodule Pleroma.Web.FederatorTest do
           "type" => "Note",
           "content" => "<p this-should-be-scrubbed-away>this is the original content</p>",
           "source" => %{
-            "content" =>
-              "this source content is irrelevant because the object content should be kept",
+            "content" => "this is the source content",
             "mediaType" => "text/x.misskeymarkdown"
           },
-          "htmlMfm" => true,
           "id" => "http://mastodon.example.org/users/admin/objects/1",
           "attributedTo" => "http://mastodon.example.org/users/admin",
           "to" => ["https://www.w3.org/ns/activitystreams#Public"]
         },
         "to" => ["https://www.w3.org/ns/activitystreams#Public"]
       }
+      |> Map.update!("object", fn obj -> Map.merge(obj, object_overrides) end)
+    end
+
+    test "properly processes objects with the htmlMfm attribute true" do
+      params = mfm_activity(%{"htmlMfm" => true})
 
       {:ok, job} = Federator.incoming_ap_doc(params)
       {:ok, %Pleroma.Activity{data: %{"object" => object_ap_id}}} = ObanHelpers.perform(job)
@@ -165,30 +168,12 @@ defmodule Pleroma.Web.FederatorTest do
 
       assert html_mfm == true
       refute content =~ "this-should-be-scrubbed-away"
-      refute content =~ "source content is irrelevant"
+      refute content =~ "this is the source content"
       assert content =~ "this is the original content"
     end
 
     test "properly processes objects with the htmlMfm attribute false" do
-      params = %{
-        "@context" => "https://www.w3.org/ns/activitystreams",
-        "actor" => "http://mastodon.example.org/users/admin",
-        "type" => "Create",
-        "id" => "http://mastodon.example.org/users/admin/activities/1",
-        "object" => %{
-          "type" => "Note",
-          "content" => "<p this-should-be-scrubbed-away>this is the original content</p>",
-          "source" => %{
-            "content" => "<p this-should-be-scrubbed-away>$[spin the source content is used]</p>",
-            "mediaType" => "text/x.misskeymarkdown"
-          },
-          "htmlMfm" => false,
-          "id" => "http://mastodon.example.org/users/admin/objects/1",
-          "attributedTo" => "http://mastodon.example.org/users/admin",
-          "to" => ["https://www.w3.org/ns/activitystreams#Public"]
-        },
-        "to" => ["https://www.w3.org/ns/activitystreams#Public"]
-      }
+      params = mfm_activity(%{"htmlMfm" => false})
 
       {:ok, job} = Federator.incoming_ap_doc(params)
       {:ok, %Pleroma.Activity{data: %{"object" => object_ap_id}}} = ObanHelpers.perform(job)
@@ -198,29 +183,12 @@ defmodule Pleroma.Web.FederatorTest do
 
       assert html_mfm == false
       refute content =~ "this-should-be-scrubbed-away"
-      assert content =~ "the source content is used"
+      assert content =~ "this is the source content"
       refute content =~ "this is the original content"
     end
 
     test "properly processes objects with the htmlMfm attribute not set" do
-      params = %{
-        "@context" => "https://www.w3.org/ns/activitystreams",
-        "actor" => "http://mastodon.example.org/users/admin",
-        "type" => "Create",
-        "id" => "http://mastodon.example.org/users/admin/activities/1",
-        "object" => %{
-          "type" => "Note",
-          "content" => "<p this-should-be-scrubbed-away>this is the original content</p>",
-          "source" => %{
-            "content" => "<p this-should-be-scrubbed-away>$[spin the source content is used]</p>",
-            "mediaType" => "text/x.misskeymarkdown"
-          },
-          "id" => "http://mastodon.example.org/users/admin/objects/1",
-          "attributedTo" => "http://mastodon.example.org/users/admin",
-          "to" => ["https://www.w3.org/ns/activitystreams#Public"]
-        },
-        "to" => ["https://www.w3.org/ns/activitystreams#Public"]
-      }
+      params = mfm_activity()
 
       {:ok, job} = Federator.incoming_ap_doc(params)
       {:ok, %Pleroma.Activity{data: %{"object" => object_ap_id}}} = ObanHelpers.perform(job)
@@ -228,9 +196,9 @@ defmodule Pleroma.Web.FederatorTest do
       %Pleroma.Object{data: %{"content" => content} = data} =
         Pleroma.Object.get_by_ap_id(object_ap_id)
 
-      assert Map.get(data, "htmlMfm") == nil
+      refute Map.has_key?(data, "htmlMfm")
       refute content =~ "this-should-be-scrubbed-away"
-      assert content =~ "the source content is used"
+      assert content =~ "this is the source content"
       refute content =~ "this is the original content"
     end
 
