@@ -534,6 +534,34 @@ defmodule Pleroma.Web.CommonAPITest do
       assert activity.data["listMessage"] == list.ap_id
     end
 
+    test "it adds the htmlMFM term to MFM posts and properly processes it" do
+      user = insert(:user)
+
+      assert {:ok,
+              %Pleroma.Activity{
+                object: %Pleroma.Object{
+                  data: %{
+                    "content" => content,
+                    "source" => %{
+                      "content" => source_content,
+                      "mediaType" => "text/x.misskeymarkdown"
+                    },
+                    "htmlMfm" => html_mfm
+                  }
+                }
+              }} =
+               CommonAPI.post(user, %{
+                 status: "<p class='scrub-this'>$[spin 13:37]</p>",
+                 content_type: "text/x.misskeymarkdown"
+               })
+
+      assert html_mfm == true
+      assert content =~ "mfm-spin"
+      assert content =~ "13:37"
+      refute content =~ "scrub-this"
+      assert source_content == "<p class='scrub-this'>$[spin 13:37]</p>"
+    end
+
     test "it returns error when status is empty and no attachments" do
       user = insert(:user)
 

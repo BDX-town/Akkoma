@@ -191,6 +191,31 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.ArticleNotePageValidatorTest 
     end
   end
 
+  test "an MFM status with htmlMfm should not have its content re-parsed" do
+    insert(:user, %{ap_id: "https://misskey.local.live/users/92hzkskwgy"})
+
+    note =
+      "test/fixtures/misskey/mfm_x_format.json"
+      |> File.read!()
+      |> Jason.decode!()
+      |> Map.put("htmlMfm", true)
+      |> Map.put("content", "do not re-parse")
+
+    changes = ArticleNotePageValidator.cast_and_validate(note)
+
+    %{
+      valid?: true,
+      changes: %{
+        content: content,
+        source: %{
+          "mediaType" => "text/x.misskeymarkdown"
+        }
+      }
+    } = changes
+
+    assert content == "do not re-parse"
+  end
+
   test "a Note without replies/first/items validates" do
     insert(:user, ap_id: "https://mastodon.social/users/emelie")
 

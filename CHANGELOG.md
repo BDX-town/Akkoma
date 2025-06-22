@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Added
+- We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
 - Prometheus stats now exposes failed ActivityPub deliveries
   which failed all attempts and the failure reason
 - status and user HTML pages now provide ActivityPub alternate links

@@ -144,7 +144,8 @@ defmodule Pleroma.Web.ActivityPub.UtilsTest do
                "https://www.w3.org/ns/activitystreams",
                "http://localhost:4001/schemas/litepub-0.1.jsonld",
                %{
-                 "@language" => "und"
+                 "@language" => "und",
+                 "htmlMfm" => "https://w3id.org/fep/c16b#htmlMfm"
                }
              ]
            }
