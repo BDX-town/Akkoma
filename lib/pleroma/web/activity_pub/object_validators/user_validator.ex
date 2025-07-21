@@ -14,6 +14,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   @behaviour Pleroma.Web.ActivityPub.ObjectValidator.Validating
 
   alias Pleroma.Object.Containment
+  alias Pleroma.Web.ActivityPub.Utils
 
   require Pleroma.Constants
 
@@ -62,6 +63,7 @@ defmodule Pleroma.Web.ActivityPub.ObjectValidators.UserValidator do
   defp validate_inbox(_), do: {:error, "No inbox"}
 
   defp check_field_value(%{"id" => id} = _data, value) do
+    value = Utils.get_ap_id(value)
     Containment.same_origin(id, value)
   end
 

@@ -1608,8 +1608,11 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     invisible = data["invisible"] || false
     actor_type = data["type"] || "Person"
 
-    featured_address = data["featured"]
-    {:ok, pinned_objects} = fetch_and_prepare_featured_from_ap_id(featured_address)
+    {featured_address, pinned_objects} =
+      case process_featured_collection(data["featured"]) do
+        {:ok, featured_address, pinned_objects} -> {featured_address, pinned_objects}
+        _ -> {nil, %{}}
+      end
 
     # first, check that the owner is correct
     signing_key =
@@ -1808,57 +1811,35 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
     end
   end
 
-  def pin_data_from_featured_collection(%{
-        "type" => "OrderedCollection",
-        "first" => first
-      }) do
-    with {:ok, page} <- Fetcher.fetch_and_contain_remote_object_from_id(first) do
-      page
-      |> Map.get("orderedItems")
-      |> Map.new(fn %{"id" => object_ap_id} -> {object_ap_id, NaiveDateTime.utc_now()} end)
-    else
-      e ->
-        Logger.error("Could not decode featured collection at fetch #{first}, #{inspect(e)}")
-        %{}
-    end
-  end
+  def process_featured_collection(nil), do: {:ok, nil, %{}}
+  def process_featured_collection(""), do: {:ok, nil, %{}}
 
-  def pin_data_from_featured_collection(
-        %{
-          "type" => type
-        } = collection
-      )
-      when type in ["OrderedCollection", "Collection"] do
-    with {:ok, objects} <- Collections.Fetcher.fetch_collection(collection) do
-      # Items can either be a map _or_ a string
-      objects
-      |> Map.new(fn
-        ap_id when is_binary(ap_id) -> {ap_id, NaiveDateTime.utc_now()}
-        %{"id" => object_ap_id} -> {object_ap_id, NaiveDateTime.utc_now()}
-      end)
-    else
-      e ->
-        Logger.warning("Failed to fetch featured collection #{collection}, #{inspect(e)}")
-        %{}
-    end
-  end
+  def process_featured_collection(featured_collection) do
+    featured_address =
+      case get_ap_id(featured_collection) do
+        id when is_binary(id) -> id
+        _ -> nil
+      end
 
-  def pin_data_from_featured_collection(obj) do
-    Logger.error("Could not parse featured collection #{inspect(obj)}")
-    %{}
-  end
+    # TODO: allow passing item/page limit as function opt and use here
+    case Collections.Fetcher.fetch_collection(featured_collection) do
+      {:ok, items} ->
+        now = NaiveDateTime.utc_now()
+        dated_obj_ids = Map.new(items, fn obj -> {get_ap_id(obj), now} end)
+        {:ok, featured_address, dated_obj_ids}
 
-  def fetch_and_prepare_featured_from_ap_id(nil) do
-    {:ok, %{}}
-  end
+      error ->
+        Logger.error(
+          "Could not decode featured collection at fetch #{inspect(featured_collection)}: #{inspect(error)}"
+        )
 
-  def fetch_and_prepare_featured_from_ap_id(ap_id) do
-    with {:ok, data} <- Fetcher.fetch_and_contain_remote_object_from_id(ap_id) do
-      {:ok, pin_data_from_featured_collection(data)}
-    else
-      e ->
-        Logger.error("Could not decode featured collection at fetch #{ap_id}, #{inspect(e)}")
-        {:ok, %{}}
+        error =
+          case error do
+            {:error, e} -> e
+            e -> e
+          end
+
+        {:error, error}
     end
   end
 
