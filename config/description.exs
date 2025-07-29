@@ -298,7 +298,7 @@ config :pleroma, :config_description, [
         key: :ssl,
         label: "Use SSL",
         type: :boolean,
-        description: "Use Implicit SSL/TLS. e.g. port 465"
+        description: "Use Implicit SSL/TLS. e.g. port 465; default: true"
       },
       %{
         group: {:subgroup, Swoosh.Adapters.SMTP},
