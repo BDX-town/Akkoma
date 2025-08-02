@@ -128,6 +128,26 @@ defmodule Pleroma.Web.CommonAPITest do
       assert {:ok, :no_activity} == CommonAPI.unblock(blocker, blocked)
       refute User.blocks?(blocker, blocked)
     end
+
+    test "it unblocks and does not federate if outgoing blocks are disabled" do
+      clear_config([:instance, :federating], true)
+      clear_config([:activitypub, :outgoing_blocks], false)
+
+      blocked = insert(:user)
+      blocker = insert(:user)
+
+      with_mock Pleroma.Web.Federator,
+        publish: fn _ -> nil end do
+        assert {:ok, block} = CommonAPI.block(blocker, blocked)
+        assert block.local
+        assert User.blocks?(blocker, blocked)
+
+        assert {:ok, unblock} = CommonAPI.unblock(blocker, blocked)
+        assert unblock.local
+        refute User.blocks?(blocker, blocked)
+        assert_not_called(Pleroma.Web.Federator.publish(:_))
+      end
+    end
   end
 
   describe "deletion" do
