@@ -517,6 +517,33 @@ defmodule Mix.Tasks.Pleroma.Database do
     |> Stream.run()
   end
 
+  def run(["resync_inlined_caches" | args]) do
+    {options, [], []} =
+      OptionParser.parse(
+        args,
+        strict: [
+          replies_count: :boolean,
+          announcements: :boolean,
+          likes: :boolean
+          # TODO: reactions (emoji reacts)
+        ]
+      )
+
+    start_pleroma()
+
+    if Keyword.get(options, :replies_count, true) do
+      resync_replies_count()
+    end
+
+    if Keyword.get(options, :announcements, true) do
+      resync_inlined_array("Announce", "announcement")
+    end
+
+    if Keyword.get(options, :likes, true) do
+      resync_inlined_array("Like", "like")
+    end
+  end
+
   def run(["clean_inlined_replies"]) do
     # The inlined replies array is not used after the initial processing
     # when first receiving the object and only wastes space
@@ -617,5 +644,79 @@ defmodule Mix.Tasks.Pleroma.Database do
 
       shell_info(inspect(result))
     end
+  end
+
+  defp resync_replies_count() do
+    public_str = Pleroma.Constants.as_public()
+
+    ref =
+      Pleroma.Object
+      |> select([o], %{apid: fragment("?->>'inReplyTo'", o.data), cnt: count()})
+      |> where(
+        [o],
+        fragment("?->>'type' <> 'Answer'", o.data) and
+          fragment("?->>'inReplyTo' IS NOT NULL", o.data) and
+          (fragment("?->'to' @> ?::jsonb", o.data, ^public_str) or
+             fragment("?->'cc' @> ?::jsonb", o.data, ^public_str))
+      )
+      |> group_by([o], fragment("?->>'inReplyTo'", o.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("ref", as: ^ref)
+      |> join(:inner, [o], r in "ref", on: fragment("?->>'id'", o.data) == r.apid)
+      |> where([o, r], fragment("(?->>'repliesCount')::bigint <> ?", o.data, r.cnt))
+      |> update([o, r],
+        set: [data: fragment("jsonb_set(?, '{repliesCount}', to_jsonb(?))", o.data, r.cnt)]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed reply counter for #{update_cnt} objects.")
+  end
+
+  defp resync_inlined_array(activity_type, basename) do
+    array_name = basename <> "s"
+    counter_name = basename <> "_count"
+
+    ref =
+      Pleroma.Activity
+      |> select([a], %{
+        apid: fragment("?->>'object'", a.data),
+        correct: fragment("to_jsonb(ARRAY_AGG(?->>'actor'))", a.data)
+      })
+      |> where(
+        [a],
+        fragment("?->>'type' = ?", a.data, ^activity_type) and
+          fragment("?->>'id' IS NOT NULL", a.data) and
+          fragment("?->>'actor' IS NOT NULL", a.data)
+      )
+      |> group_by([a], fragment("?->>'object'", a.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("ref", as: ^ref)
+      |> join(:inner, [o], r in "ref", on: fragment("?->>'id'", o.data) == r.apid)
+      |> where(
+        [o, r],
+        fragment("?->>'id' = ?", o.data, r.apid) and
+          not (fragment("? @> (?->?)", r.correct, o.data, ^array_name) and
+                 fragment("? <@ (?->?)", r.correct, o.data, ^array_name))
+      )
+      |> update([o, r],
+        set: [
+          data:
+            fragment(
+              "? || jsonb_build_object(?::text, jsonb_array_length(?::jsonb), ?::text, ?::jsonb)",
+              o.data,
+              ^counter_name,
+              r.correct,
+              ^array_name,
+              r.correct
+            )
+        ]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed inlined #{basename} array and counter for #{update_cnt} objects.")
   end
 end

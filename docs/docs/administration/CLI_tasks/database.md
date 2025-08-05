@@ -268,3 +268,30 @@ Delete them to free up a little bit of space.
     ```sh
     mix pleroma.database clean_inlined_replies
     ```
+
+## Resync data inlined into posts
+
+For legacy and performance reasons some data, e.g. relating to likes and boosts,
+is currently copied and inline references post objects. Occasionally this data
+may desync from the actual authorative activity and object data stored in the
+database which may lead to cosmetic but also functional issues.
+For example a particular user may appear unable to like a post.
+Run this task to detect and fix such desyncs.
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl database resync_inlined_caches
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.database resync_inlined_caches
+    ```
+
+### Options
+
+- `--no-announcements` - Skip fixing announcement counters and lists
+- `--no-likes` - Skip fixing like counters and lists
+- `--no-replies-count` - Skip fixing replies counters (purely cosmetic)
