@@ -251,3 +251,20 @@ to the current day.
     ```sh
     mix pleroma.database prune_task
     ```
+
+## Clean inlined replies lists
+
+Those inlined arrays of replies AP IDs are not used (anymore).
+Delete them to free up a little bit of space.
+
+=== "OTP"
+
+    ```sh
+    ./bin/pleroma_ctl database clean_inlined_replies
+    ```
+
+=== "From Source"
+
+    ```sh
+    mix pleroma.database clean_inlined_replies
+    ```

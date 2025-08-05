@@ -446,6 +446,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     |> Pleroma.Workers.Cron.PruneDatabaseWorker.perform()
   end
 
+  # fixes wrong type of inlined like references for objects predating the inlined array
   def run(["fix_likes_collections"]) do
     start_pleroma()
 
@@ -514,6 +515,29 @@ defmodule Mix.Tasks.Pleroma.Database do
       end)
     end)
     |> Stream.run()
+  end
+
+  def run(["clean_inlined_replies"]) do
+    # The inlined replies array is not used after the initial processing
+    # when first receiving the object and only wastes space
+    start_pleroma()
+
+    # We cannot check jsonb_typeof(array) and jsonb_array_length() in the same query
+    # since the checks do not short-circuit and NULL values will raise an error for the latter
+    has_replies =
+      Pleroma.Object
+      |> select([o], %{id: o.id})
+      |> where([o], fragment("jsonb_typeof(?->'replies') = 'array'", o.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("arrays", as: ^has_replies)
+      |> join(:inner, [o], a in "arrays", on: o.id == a.id)
+      |> where([o, _a], fragment("jsonb_array_length(?->'replies') > 0", o.data))
+      |> update(set: [data: fragment("jsonb_set(data, '{replies}', '[]'::jsonb)")])
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Emptied inlined replies lists from #{update_cnt} rows.")
   end
 
   def run(["set_text_search_config", tsconfig]) do
