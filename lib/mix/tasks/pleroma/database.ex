@@ -340,6 +340,7 @@ defmodule Mix.Tasks.Pleroma.Database do
           keep_non_public: :boolean,
           prune_orphaned_activities: :boolean,
           prune_pinned: :boolean,
+          fix_replies_count: :boolean,
           limit: :integer
         ]
       )
@@ -430,6 +431,11 @@ defmodule Mix.Tasks.Pleroma.Database do
       |> Repo.query!()
 
     Logger.info("Deleted #{del_hashtags} no longer used hashtags...")
+
+    if Keyword.get(options, :fix_replies_count, true) do
+      Logger.info("Fixing reply counters...")
+      resync_replies_count()
+    end
 
     if Keyword.get(options, :vacuum) do
       Logger.info("Starting vacuum...")
