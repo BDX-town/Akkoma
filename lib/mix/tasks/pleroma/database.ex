@@ -530,8 +530,8 @@ defmodule Mix.Tasks.Pleroma.Database do
         strict: [
           replies_count: :boolean,
           announcements: :boolean,
-          likes: :boolean
-          # TODO: reactions (emoji reacts)
+          likes: :boolean,
+          reactions: :boolean
         ]
       )
 
@@ -547,6 +547,10 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     if Keyword.get(options, :likes, true) do
       resync_inlined_array("Like", "like")
+    end
+
+    if Keyword.get(options, :reactions, true) do
+      resync_inlined_reactions()
     end
   end
 
@@ -724,5 +728,52 @@ defmodule Mix.Tasks.Pleroma.Database do
       |> Pleroma.Repo.update_all([], timeout: :infinity)
 
     Logger.info("Fixed inlined #{basename} array and counter for #{update_cnt} objects.")
+  end
+
+  defp resync_inlined_reactions() do
+    expanded_ref =
+      Pleroma.Activity
+      |> select([a], %{
+        apid: selected_as(fragment("?->>'object'", a.data), :apid),
+        emoji_name: selected_as(fragment("TRIM(?->>'content', ':')", a.data), :emoji_name),
+        actors: fragment("ARRAY_AGG(DISTINCT ?->>'actor')", a.data),
+        url: selected_as(fragment("?#>>'{tag,0,icon,url}'", a.data), :url)
+      })
+      |> where(
+        [a],
+        fragment("?->>'type' = 'EmojiReact'", a.data) and
+          fragment("?->>'actor' IS NOT NULL", a.data) and
+          fragment("TRIM(?->>'content', ':') IS NOT NULL", a.data)
+      )
+      |> group_by([_], [selected_as(:apid), selected_as(:emoji_name), selected_as(:url)])
+
+    ref =
+      from(e in subquery(expanded_ref))
+      |> select([e], %{
+        apid: e.apid,
+        correct:
+          fragment(
+            "jsonb_agg(DISTINCT ARRAY[to_jsonb(?), to_jsonb(?), to_jsonb(?)])",
+            e.emoji_name,
+            e.actors,
+            e.url
+          )
+      })
+      |> group_by([e], e.apid)
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> join(:inner, [o], r in subquery(ref), on: r.apid == fragment("?->>'id'", o.data))
+      |> where(
+        [o, r],
+        not (fragment("? @> (?->'reactions')", r.correct, o.data) and
+               fragment("? <@ (?->'reactions')", r.correct, o.data))
+      )
+      |> update([o, r],
+        set: [data: fragment("jsonb_set(?, '{reactions}', ?)", o.data, r.correct)]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed inlined emoji reactions for #{update_cnt} objects.")
   end
 end

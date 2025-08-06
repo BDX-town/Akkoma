@@ -298,4 +298,5 @@ Run this task to detect and fix such desyncs.
 
 - `--no-announcements` - Skip fixing announcement counters and lists
 - `--no-likes` - Skip fixing like counters and lists
+- `--no-reactions` - Skip fixing inlined emoji reaction data
 - `--no-replies-count` - Skip fixing replies counters (purely cosmetic)
