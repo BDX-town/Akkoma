@@ -266,6 +266,7 @@ defmodule Pleroma.Application do
     pool_size = Config.get([:http, :pool_size], 10)
     pool_timeout = Config.get([:http, :pool_timeout], 60_000)
     connection_timeout = Config.get([:http, :conn_max_idle_time], 10_000)
+    protocols = Config.get([:http, :protocols], [:http2, :http1])
 
     :public_key.cacerts_load()
 
@@ -277,6 +278,7 @@ defmodule Pleroma.Application do
       |> Pleroma.HTTP.AdapterHelper.ensure_ipv6()
       |> Pleroma.HTTP.AdapterHelper.add_default_conn_max_idle_time(connection_timeout)
       |> Pleroma.HTTP.AdapterHelper.add_default_pool_max_idle_time(pool_timeout)
+      |> Pleroma.HTTP.AdapterHelper.add_default_protocols(protocols)
       |> Keyword.put(:name, MyFinch)
 
     [{Finch, config}]
