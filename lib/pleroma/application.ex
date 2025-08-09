@@ -261,25 +261,11 @@ defmodule Pleroma.Application do
   end
 
   defp http_children do
-    proxy_url = Config.get([:http, :proxy_url])
-    proxy = Pleroma.HTTP.AdapterHelper.format_proxy(proxy_url)
-    pool_size = Config.get([:http, :pool_size], 10)
-    pool_timeout = Config.get([:http, :pool_timeout], 60_000)
-    connection_timeout = Config.get([:http, :conn_max_idle_time], 10_000)
-    protocols = Config.get([:http, :protocols], [:http2, :http1])
-
     :public_key.cacerts_load()
 
     config =
-      [:http, :adapter]
-      |> Config.get([])
-      |> Pleroma.HTTP.AdapterHelper.add_pool_size(pool_size)
-      |> Pleroma.HTTP.AdapterHelper.maybe_add_proxy_pool(proxy)
-      |> Pleroma.HTTP.AdapterHelper.ensure_ipv6()
-      |> Pleroma.HTTP.AdapterHelper.add_default_conn_max_idle_time(connection_timeout)
-      |> Pleroma.HTTP.AdapterHelper.add_default_pool_max_idle_time(pool_timeout)
-      |> Pleroma.HTTP.AdapterHelper.add_default_protocols(protocols)
-      |> Keyword.put(:name, MyFinch)
+      Config.get([:http, :adapter])
+      |> Pleroma.HTTP.AdapterHelper.options()
 
     [{Finch, config}]
   end

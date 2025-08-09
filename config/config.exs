@@ -184,6 +184,7 @@ config :pleroma, :http,
   pool_timeout: :timer.seconds(60),
   receive_timeout: :timer.seconds(15),
   proxy_url: nil,
+  protocols: [:http2, :http1],
   user_agent: :default,
   pool_size: 10,
   adapter: []
