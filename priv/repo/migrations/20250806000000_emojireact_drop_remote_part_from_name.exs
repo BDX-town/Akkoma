@@ -46,13 +46,26 @@ defmodule Pleroma.Repo.Migrations.EmojiReactDropRemotePartFromName do
   end
 
   def up() do
-    Pleroma.Activity
+    has_tag_array =
+      Pleroma.Activity
+      |> where(
+        [a],
+        fragment("?->>'type' = 'EmojiReact'", a.data) and
+          fragment("jsonb_typeof(?->'content') = 'string'", a.data) and
+          fragment("jsonb_typeof(?->'tag') = 'array'", a.data)
+      )
+
+    from(a in subquery(has_tag_array))
+    |> join(:cross_lateral, [a], fragment("jsonb_array_elements(?->'tag')", a.data))
     |> where(
-      [a],
-      fragment("?->>'type' = 'EmojiReact'", a.data) and
-        fragment("jsonb_typeof(?->'content') = 'string'", a.data) and
-        fragment("jsonb_typeof(?->'tag') = 'array'", a.data)
+      [a, t],
+      fragment("?->>'content' LIKE '%@%'", a.data) or
+        fragment("?->>'content' NOT LIKE ':%:'", a.data) or
+        fragment("jsonb_array_length(?->'tag') > 1", a.data) or
+        fragment("?->>'name' LIKE '%:%'", t) or
+        fragment("?->>'name' LIKE '%@%'", t)
     )
+    |> distinct(true)
     |> Pleroma.Repo.chunk_stream(600, :batches, timeout: :infinity)
     |> Stream.each(fn chunk ->
       Enum.reduce(chunk, {[], []}, fn %{id: id, data: data}, {ids, newdat} ->
