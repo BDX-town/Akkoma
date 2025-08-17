@@ -26,13 +26,19 @@ Replaces embedded objects with references to them in the `objects` table. Only n
 
 ## Prune old remote posts from the database
 
-This will prune remote posts older than 90 days (configurable with [`config :pleroma, :instance, remote_post_retention_days`](../../configuration/cheatsheet.md#instance)) from the database. Pruned posts may be refetched in some cases.
+This will selectively prune remote posts older than 90 days (configurable with [`config :pleroma, :instance, remote_post_retention_days`](../../configuration/cheatsheet.md#instance)) from the database. Pruned posts may be refetched in some cases.
 
 !!! note
-    The disk space will only be reclaimed after a proper vacuum. By default, Postgresql does this for you on a regular basis, but if your instance has been running for a long time and there are many rows deleted, it may be advantageous to use `VACUUM FULL` (e.g. by using the `--vacuum` option).
+    The disk space used up by deleted rows only becomes usable for new data after a vaccum.
+    By default, Postgresql does this for you on a regular basis, but if you delete a lot at once
+    it might be advantageous to also manually kick off a vacuum and statistics update using `VACUUM ANALYZE`.
+
+    **However**, the freed up space is never returned to the operating system unless you run
+    the much more heavy `VACUUM FULL` operation. This epensive but comprehensive vacuum mode
+    can be schedlued using the `--vacuum` option.
 
 !!! danger
-    You may run out of disk space during the execution of the task or vacuuming if you don't have about 1/3rds of the database size free. Vacuum causes a substantial increase in I/O traffic, and may lead to a degraded experience while it is running.
+    You may run out of disk space during the execution of the task or full vacuuming if you don't have about 1/3rds of the database size free. `VACUUM FULL` causes a substantial increase in I/O traffic, needs full table locks and thus renders the instance basically unusable while its running.
 
 === "OTP"
 
@@ -47,6 +53,27 @@ This will prune remote posts older than 90 days (configurable with [`config :ple
     ```
 
 ### Options
+
+The recommended starting point and configuration for small and medium-sized instances is:
+```sh
+prune_objects --keep-followed posts --keep-threads --keep-non-public
+# followed by
+prune_orphaned_activities --no-singles
+prune_orphaned_activities --no-arrays
+# and finally, using psql to manually run:
+#   VACUUM ANALYZE;
+#   REINDEX TABLE objects;
+#   REINDEX TABLE activities;
+```
+This almost certainly won’t delete stuff your interested in and
+makes sure the database is immediately utilising the newly freed up space.
+If you need more aggressive database size reductions or if this proves too costly to run for you
+you can drop restrictions and/or use the `--limit` option.
+In the opposite case if everything goes through quickly,
+you can combine the three CLI tasks into one for future runs using `--prune-orphaned-activities`
+and perhaps even using a full vacuum (which implies a reindex) using `--vacuum` too.
+
+Full details below:
 
 - `--keep-followed <mode>` - If set to `posts` all posts and boosts of users with local follows will be kept.  
     If set to `full` it will additionally keep any posts such users interacted with; this requires `--keep-threads`.  
