@@ -41,6 +41,13 @@ This is a list of clients that are known to work with Akkoma.
 - Platforms: Android
 - Features: MastoAPI, No Streaming, Emoji Reactions, Text Formatting, FE Stickers
 
+### Pachli
+- Homepage: <https://pachli.app/>
+- Source Code: <https://github.com/pachli/pachli-android>
+- Contact: [@pachli@mastodon.social](https://mastodon.social/users/pachli)
+- Platforms: Android
+- Features: MastoAPI, No Streaming
+
 ### Tusky
 
 !!! warning
