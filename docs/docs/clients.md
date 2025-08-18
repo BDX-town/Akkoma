@@ -42,11 +42,16 @@ This is a list of clients that are known to work with Akkoma.
 - Features: MastoAPI, No Streaming, Emoji Reactions, Text Formatting, FE Stickers
 
 ### Tusky
+
+!!! warning
+    Versions after v30.0 do not support Akkoma-compatible filters.
+    Consider using another client if you use any filters.
+
 - Homepage: <https://tuskyapp.github.io/>
 - Source Code: <https://github.com/tuskyapp/Tusky>
 - Contact: [@ConnyDuck@mastodon.social](https://mastodon.social/users/ConnyDuck)
 - Platforms: Android
-- Features: MastoAPI, No Streaming
+- Features: MastoAPI, No Streaming, **No Filters (beyond v30.0)**
 
 ### Subway Tooter
 - Source Code: <https://github.com/tateisu/SubwayTooter/>
