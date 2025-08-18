@@ -83,7 +83,8 @@ Full details below:
 - `--limit` - limits how many remote posts get pruned. This limit does **not** apply to any of the follow up jobs. If wanting to keep the database load in check it is thus advisable to run the standalone `prune_orphaned_activities` task with a limit afterwards instead of passing `--prune-orphaned-activities` to this task.
 - `--prune-orphaned-activities` - Also prune orphaned activities afterwards. Activities are things like Like, Create, Announce, Flag (aka reports)... They can significantly help reduce the database size.
 - `--prune-pinned` - Also prune pinned posts; keeping pinned posts does not suffice to protect their threads from pruning, even when using `--keep-threads`.  
-    Note, if using this option and pinned posts are pruned, they and their threads will just be refetched on the next user update. Therefore it usually doesn't bring much gain while incurring a heavy fetch load after pruning.
+    Note, if using this option and pinned posts are pruned, they and their threads will just be refetched on the next user update. Therefore it usually doesn't bring much gain while incurring a heavy fetch load after pruning.  
+    One exception to this is if you already need to use a relatively small `--limit` to keep downtime mangeable or even being able to run it without downtime. Retaining pinned posts adds a mostly constant overhead which will impact repeated runs with small limit much more than one full prune run.
 - `--vacuum` - Run `VACUUM FULL` after the objects are pruned. This should not be used on a regular basis, but is useful if your instance has been running for a long time before pruning.
 
 ## Prune orphaned activities from the database
