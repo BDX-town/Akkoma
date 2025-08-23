@@ -2,12 +2,11 @@ labels:
   platform: linux/amd64
 
 when:
-  event:
-    - pull_request
-    - event: push
-      branch: develop
-    - event: push
-      branch: stable
+  - event: pull_request
+  - event: push
+    branch:
+      - develop
+      - stable
 
 matrix:
   # test the lowest and highest versions
