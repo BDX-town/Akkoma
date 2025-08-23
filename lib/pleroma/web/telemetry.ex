@@ -98,16 +98,25 @@ defmodule Pleroma.Web.Telemetry do
     process_fail_reason(reason)
   end
 
-  defp collect_apdelivery_error(_, _) do
+  defp collect_apdelivery_error(state, res) do
+    Logger.info("Unknown AP delivery result: #{inspect(state)}, #{inspect(res)}")
     "cause_unknown"
   end
 
   defp process_fail_reason(error) do
     case error do
-      error when is_binary(error) -> error
-      error when is_atom(error) -> "#{error}"
-      %{status: code} when is_number(code) -> "http_#{code}"
-      _ -> "error_unknown"
+      error when is_binary(error) ->
+        error
+
+      error when is_atom(error) ->
+        "#{error}"
+
+      %{status: code} when is_number(code) ->
+        "http_#{code}"
+
+      _ ->
+        Logger.notice("Unusual AP delivery error mapped to 'unknown': #{inspect(error)}")
+        "error_unknown"
     end
   end
 
