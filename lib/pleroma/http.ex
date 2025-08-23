@@ -78,7 +78,7 @@ defmodule Pleroma.HTTP do
     request(client, request)
   rescue
     e ->
-      Logger.error("Failed to fetch #{url}: #{inspect(e)}")
+      Logger.error("Failed to fetch #{url}: #{Exception.format(:error, e, __STACKTRACE__)}")
       {:error, :fetch_error}
   end
 
