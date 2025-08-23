@@ -1193,7 +1193,7 @@ Each job has these settings:
 * `:max_running` - max concurrently running jobs
 * `:max_waiting` - max waiting jobs
 
-### Translation Settings
+## Translation Settings
 
 Settings to automatically translate statuses for end users. Currently supported
 translation services are DeepL and LibreTranslate. The supported command line tool is [Argos Translate](https://github.com/argosopentech/argos-translate).
@@ -1223,3 +1223,12 @@ Translations are available at `/api/v1/statuses/:id/translations/:language`, whe
 - `:command_argos_translate` - command for `argos-translate`. Can be the command if it's in your PATH, or the full path to the file (default: `argos-translate`).
 - `:command_argospm` - command for `argospm`. Can be the command if it's in your PATH, or the full path to the file (default: `argospm`).
 - `:strip_html` - Strip html from the post before translating it (default: `true`).
+
+## Oban Web
+
+The built-in Oban Web dashboard grants all administrators access to look at and modify the instance’s job queue.
+To enable or disable it the following setting can be set to `true` or `false` respectively:
+
+```
+config :oban_met, autostart: false
+```
