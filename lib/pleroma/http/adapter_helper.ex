@@ -37,7 +37,11 @@ defmodule Pleroma.HTTP.AdapterHelper do
           conn_opts: [
             # Do NOT add cacerts here as this will cause issues for plain HTTP connections!
             # (when we upgrade our deps to Mint >= 1.6.0 we can also explicitly enable "inet4: true")
-            transport_opts: [inet6: true]
+            transport_opts: [inet6: true],
+            # up to at least version 0.20.0, Finch leaves server_push enabled by default for HTTP2,
+            # but will actually raise an exception when receiving such a response. Tell servers we don't want it.
+            # see: https://github.com/sneako/finch/issues/325
+            client_settings: [enable_push: false]
           ]
         ]
       }
