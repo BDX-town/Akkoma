@@ -5,7 +5,7 @@ when:
   event:
     - pull_request
     - event: push
-+     branch: develop
+      branch: develop
     - event: push
       branch: stable
 
