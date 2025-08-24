@@ -2,7 +2,6 @@ labels:
   platform: linux/amd64
 
 depends_on:
-  - test
   - build-amd64
 
 when:

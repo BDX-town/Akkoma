@@ -3,10 +3,6 @@ labels:
 
 when:
   - event: pull_request
-  - event: push
-    branch:
-      - develop
-      - stable
 
 matrix:
   # test the lowest and highest versions
@@ -21,9 +17,6 @@ matrix:
 services:
   postgres:
     image: postgres:15
-    when:
-      event:
-        - pull_request
     environment:
       POSTGRES_DB: pleroma_test_${ELIXIR_VERSION}_${OTP_VERSION}
       POSTGRES_USER: postgres

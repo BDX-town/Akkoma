@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   new setting `:pleroma, :instance, :short_description` is also preferred for nodeinfo use
 - Note AP objects now expose full `replies` collections and those collections can be accessed on their own;
   previously only self-replies were inlined as an anonymous collection into the Note object
+- Added a reference Grafana dashboard and improved documentation for Prometheus metrics
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -37,10 +38,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - remote signing keys are no longer refreshed multiple times per incoming request
 - fix digest emails never being sent and clogging the job queue even if not enabled
 - `api/v1/instance`’s `uri` field now correctly shows the bare WebFinger domain
-- fixed bug leading to `content` and thw `contentMap` entry of the primary language to sometimes diverge
+- fixed bug leading to `content` and the `contentMap` entry of the primary language to sometimes diverge
 - reloading emoji with a broken `pack.json` file being on disk no longer crashes the whole server
 - fixed blocked servers being able to access local objects when authorized fetch isn’t enabled
   even when the remote server identifies itselfs
+- fixed handling of inlined "featured" collections
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
@@ -57,6 +59,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   more time to come back up when e.g. processing repeats of a post not yet locally known
 - `/api/v1/statuses/:id/reblog` now honours all possible visibilities except `list` and `conversation`
   instead of mapping them down to a boolean private/public
+- we no longer repeatedly try to deliver to explicitly deleted inboxes
+- outgoing requests may now use HTTP2 by default
 
 
 ## 2025.03
