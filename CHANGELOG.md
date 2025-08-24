@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Note AP objects now expose full `replies` collections and those collections can be accessed on their own;
   previously only self-replies were inlined as an anonymous collection into the Note object
 - Added a reference Grafana dashboard and improved documentation for Prometheus metrics
+- New mix task `clean_inlined_replies` to delete some unused data from objects
+- New mix task `resync_inlined_caches` to retroactively fix various issues with e.g. boosts, emoji reacts and likes
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -44,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   even when the remote server identifies itselfs
 - fixed handling of inlined "featured" collections
 - fixed user endpoint serving invalid ActivityPub for minimal, authfetch-fallback responses
+- remote emoji reacts from IceShrimp.NET instances are now handled consistently and always merged with identical other emoji reactions
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
