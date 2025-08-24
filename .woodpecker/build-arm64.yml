@@ -18,14 +18,6 @@ variables:
     SCW_DEFAULT_ORGANIZATION_ID:
       from_secret: SCW_DEFAULT_ORGANIZATION_ID
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
-  - &on-release
-    when:
-      event:
-        - push
-        - tag
-      branch:
-        - stable
-        - develop
   - &on-stable
     when:
       event:
@@ -33,10 +25,6 @@ variables:
         - tag
       branch:
         - stable
-  - &on-pr-open
-    when:
-      event:
-        - pull_request
 
   - &tag-build "export BUILD_TAG=$${CI_COMMIT_TAG:-\"$CI_COMMIT_BRANCH\"} && export PLEROMA_BUILD_BRANCH=$BUILD_TAG"
 
