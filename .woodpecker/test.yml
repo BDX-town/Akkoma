@@ -3,10 +3,6 @@ labels:
 
 when:
   - event: pull_request
-  - event: push
-    branch:
-      - develop
-      - stable
 
 matrix:
   # test the lowest and highest versions
