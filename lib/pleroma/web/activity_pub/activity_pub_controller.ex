@@ -62,7 +62,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   Render the user's AP data
   WARNING: we cannot actually check if the request has a fragment! so let's play defensively
   - IF we have a valid signature, serve full user
-  - IF we do not, and authorized_fetch_mode is enabled, serve the key only
+  - IF we do not, and authorized_fetch_mode is enabled, serve only the key and bare minimum info
   - OTHERWISE, serve the full actor (since we don't need to worry about the signature)
   """
   def user(%{assigns: %{valid_signature: true}} = conn, params) do
@@ -94,7 +94,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
       conn
       |> put_resp_content_type("application/activity+json")
       |> put_view(UserView)
-      |> render("keys.json", %{user: user})
+      |> render("stripped_user.json", %{user: user})
     else
       nil -> {:error, :not_found}
       %{local: false} -> {:error, :not_found}

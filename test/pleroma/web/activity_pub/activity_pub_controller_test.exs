@@ -133,6 +133,28 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert json_response(conn, 200) == UserView.render("user.json", %{user: user})
     end
 
+    test "it returns a minimal json representation of the user when autfetch is enabled but no signature",
+         %{
+           conn: conn
+         } do
+      clear_config([:activitypub, :authorized_fetch_mode], true)
+
+      user = insert(:user) |> with_signing_key()
+
+      conn =
+        conn
+        |> assign(:valid_signature, false)
+        |> put_req_header(
+          "accept",
+          "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""
+        )
+        |> get("/users/#{user.nickname}")
+
+      user = User.get_cached_by_id(user.id)
+
+      assert json_response(conn, 200) == UserView.render("stripped_user.json", %{user: user})
+    end
+
     test "it returns 404 for remote users", %{
       conn: conn
     } do

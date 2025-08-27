@@ -7,8 +7,31 @@ defmodule Pleroma.Web.ActivityPub.UserViewTest do
   import Pleroma.Factory
 
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.ObjectValidators.UserValidator
   alias Pleroma.Web.ActivityPub.UserView
   alias Pleroma.Web.CommonAPI
+
+  test "Renders a user such that we accept it ourselves" do
+    user =
+      insert(:user)
+      |> with_signing_key()
+
+    representation = UserView.render("user.json", %{user: user})
+    validation_res = UserValidator.validate(representation, [])
+
+    assert match?({:ok, _user, _meta}, validation_res)
+  end
+
+  test "Renders a minimal user such that we accept it ourselves" do
+    user =
+      insert(:user)
+      |> with_signing_key()
+
+    representation = UserView.render("stripped_user.json", %{user: user})
+    validation_res = UserValidator.validate(representation, [])
+
+    assert match?({:ok, _user, _meta}, validation_res)
+  end
 
   test "Renders a user, including the public key" do
     user =

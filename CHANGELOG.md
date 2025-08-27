@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - fixed blocked servers being able to access local objects when authorized fetch isn’t enabled
   even when the remote server identifies itselfs
 - fixed handling of inlined "featured" collections
+- fixed user endpoint serving invalid ActivityPub for minimal, authfetch-fallback responses
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"

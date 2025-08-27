@@ -113,7 +113,10 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     |> Map.merge(Utils.make_json_ld_header())
   end
 
-  def render("keys.json", %{user: user}) do
+  # For unauthenticated requests when authfetch is enabled.
+  # Still serve the key and the bare minimum of required fields
+  # to avoid being stuck in an infinite "cannot verify" loop with remotes.
+  def render("stripped_user.json", %{user: user}) do
     {:ok, public_key} = User.SigningKey.public_key_pem(user)
 
     %{
@@ -122,7 +125,14 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         "id" => User.SigningKey.key_id_of_local_user(user),
         "owner" => user.ap_id,
         "publicKeyPem" => public_key
-      }
+      },
+      # REQUIRED fields per AP spec
+      "inbox" => "#{user.ap_id}/inbox",
+      "outbox" => "#{user.ap_id}/outbox",
+      # allow type-based processing
+      "type" => user.actor_type,
+      # since Mastodon requires a WebFinger address for all users, this seems like a good idea
+      "preferredUsername" => user.nickname
     }
     |> Map.merge(Utils.make_json_ld_header())
   end
