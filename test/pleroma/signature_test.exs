@@ -8,7 +8,6 @@ defmodule Pleroma.SignatureTest do
 
   import Pleroma.Factory
   import Tesla.Mock
-  import Mock
 
   alias HTTPSignatures.HTTPKey
   alias Pleroma.Signature
@@ -135,19 +134,6 @@ defmodule Pleroma.SignatureTest do
         ),
         ~s|keyId="https://mastodon.social/users/lambadalambda#main-key",algorithm="rsa-sha256",headers="(request-target) content-length date digest host",signature="fhOT6IBThnCo6rv2Tv8BRXLV7LvVf/7wTX/bbPLtdq5A4GUqrmXUcY5p77jQ6NU9IRIVczeeStxQV6TrHqk/qPdqQOzDcB6cWsSfrB1gsTinBbAWdPzQYqUOTl+Minqn2RERAfPebKYr9QGa0sTODDHvze/UFPuL8a1lDO2VQE0lRCdg49Igr8pGl/CupUx8Fb874omqP0ba3M+siuKEwo02m9hHcbZUeLSN0ZVdvyTMttyqPM1BfwnFXkaQRAblLTyzt4Fv2+fTN+zPipSxJl1YIo1TsmwNq9klqImpjh8NHM3MJ5eZxTZ109S6Q910n1Lm46V/SqByDaYeg9g7Jw=="|
       )
-    end
-  end
-
-  describe "signed_date" do
-    test "it returns formatted current date" do
-      with_mock(NaiveDateTime, utc_now: fn -> ~N[2019-08-23 18:11:24.822233] end) do
-        assert Signature.signed_date() == "Fri, 23 Aug 2019 18:11:24 GMT"
-      end
-    end
-
-    test "it returns formatted date" do
-      assert Signature.signed_date(~N[2019-08-23 08:11:24.822233]) ==
-               "Fri, 23 Aug 2019 08:11:24 GMT"
     end
   end
 end

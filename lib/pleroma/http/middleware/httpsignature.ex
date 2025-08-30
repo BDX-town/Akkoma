@@ -55,7 +55,7 @@ defmodule Pleroma.HTTP.Middleware.HTTPSignature do
   # Second element are all headers to be used for signing, including already existing and pseudo headers.
   defp collect_headers_for_signature(env) do
     {request_target, host} = get_request_target_and_host(env)
-    date = Pleroma.Signature.signed_date()
+    date = http_date()
 
     # content-length is always automatically set later on
     # since they are needed to establish working connection.
@@ -112,5 +112,10 @@ defmodule Pleroma.HTTP.Middleware.HTTPSignature do
     else
       "#{host}:#{port}"
     end
+  end
+
+  defp http_date() do
+    now = NaiveDateTime.utc_now()
+    Timex.lformat!(now, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT", "en")
   end
 end

@@ -74,10 +74,4 @@ defmodule Pleroma.Signature do
       _ -> raise "Tried to sign with #{key.key_id} but it has no private key!"
     end
   end
-
-  def signed_date, do: signed_date(NaiveDateTime.utc_now())
-
-  def signed_date(%NaiveDateTime{} = date) do
-    Timex.lformat!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT", "en")
-  end
 end
