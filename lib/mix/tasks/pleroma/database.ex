@@ -340,6 +340,7 @@ defmodule Mix.Tasks.Pleroma.Database do
           keep_non_public: :boolean,
           prune_orphaned_activities: :boolean,
           prune_pinned: :boolean,
+          fix_replies_count: :boolean,
           limit: :integer
         ]
       )
@@ -431,6 +432,11 @@ defmodule Mix.Tasks.Pleroma.Database do
 
     Logger.info("Deleted #{del_hashtags} no longer used hashtags...")
 
+    if Keyword.get(options, :fix_replies_count, true) do
+      Logger.info("Fixing reply counters...")
+      resync_replies_count()
+    end
+
     if Keyword.get(options, :vacuum) do
       Logger.info("Starting vacuum...")
       Maintenance.vacuum("full")
@@ -446,6 +452,7 @@ defmodule Mix.Tasks.Pleroma.Database do
     |> Pleroma.Workers.Cron.PruneDatabaseWorker.perform()
   end
 
+  # fixes wrong type of inlined like references for objects predating the inlined array
   def run(["fix_likes_collections"]) do
     start_pleroma()
 
@@ -514,6 +521,60 @@ defmodule Mix.Tasks.Pleroma.Database do
       end)
     end)
     |> Stream.run()
+  end
+
+  def run(["resync_inlined_caches" | args]) do
+    {options, [], []} =
+      OptionParser.parse(
+        args,
+        strict: [
+          replies_count: :boolean,
+          announcements: :boolean,
+          likes: :boolean,
+          reactions: :boolean
+        ]
+      )
+
+    start_pleroma()
+
+    if Keyword.get(options, :replies_count, true) do
+      resync_replies_count()
+    end
+
+    if Keyword.get(options, :announcements, true) do
+      resync_inlined_array("Announce", "announcement")
+    end
+
+    if Keyword.get(options, :likes, true) do
+      resync_inlined_array("Like", "like")
+    end
+
+    if Keyword.get(options, :reactions, true) do
+      resync_inlined_reactions()
+    end
+  end
+
+  def run(["clean_inlined_replies"]) do
+    # The inlined replies array is not used after the initial processing
+    # when first receiving the object and only wastes space
+    start_pleroma()
+
+    # We cannot check jsonb_typeof(array) and jsonb_array_length() in the same query
+    # since the checks do not short-circuit and NULL values will raise an error for the latter
+    has_replies =
+      Pleroma.Object
+      |> select([o], %{id: o.id})
+      |> where([o], fragment("jsonb_typeof(?->'replies') = 'array'", o.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("arrays", as: ^has_replies)
+      |> join(:inner, [o], a in "arrays", on: o.id == a.id)
+      |> where([o, _a], fragment("jsonb_array_length(?->'replies') > 0", o.data))
+      |> update(set: [data: fragment("jsonb_set(data, '{replies}', '[]'::jsonb)")])
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Emptied inlined replies lists from #{update_cnt} rows.")
   end
 
   def run(["set_text_search_config", tsconfig]) do
@@ -593,5 +654,126 @@ defmodule Mix.Tasks.Pleroma.Database do
 
       shell_info(inspect(result))
     end
+  end
+
+  defp resync_replies_count() do
+    public_str = Pleroma.Constants.as_public()
+
+    ref =
+      Pleroma.Object
+      |> select([o], %{apid: fragment("?->>'inReplyTo'", o.data), cnt: count()})
+      |> where(
+        [o],
+        fragment("?->>'type' <> 'Answer'", o.data) and
+          fragment("?->>'inReplyTo' IS NOT NULL", o.data) and
+          (fragment("?->'to' @> ?::jsonb", o.data, ^public_str) or
+             fragment("?->'cc' @> ?::jsonb", o.data, ^public_str))
+      )
+      |> group_by([o], fragment("?->>'inReplyTo'", o.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("ref", as: ^ref)
+      |> join(:inner, [o], r in "ref", on: fragment("?->>'id'", o.data) == r.apid)
+      |> where([o, r], fragment("(?->>'repliesCount')::bigint <> ?", o.data, r.cnt))
+      |> update([o, r],
+        set: [data: fragment("jsonb_set(?, '{repliesCount}', to_jsonb(?))", o.data, r.cnt)]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed reply counter for #{update_cnt} objects.")
+  end
+
+  defp resync_inlined_array(activity_type, basename) do
+    array_name = basename <> "s"
+    counter_name = basename <> "_count"
+
+    ref =
+      Pleroma.Activity
+      |> select([a], %{
+        apid: fragment("?->>'object'", a.data),
+        correct: fragment("to_jsonb(ARRAY_AGG(?->>'actor'))", a.data)
+      })
+      |> where(
+        [a],
+        fragment("?->>'type' = ?", a.data, ^activity_type) and
+          fragment("?->>'id' IS NOT NULL", a.data) and
+          fragment("?->>'actor' IS NOT NULL", a.data)
+      )
+      |> group_by([a], fragment("?->>'object'", a.data))
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> with_cte("ref", as: ^ref)
+      |> join(:inner, [o], r in "ref", on: fragment("?->>'id'", o.data) == r.apid)
+      |> where(
+        [o, r],
+        fragment("?->>'id' = ?", o.data, r.apid) and
+          not (fragment("? @> (?->?)", r.correct, o.data, ^array_name) and
+                 fragment("? <@ (?->?)", r.correct, o.data, ^array_name))
+      )
+      |> update([o, r],
+        set: [
+          data:
+            fragment(
+              "? || jsonb_build_object(?::text, jsonb_array_length(?::jsonb), ?::text, ?::jsonb)",
+              o.data,
+              ^counter_name,
+              r.correct,
+              ^array_name,
+              r.correct
+            )
+        ]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed inlined #{basename} array and counter for #{update_cnt} objects.")
+  end
+
+  defp resync_inlined_reactions() do
+    expanded_ref =
+      Pleroma.Activity
+      |> select([a], %{
+        apid: selected_as(fragment("?->>'object'", a.data), :apid),
+        emoji_name: selected_as(fragment("TRIM(?->>'content', ':')", a.data), :emoji_name),
+        actors: fragment("ARRAY_AGG(DISTINCT ?->>'actor')", a.data),
+        url: selected_as(fragment("?#>>'{tag,0,icon,url}'", a.data), :url)
+      })
+      |> where(
+        [a],
+        fragment("?->>'type' = 'EmojiReact'", a.data) and
+          fragment("?->>'actor' IS NOT NULL", a.data) and
+          fragment("TRIM(?->>'content', ':') IS NOT NULL", a.data)
+      )
+      |> group_by([_], [selected_as(:apid), selected_as(:emoji_name), selected_as(:url)])
+
+    ref =
+      from(e in subquery(expanded_ref))
+      |> select([e], %{
+        apid: e.apid,
+        correct:
+          fragment(
+            "jsonb_agg(DISTINCT ARRAY[to_jsonb(?), to_jsonb(?), to_jsonb(?)])",
+            e.emoji_name,
+            e.actors,
+            e.url
+          )
+      })
+      |> group_by([e], e.apid)
+
+    {update_cnt, _} =
+      Pleroma.Object
+      |> join(:inner, [o], r in subquery(ref), on: r.apid == fragment("?->>'id'", o.data))
+      |> where(
+        [o, r],
+        not (fragment("? @> (?->'reactions')", r.correct, o.data) and
+               fragment("? <@ (?->'reactions')", r.correct, o.data))
+      )
+      |> update([o, r],
+        set: [data: fragment("jsonb_set(?, '{reactions}', ?)", o.data, r.correct)]
+      )
+      |> Pleroma.Repo.update_all([], timeout: :infinity)
+
+    Logger.info("Fixed inlined emoji reactions for #{update_cnt} objects.")
   end
 end
