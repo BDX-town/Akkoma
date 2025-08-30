@@ -51,34 +51,15 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
         %{"inbox" => inbox, "json" => json, "actor" => %User{} = actor, "id" => id} = params
       ) do
     Logger.debug("Federating #{id} to #{inbox}")
-    uri = %{path: path} = URI.parse(inbox)
-    digest = "SHA-256=" <> (:crypto.hash(:sha256, json) |> Base.encode64())
 
-    date = Pleroma.Signature.signed_date()
-
-    signature =
-      Pleroma.Signature.sign(
-        actor,
-        %{
-          "(request-target)" => "post #{path}",
-          "host" => signature_host(uri),
-          "content-length" => byte_size(json),
-          "digest" => digest,
-          "date" => date
-        },
-        has_body: true
-      )
+    signing_key = Pleroma.User.SigningKey.load_key(actor).signing_key
 
     with {:ok, %{status: code}} = result when code in 200..299 <-
            HTTP.post(
              inbox,
              json,
-             [
-               {"Content-Type", "application/activity+json"},
-               {"Date", date},
-               {"signature", signature},
-               {"digest", digest}
-             ]
+             [{"content-type", "application/activity+json"}],
+             httpsig: %{signing_key: signing_key}
            ) do
       if not Map.has_key?(params, "unreachable_since") || params["unreachable_since"] do
         Instances.set_reachable(inbox)
@@ -99,14 +80,6 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     |> Map.delete("actor_id")
     |> Map.put("actor", actor)
     |> publish_one()
-  end
-
-  defp signature_host(%URI{port: port, scheme: scheme, host: host}) do
-    if port == URI.default_port(scheme) do
-      host
-    else
-      "#{host}:#{port}"
-    end
   end
 
   defp blocked_instances do

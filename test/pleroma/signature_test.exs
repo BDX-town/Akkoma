@@ -130,7 +130,7 @@ defmodule Pleroma.SignatureTest do
 
       assert_signature_equal(
         Signature.sign(
-          user,
+          user.signing_key,
           headers
         ),
         ~s|keyId="https://mastodon.social/users/lambadalambda#main-key",algorithm="rsa-sha256",headers="(request-target) content-length date digest host",signature="fhOT6IBThnCo6rv2Tv8BRXLV7LvVf/7wTX/bbPLtdq5A4GUqrmXUcY5p77jQ6NU9IRIVczeeStxQV6TrHqk/qPdqQOzDcB6cWsSfrB1gsTinBbAWdPzQYqUOTl+Minqn2RERAfPebKYr9QGa0sTODDHvze/UFPuL8a1lDO2VQE0lRCdg49Igr8pGl/CupUx8Fb874omqP0ba3M+siuKEwo02m9hHcbZUeLSN0ZVdvyTMttyqPM1BfwnFXkaQRAblLTyzt4Fv2+fTN+zPipSxJl1YIo1TsmwNq9klqImpjh8NHM3MJ5eZxTZ109S6Q910n1Lm46V/SqByDaYeg9g7Jw=="|

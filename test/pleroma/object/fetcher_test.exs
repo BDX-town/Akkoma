@@ -478,7 +478,7 @@ defmodule Pleroma.Object.FetcherTest do
 
       Fetcher.fetch_object_from_id("http://mastodon.example.org/@admin/99541947525187367")
 
-      assert called(Pleroma.Signature.sign(:_, :_))
+      assert called(Pleroma.Signature.sign(:_, :_, :_))
     end
 
     test_with_mock "it doesn't sign fetches when not configured to do so",
@@ -489,7 +489,7 @@ defmodule Pleroma.Object.FetcherTest do
 
       Fetcher.fetch_object_from_id("http://mastodon.example.org/@admin/99541947525187367")
 
-      refute called(Pleroma.Signature.sign(:_, :_))
+      refute called(Pleroma.Signature.sign(:_, :_, :_))
     end
   end
 
