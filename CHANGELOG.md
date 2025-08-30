@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - fixed handling of inlined "featured" collections
 - fixed user endpoint serving invalid ActivityPub for minimal, authfetch-fallback responses
 - remote emoji reacts from IceShrimp.NET instances are now handled consistently and always merged with identical other emoji reactions
+- ActivityPub requests signatures are now renewed when following redirects making sure path and host actually match the final URL
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
