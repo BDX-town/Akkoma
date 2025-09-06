@@ -60,7 +60,7 @@ defmodule Pleroma.HTTP do
           {:ok, Env.t()} | {:error, any()}
   def request(method, url, body, headers, options) when is_binary(url) do
     uri = URI.parse(url)
-    adapter_opts = AdapterHelper.options(options || [])
+    adapter_opts = AdapterHelper.options(options[:adapter] || [])
 
     adapter_opts =
       if uri.scheme == :https do
@@ -71,6 +71,7 @@ defmodule Pleroma.HTTP do
 
     options = put_in(options[:adapter], adapter_opts)
     params = options[:params] || []
+    options = options |> Keyword.delete(:params)
     request = build_request(method, headers, options, url, body, params)
 
     client =

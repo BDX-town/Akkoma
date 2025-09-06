@@ -242,7 +242,7 @@ defmodule Pleroma.Instances.Instance do
            {:ok,
             Enum.find(links, &(&1["rel"] == "http://nodeinfo.diaspora.software/ns/schema/2.0"))},
          {:ok, %Tesla.Env{body: data}} <-
-           Pleroma.HTTP.get(href, [{"accept", "application/json"}], []),
+           Pleroma.HTTP.get(href, [{"accept", "application/json"}]),
          {:length, true} <- {:length, String.length(data) < 50_000},
          {:ok, nodeinfo} <- Jason.decode(data) do
       nodeinfo
@@ -270,7 +270,7 @@ defmodule Pleroma.Instances.Instance do
     with true <- Pleroma.Config.get([:instances_favicons, :enabled]),
          {_, true} <- {:reachable, reachable?(instance_uri.host)},
          {:ok, %Tesla.Env{body: html}} <-
-           Pleroma.HTTP.get(to_string(instance_uri), [{"accept", "text/html"}], []),
+           Pleroma.HTTP.get(to_string(instance_uri), [{"accept", "text/html"}]),
          {_, [favicon_rel | _]} when is_binary(favicon_rel) <-
            {:parse, html |> Floki.parse_document!() |> Floki.attribute("link[rel=icon]", "href")},
          {_, favicon} when is_binary(favicon) <-
