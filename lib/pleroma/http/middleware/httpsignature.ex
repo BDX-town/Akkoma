@@ -16,6 +16,20 @@ defmodule Pleroma.HTTP.Middleware.HTTPSignature do
 
   (Note: the third argument holds static middleware options from client creation)
   """
+
+  @doc """
+  If logging raw Tesla.Env use this if you wish to redact signing key details
+  """
+  def redact_keys(env) do
+    case get_in(env, [:opts, :httpsig, :signing_key]) do
+      nil -> env
+      key -> put_in(env, [:opts, :httpsig, :signing_key], redact_key_details(key))
+    end
+  end
+
+  defp redact_key_details(%SigningKey{key_id: id}), do: id
+  defp redact_key_details(key), do: key
+
   @impl true
   def call(env, next, _options) do
     env = maybe_sign(env)

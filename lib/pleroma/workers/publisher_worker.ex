@@ -40,7 +40,7 @@ defmodule Pleroma.Workers.PublisherWorker do
       # instance / actor was explicitly deleted; there’s nothing to deliver to anymore
       # since we don’t know whether the whole instance is gone or just this actor,
       # do NOT immediately mark the instance as unreachable
-      {:error, %{status: 410}} ->
+      {:error, {:http_error, 410, _}} ->
         :ok
 
       res ->

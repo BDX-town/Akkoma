@@ -69,7 +69,7 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     else
       {_post_result, response} ->
         unless params["unreachable_since"], do: Instances.set_unreachable(inbox)
-        {:error, response}
+        {:error, format_error_response(response)}
     end
   end
 
@@ -81,6 +81,14 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     |> Map.put("actor", actor)
     |> publish_one()
   end
+
+  defp format_error_response(%Tesla.Env{status: code, headers: headers}),
+    do: {:http_error, code, headers}
+
+  defp format_error_response(%Tesla.Env{} = env),
+    do: {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}
+
+  defp format_error_response(response), do: response
 
   defp blocked_instances do
     Config.get([:instance, :quarantined_instances], []) ++

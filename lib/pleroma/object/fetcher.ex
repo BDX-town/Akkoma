@@ -417,6 +417,13 @@ defmodule Pleroma.Object.Fetcher do
       {:ok, %{status: code}} when code in [404, 410] ->
         {:error, :not_found}
 
+      {:ok, %{status: code, headers: headers}} ->
+        {:error, {:http_error, code, headers}}
+
+      # connection/protocol-related error
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}}
+
       {:error, e} ->
         {:error, e}
 
