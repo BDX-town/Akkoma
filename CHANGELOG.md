@@ -66,6 +66,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   instead of mapping them down to a boolean private/public
 - we no longer repeatedly try to deliver to explicitly deleted inboxes
 - outgoing requests may now use HTTP2 by default
+- Config option `Pleroma.Web.MediaProxy.Invalidation.Http, :options` and
+  the `:http` subkey of `:media_proxy, :proxy_opts` now only accept
+  adapter-related settings inside the `:adapter` subkey, no longer on the top-level
 
 
 ## 2025.03
