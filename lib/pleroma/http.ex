@@ -8,15 +8,14 @@ defmodule Pleroma.HTTP do
   """
 
   alias Pleroma.HTTP.AdapterHelper
-  alias Pleroma.HTTP.Request
-  alias Pleroma.HTTP.RequestBuilder, as: Builder
-  alias Tesla.Client
   alias Tesla.Env
 
   require Logger
 
   @type t :: __MODULE__
   @type method() :: :get | :post | :put | :delete | :head
+
+  @mix_env Mix.env()
 
   @doc """
   Performs GET request.
@@ -72,7 +71,7 @@ defmodule Pleroma.HTTP do
     options = put_in(options[:adapter], adapter_opts)
     params = options[:params] || []
     options = options |> Keyword.delete(:params)
-    request = build_request(method, headers, options, url, body, params)
+    headers = maybe_add_user_agent(headers)
 
     client =
       Tesla.client([
@@ -82,24 +81,32 @@ defmodule Pleroma.HTTP do
       ])
 
     Logger.debug("Outbound: #{method} #{url}")
-    request(client, request)
+
+    Tesla.request(client,
+      method: method,
+      url: url,
+      query: params,
+      headers: headers,
+      body: body,
+      opts: options
+    )
   rescue
     e ->
       Logger.error("Failed to fetch #{url}: #{Exception.format(:error, e, __STACKTRACE__)}")
       {:error, :fetch_error}
   end
 
-  @spec request(Client.t(), keyword()) :: {:ok, Env.t()} | {:error, any()}
-  def request(client, request), do: Tesla.request(client, request)
-
-  defp build_request(method, headers, options, url, body, params) do
-    Builder.new()
-    |> Builder.method(method)
-    |> Builder.headers(headers)
-    |> Builder.opts(options)
-    |> Builder.url(url)
-    |> Builder.add_param(:body, :body, body)
-    |> Builder.add_param(:query, :query, params)
-    |> Builder.convert_to_keyword()
+  if @mix_env == :test do
+    defp maybe_add_user_agent(headers) do
+      with true <- Pleroma.Config.get([:http, :send_user_agent]) do
+        [{"user-agent", Pleroma.Application.user_agent()} | headers]
+      else
+        _ ->
+          headers
+      end
+    end
+  else
+    defp maybe_add_user_agent(headers),
+      do: [{"user-agent", Pleroma.Application.user_agent()} | headers]
   end
 end
