@@ -428,7 +428,7 @@ defmodule Mix.Tasks.Pleroma.Database do
           AND hto.hashtag_id is NULL
           AND ufht.hashtag_id is NULL
       """
-      |> Repo.query!()
+      |> Repo.query!([], timeout: :infinity)
 
     Logger.info("Deleted #{del_hashtags} no longer used hashtags...")
 
