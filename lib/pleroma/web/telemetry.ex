@@ -15,7 +15,7 @@ defmodule Pleroma.Web.Telemetry do
 
     children =
       [
-        {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+        {:telemetry_poller, measurements: periodic_measurements(), period: 60_000}
       ] ++
         prometheus_children()
 
