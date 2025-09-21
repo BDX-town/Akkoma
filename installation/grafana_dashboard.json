@@ -106,228 +106,6 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.9,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Completions: PublisherWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Completions: ReceiverWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Completions: RemoteFetcherWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Exceptions: PublisherWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Exceptions: ReceiverWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Exceptions: RemoteFetcherWorker"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 9,
-        "x": 0,
-        "y": 0
-      },
-      "id": 4,
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.1.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DATASOURCE}"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "increase(oban_job_completion_count{worker=~\"Pleroma.Workers.RemoteFetcherWorker|Pleroma.Workers.ReceiverWorker|Pleroma.Workers.PublisherWorker\", instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "Completions: {{worker}}",
-          "range": true,
-          "refId": "A",
-          "useBackend": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DATASOURCE}"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "increase(oban_job_exception_count{worker=~\"Pleroma.Workers.RemoteFetcherWorker|Pleroma.Workers.ReceiverWorker|Pleroma.Workers.PublisherWorker\", instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
-          "fullMetaSearch": false,
-          "hide": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "Exceptions: {{worker}}",
-          "range": true,
-          "refId": "B",
-          "useBackend": false
-        }
-      ],
-      "title": "Receive, Fetch, Publish Events",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "([^:]+: )Pleroma\\.Workers\\.(.*)",
-            "renamePattern": "$1$2"
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DATASOURCE}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
             "mode": "thresholds"
           },
           "displayName": "${__field.displayName}",
@@ -356,8 +134,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 4,
-        "x": 9,
+        "w": 9,
+        "x": 0,
         "y": 0
       },
       "id": 29,
@@ -373,7 +151,7 @@
         "minVizHeight": 16,
         "minVizWidth": 8,
         "namePlacement": "auto",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "sum"
@@ -492,8 +270,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 13,
+        "w": 4,
+        "x": 9,
         "y": 0
       },
       "id": 7,
@@ -570,7 +348,7 @@
       "gridPos": {
         "h": 4,
         "w": 2,
-        "x": 16,
+        "x": 13,
         "y": 0
       },
       "id": 13,
@@ -720,8 +498,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 3,
-        "x": 18,
+        "w": 5,
+        "x": 15,
         "y": 0
       },
       "id": 6,
@@ -873,8 +651,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 3,
-        "x": 21,
+        "w": 4,
+        "x": 20,
         "y": 0
       },
       "id": 5,
@@ -1025,8 +803,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 5,
-        "x": 13,
+        "w": 6,
+        "x": 9,
         "y": 4
       },
       "id": 8,
@@ -1210,9 +988,9 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "bars",
-            "fillOpacity": 100,
+            "barWidthFactor": 0.9,
+            "drawStyle": "line",
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -1220,17 +998,17 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 0,
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1249,13 +1027,29 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "none"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "200"
+              "options": "Completions: PublisherWorker"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Completions: ReceiverWorker"
             },
             "properties": [
               {
@@ -1270,13 +1064,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "401"
+              "options": "Completions: RemoteFetcherWorker"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "super-light-red",
+                  "fixedColor": "light-blue",
                   "mode": "fixed"
                 }
               }
@@ -1285,13 +1079,43 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "410"
+              "options": "Exceptions: PublisherWorker"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "light-red",
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Exceptions: ReceiverWorker"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Exceptions: RemoteFetcherWorker"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
                   "mode": "fixed"
                 }
               }
@@ -1300,12 +1124,12 @@
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 10,
         "x": 0,
         "y": 8
       },
-      "id": 3,
+      "id": 4,
       "interval": "1m",
       "options": {
         "legend": {
@@ -1329,23 +1153,40 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "increase(tesla_request_completed_count{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__interval])",
+          "expr": "increase(oban_job_completion_count{worker=~\"Pleroma.Workers.RemoteFetcherWorker|Pleroma.Workers.ReceiverWorker|Pleroma.Workers.PublisherWorker\", instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "{{response_code}}",
+          "legendFormat": "Completions: {{worker}}",
           "range": true,
           "refId": "A",
           "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "increase(oban_job_exception_count{worker=~\"Pleroma.Workers.RemoteFetcherWorker|Pleroma.Workers.ReceiverWorker|Pleroma.Workers.PublisherWorker\", instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "Exceptions: {{worker}}",
+          "range": true,
+          "refId": "B",
+          "useBackend": false
         }
       ],
-      "title": "Outgoing Requests",
+      "title": "Receive, Fetch, Publish Events",
       "transformations": [
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "\\{.*",
-            "renamePattern": "unknown"
+            "regex": "([^:]+: )Pleroma\\.Workers\\.(.*)",
+            "renamePattern": "$1$2"
           }
         }
       ],
@@ -1439,7 +1280,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 9,
+        "w": 8,
         "x": 10,
         "y": 8
       },
@@ -1645,8 +1486,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 5,
-        "x": 19,
+        "w": 6,
+        "x": 18,
         "y": 8
       },
       "id": 10,
@@ -1756,7 +1597,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
@@ -1765,13 +1606,13 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "smooth",
+            "lineInterpolation": "linear",
             "lineWidth": 0,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1794,42 +1635,64 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "sum"
+              "id": "byName",
+              "options": "200"
             },
             "properties": [
               {
-                "id": "custom.stacking",
+                "id": "color",
                 "value": {
-                  "group": "A",
-                  "mode": "none"
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
                 }
-              },
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "401"
+            },
+            "properties": [
               {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "410"
+            },
+            "properties": [
               {
-                "id": "custom.lineWidth",
-                "value": 1
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 10,
         "x": 0,
-        "y": 15
+        "y": 16
       },
-      "id": 2,
+      "id": 3,
+      "interval": "1m",
       "options": {
         "legend": {
           "calcs": [],
@@ -1837,9 +1700,6 @@
           "placement": "bottom",
           "showLegend": true
         },
-        "timezone": [
-          "utc"
-        ],
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
@@ -1855,34 +1715,26 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rate(phoenix_router_dispatch_stop_duration_sum{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__rate_interval])",
+          "expr": "increase(tesla_request_completed_count{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__interval])",
           "fullMetaSearch": false,
-          "includeNullMetadata": false,
+          "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "{{route}}",
+          "legendFormat": "{{response_code}}",
           "range": true,
           "refId": "A",
           "useBackend": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DATASOURCE}"
-          },
-          "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "sum(rate(phoenix_router_dispatch_stop_duration_sum{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__rate_interval]))",
-          "fullMetaSearch": false,
-          "hide": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "TOTAL",
-          "range": true,
-          "refId": "sum",
-          "useBackend": false
         }
       ],
-      "title": "Inbound HTTP Proc. Time per Second",
+      "title": "Outgoing Requests",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "\\{.*",
+            "renamePattern": "unknown"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -2266,6 +2118,362 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "sum"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 0,
+        "y": 23
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "timezone": [
+          "utc"
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "rate(phoenix_router_dispatch_stop_duration_sum{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__rate_interval])",
+          "fullMetaSearch": false,
+          "includeNullMetadata": false,
+          "instant": false,
+          "legendFormat": "{{route}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "sum(rate(phoenix_router_dispatch_stop_duration_sum{job=\"${SCRAPE_JOB}\", instance=\"${INSTANCE}\"}[$__rate_interval]))",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "TOTAL",
+          "range": true,
+          "refId": "sum",
+          "useBackend": false
+        }
+      ],
+      "title": "Inbound HTTP Proc. Time per Second",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DATASOURCE}"
+      },
+      "description": "Jobs eligible for immediate execution, but not yet started. Most likely they’re held back because the queue is already saturated and there’s no free slot.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.9,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 10,
+        "y": 25
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "akkoma_job_queue_available",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "{{queue_name}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          }
+        }
+      ],
+      "title": "Pending Jobs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DATASOURCE}"
+      },
+      "description": "Jobs intentionally held back until a later start data",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.9,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 17,
+        "y": 25
+      },
+      "id": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "akkoma_job_queue_scheduled",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "{{queue_name}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          }
+        }
+      ],
+      "title": "Scheduled Jobs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DATASOURCE}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
@@ -2328,7 +2536,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 25
+        "y": 33
       },
       "id": 16,
       "interval": "1m",
@@ -2448,7 +2656,7 @@
         "h": 6,
         "w": 10,
         "x": 10,
-        "y": 25
+        "y": 33
       },
       "id": 15,
       "options": {
@@ -2580,7 +2788,7 @@
         "h": 6,
         "w": 4,
         "x": 20,
-        "y": 25
+        "y": 33
       },
       "id": 26,
       "interval": "1m",
@@ -2760,7 +2968,7 @@
         "h": 9,
         "w": 10,
         "x": 10,
-        "y": 31
+        "y": 39
       },
       "id": 19,
       "interval": "1m",
@@ -2926,7 +3134,7 @@
         "h": 7,
         "w": 4,
         "x": 20,
-        "y": 31
+        "y": 39
       },
       "id": 23,
       "options": {
@@ -3082,7 +3290,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "id": 21,
       "options": {
@@ -3221,7 +3429,7 @@
         "h": 7,
         "w": 4,
         "x": 20,
-        "y": 38
+        "y": 46
       },
       "id": 25,
       "options": {
@@ -3326,7 +3534,7 @@
         "h": 5,
         "w": 10,
         "x": 10,
-        "y": 40
+        "y": 48
       },
       "id": 22,
       "options": {
@@ -3373,7 +3581,7 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {
@@ -3390,6 +3598,6 @@
   "timezone": "utc",
   "title": "Akkoma Dashboard",
   "uid": "edzowz85niznkc",
-  "version": 21,
+  "version": 29,
   "weekStart": ""
 }
