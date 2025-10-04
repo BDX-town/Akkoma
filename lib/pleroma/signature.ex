@@ -62,20 +62,16 @@ defmodule Pleroma.Signature do
     end
   end
 
-  def sign(%User{} = user, headers, opts \\ []) do
-    with {:ok, private_key} <- SigningKey.private_key(user) do
+  def sign(%SigningKey{} = key, headers, opts \\ []) do
+    with {:ok, private_key_binary} <- SigningKey.private_key_binary(key) do
       HTTPSignatures.sign(
-        %HTTPKey{key: private_key},
-        SigningKey.local_key_id(user.ap_id),
+        %HTTPKey{key: private_key_binary},
+        key.key_id,
         headers,
         opts
       )
+    else
+      _ -> raise "Tried to sign with #{key.key_id} but it has no private key!"
     end
-  end
-
-  def signed_date, do: signed_date(NaiveDateTime.utc_now())
-
-  def signed_date(%NaiveDateTime{} = date) do
-    Timex.lformat!(date, "{WDshort}, {0D} {Mshort} {YYYY} {h24}:{m}:{s} GMT", "en")
   end
 end

@@ -51,34 +51,15 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
         %{"inbox" => inbox, "json" => json, "actor" => %User{} = actor, "id" => id} = params
       ) do
     Logger.debug("Federating #{id} to #{inbox}")
-    uri = %{path: path} = URI.parse(inbox)
-    digest = "SHA-256=" <> (:crypto.hash(:sha256, json) |> Base.encode64())
 
-    date = Pleroma.Signature.signed_date()
-
-    signature =
-      Pleroma.Signature.sign(
-        actor,
-        %{
-          "(request-target)" => "post #{path}",
-          "host" => signature_host(uri),
-          "content-length" => byte_size(json),
-          "digest" => digest,
-          "date" => date
-        },
-        has_body: true
-      )
+    signing_key = Pleroma.User.SigningKey.load_key(actor).signing_key
 
     with {:ok, %{status: code}} = result when code in 200..299 <-
            HTTP.post(
              inbox,
              json,
-             [
-               {"Content-Type", "application/activity+json"},
-               {"Date", date},
-               {"signature", signature},
-               {"digest", digest}
-             ]
+             [{"content-type", "application/activity+json"}],
+             httpsig: %{signing_key: signing_key}
            ) do
       if not Map.has_key?(params, "unreachable_since") || params["unreachable_since"] do
         Instances.set_reachable(inbox)
@@ -88,7 +69,7 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     else
       {_post_result, response} ->
         unless params["unreachable_since"], do: Instances.set_unreachable(inbox)
-        {:error, response}
+        {:error, format_error_response(response)}
     end
   end
 
@@ -101,13 +82,13 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     |> publish_one()
   end
 
-  defp signature_host(%URI{port: port, scheme: scheme, host: host}) do
-    if port == URI.default_port(scheme) do
-      host
-    else
-      "#{host}:#{port}"
-    end
-  end
+  defp format_error_response(%Tesla.Env{status: code, headers: headers}),
+    do: {:http_error, code, headers}
+
+  defp format_error_response(%Tesla.Env{} = env),
+    do: {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}
+
+  defp format_error_response(response), do: response
 
   defp blocked_instances do
     Config.get([:instance, :quarantined_instances], []) ++

@@ -9,7 +9,6 @@ defmodule Pleroma.Object.Fetcher do
   alias Pleroma.Object
   alias Pleroma.Object.Containment
   alias Pleroma.Repo
-  alias Pleroma.Signature
   alias Pleroma.Web.ActivityPub.InternalFetchActor
   alias Pleroma.Web.ActivityPub.ObjectValidator
   alias Pleroma.Web.ActivityPub.Transmogrifier
@@ -227,36 +226,6 @@ defmodule Pleroma.Object.Fetcher do
     |> Maps.put_if_present("bcc", data["bcc"])
   end
 
-  defp make_signature(id, date) do
-    uri = URI.parse(id)
-
-    signature =
-      InternalFetchActor.get_actor()
-      |> Signature.sign(%{
-        "(request-target)" => "get #{uri.path}",
-        "host" => uri.host,
-        "date" => date
-      })
-
-    {"signature", signature}
-  end
-
-  defp sign_fetch(headers, id, date) do
-    if Pleroma.Config.get([:activitypub, :sign_object_fetches]) do
-      [make_signature(id, date) | headers]
-    else
-      headers
-    end
-  end
-
-  defp maybe_date_fetch(headers, date) do
-    if Pleroma.Config.get([:activitypub, :sign_object_fetches]) do
-      [{"date", date} | headers]
-    else
-      headers
-    end
-  end
-
   @doc """
   Fetches arbitrary remote object and performs basic safety and authenticity checks.
   When the fetch URL is known to already be a canonical AP id, checks are stricter.
@@ -402,20 +371,25 @@ defmodule Pleroma.Object.Fetcher do
 
   @doc "Do NOT use; only public for use in tests"
   def get_object(id) do
-    date = Pleroma.Signature.signed_date()
-
     headers =
       [
         # The first is required by spec, the second provided as a fallback for buggy implementations
         {"accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""},
         {"accept", "application/activity+json"}
       ]
-      |> maybe_date_fetch(date)
-      |> sign_fetch(id, date)
+
+    http_opts =
+      if Pleroma.Config.get([:activitypub, :sign_object_fetches]) do
+        signing_actor = InternalFetchActor.get_actor() |> Pleroma.User.SigningKey.load_key()
+        signing_key = signing_actor.signing_key
+        [httpsig: %{signing_key: signing_key}]
+      else
+        []
+      end
 
     with {:ok, %{body: body, status: code, headers: headers, url: final_url}}
          when code in 200..299 <-
-           HTTP.Backoff.get(id, headers),
+           HTTP.Backoff.get(id, headers, http_opts),
          {:has_content_type, {_, content_type}} <-
            {:has_content_type, List.keyfind(headers, "content-type", 0)},
          {:parse_content_type, {:ok, "application", subtype, type_params}} <-
@@ -442,6 +416,13 @@ defmodule Pleroma.Object.Fetcher do
 
       {:ok, %{status: code}} when code in [404, 410] ->
         {:error, :not_found}
+
+      {:ok, %{status: code, headers: headers}} ->
+        {:error, {:http_error, code, headers}}
+
+      # connection/protocol-related error
+      {:ok, %Tesla.Env{} = env} ->
+        {:error, {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}}
 
       {:error, e} ->
         {:error, e}

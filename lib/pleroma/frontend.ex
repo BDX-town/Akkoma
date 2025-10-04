@@ -84,7 +84,7 @@ defmodule Pleroma.Frontend do
     url = String.replace(frontend_info["build_url"], "${ref}", frontend_info["ref"])
 
     with {:ok, %{status: 200, body: zip_body}} <-
-           Pleroma.HTTP.get(url, [], receive_timeout: 120_000) do
+           Pleroma.HTTP.get(url, [], adapter: [receive_timeout: 120_000]) do
       unzip(zip_body, dest)
     else
       {:error, e} -> {:error, e}
