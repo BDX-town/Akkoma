@@ -1,5 +1,6 @@
 defmodule Pleroma.Web.Telemetry do
   use Supervisor
+  import Ecto.Query
   import Telemetry.Metrics
   alias Pleroma.Stats
   alias Pleroma.Config
@@ -15,7 +16,7 @@ defmodule Pleroma.Web.Telemetry do
 
     children =
       [
-        {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+        {:telemetry_poller, measurements: periodic_measurements(), period: 60_000}
       ] ++
         prometheus_children()
 
@@ -303,7 +304,9 @@ defmodule Pleroma.Web.Telemetry do
       last_value("pleroma.domains.total"),
       last_value("pleroma.local_statuses.total"),
       last_value("pleroma.remote_users.total"),
-      counter("akkoma.ap.delivery.fail.final", tags: [:target, :reason])
+      counter("akkoma.ap.delivery.fail.final", tags: [:target, :reason]),
+      last_value("akkoma.job.queue.scheduled", tags: [:queue_name]),
+      last_value("akkoma.job.queue.available", tags: [:queue_name])
     ]
   end
 
@@ -315,7 +318,8 @@ defmodule Pleroma.Web.Telemetry do
   defp periodic_measurements do
     [
       {__MODULE__, :io_stats, []},
-      {__MODULE__, :instance_stats, []}
+      {__MODULE__, :instance_stats, []},
+      {__MODULE__, :oban_pending, []}
     ]
   end
 
@@ -332,5 +336,27 @@ defmodule Pleroma.Web.Telemetry do
     :telemetry.execute([:pleroma, :domains], %{total: stats.domain_count}, %{})
     :telemetry.execute([:pleroma, :local_statuses], %{total: stats.status_count}, %{})
     :telemetry.execute([:pleroma, :remote_users], %{total: stats.remote_user_count}, %{})
+  end
+
+  def oban_pending() do
+    query =
+      from(j in Oban.Job,
+        select: %{queue: j.queue, state: j.state, count: count()},
+        where: j.state in ["scheduled", "available"],
+        group_by: [j.queue, j.state]
+      )
+
+    conf = Oban.Config.new(Config.get!(Oban))
+    qres = Oban.Repo.all(conf, query)
+    acc = Enum.into(conf.queues, %{}, fn {x, _} -> {x, %{available: 0, scheduled: 0}} end)
+
+    acc =
+      Enum.reduce(qres, acc, fn %{queue: q, state: state, count: count}, acc ->
+        put_in(acc, [String.to_existing_atom(q), String.to_existing_atom(state)], count)
+      end)
+
+    for {queue, info} <- acc do
+      :telemetry.execute([:akkoma, :job, :queue], info, %{queue_name: queue})
+    end
   end
 end

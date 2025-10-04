@@ -119,7 +119,8 @@ That’s it, you’ve got a fancy dashboard with long-term, 24/7 metrics now!
 Updating the dashboard can be done by just repeating the import process.
 
 Here’s an example taken from a healthy, small instance where
-nobody was logged in for about the first half of the displayed time span:  
+nobody was logged in except for a few minutes
+resulting in an (expected) spike in incoming requests:  
 ![Full view of the reference dashboard as it looked at the time of writing](img/grafana_dashboard.webp)
 
 !!! note
@@ -259,7 +260,6 @@ This too requires administrator rights to access and can be found under `/akkoma
 The exposed aggregate info is mostly redundant with job statistics already tracked in Prometheus,
 but it additionally also:
 
- - shows not-yet executed jobs in the backlog of queues
  - shows full argument and meta details for each job
  - allows interactively deleting or manually retrying jobs  
   *(keep this in mind when granting people administrator rights!)*
