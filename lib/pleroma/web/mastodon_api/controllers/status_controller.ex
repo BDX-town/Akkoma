@@ -262,7 +262,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "GET /api/v1/statuses/:id"
   def show(%{assigns: %{user: user}} = conn, %{id: id} = params) do
+    # Announces are handled as normal statuses in MastoAPI, they just put the reblogged post
+    # in a "reblog" subproperty which clients the use for display. Creates are trivially ok.
+    # Everything else isn’t a status as far as MastoAPI is concerned and
+    # would show up buggy since it’s not expected by our JSON render, thus reject.
     with %Activity{} = activity <- Activity.get_by_id_with_object(id),
+         type when type in ["Create", "Announce"] <- activity.data["type"],
          true <- Visibility.visible_for_user?(activity, user) do
       try_render(conn, "show.json",
         activity: activity,
@@ -455,10 +460,11 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "GET /api/v1/favourites"
   def favourites(%{assigns: %{user: %User{} = user}} = conn, params) do
-    activities = ActivityPub.fetch_favourites(user, params)
+    activities_keyed = ActivityPub.fetch_favourited_with_fav_id(user, params)
+    activities = Pleroma.Pagination.unwrap(activities_keyed)
 
     conn
-    |> add_link_headers(activities)
+    |> add_link_headers(activities_keyed)
     |> render("index.json",
       activities: activities,
       for: user,

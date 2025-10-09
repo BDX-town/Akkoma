@@ -1467,21 +1467,18 @@ defmodule Pleroma.Web.ActivityPub.ActivityPub do
   end
 
   @doc """
-  Fetch favorites activities of user with order by sort adds to favorites
+  Fetch posts liked by the given user wrapped in a paginated list with IDs taken from the like activity
   """
-  @spec fetch_favourites(User.t(), map(), Pagination.type()) :: list(Activity.t())
-  def fetch_favourites(user, params \\ %{}, pagination \\ :keyset) do
+  @spec fetch_favourited_with_fav_id(User.t(), map()) ::
+          list(%{id: binary(), entry: Activity.t()})
+  def fetch_favourited_with_fav_id(user, params \\ %{}) do
     user.ap_id
     |> Activity.Queries.by_actor()
     |> Activity.Queries.by_type("Like")
     |> Activity.with_joined_object()
     |> Object.with_joined_activity()
-    |> select([like, object, activity], %{activity | object: object, pagination_id: like.id})
-    |> order_by([like, _, _], desc_nulls_last: like.id)
-    |> Pagination.fetch_paginated(
-      Map.merge(params, %{skip_order: true}),
-      pagination
-    )
+    |> select([like, object, create], %{id: like.id, entry: %{create | object: object}})
+    |> Pagination.fetch_paginated(params, :keyset)
   end
 
   defp maybe_update_cc(activities, [_ | _] = list_memberships, %User{ap_id: user_ap_id}) do

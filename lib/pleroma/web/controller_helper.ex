@@ -79,10 +79,6 @@ defmodule Pleroma.Web.ControllerHelper do
 
   defp get_first_last_pagination_id(entries) do
     case List.last(entries) do
-      %{pagination_id: last_id} when not is_nil(last_id) ->
-        %{pagination_id: first_id} = List.first(entries)
-        {first_id, last_id}
-
       %{id: last_id} ->
         %{id: first_id} = List.first(entries)
         {first_id, last_id}

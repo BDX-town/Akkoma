@@ -28,6 +28,12 @@ defmodule Pleroma.UserTest do
 
   setup do: clear_config([:instance, :account_activation_required])
 
+  defp get_pending_follower_user_ids_for(%User{} = user) do
+    User.get_follow_requests_query(user)
+    |> select([r], r.follower_id)
+    |> Repo.all()
+  end
+
   describe "service actors" do
     test "returns updated invisible actor" do
       uri = "#{Pleroma.Web.Endpoint.url()}/relay"
@@ -181,14 +187,13 @@ defmodule Pleroma.UserTest do
     unlocked = insert(:user)
     locked = insert(:user, is_locked: true)
     follower = insert(:user)
+    follower_id = follower.id
 
     CommonAPI.follow(follower, unlocked)
     CommonAPI.follow(follower, locked)
 
-    assert [] = User.get_follow_requests(unlocked)
-    assert [activity] = User.get_follow_requests(locked)
-
-    assert activity
+    assert [] = get_pending_follower_user_ids_for(unlocked)
+    assert [^follower_id] = get_pending_follower_user_ids_for(locked)
   end
 
   test "doesn't return already accepted or duplicate follow requests" do
@@ -202,7 +207,8 @@ defmodule Pleroma.UserTest do
 
     Pleroma.FollowingRelationship.update(accepted_follower, locked, :follow_accept)
 
-    assert [^pending_follower] = User.get_follow_requests(locked)
+    pending_follower_id = pending_follower.id
+    assert [^pending_follower_id] = get_pending_follower_user_ids_for(locked)
   end
 
   test "doesn't return follow requests for deactivated accounts" do
@@ -212,7 +218,7 @@ defmodule Pleroma.UserTest do
     CommonAPI.follow(pending_follower, locked)
 
     refute pending_follower.is_active
-    assert [] = User.get_follow_requests(locked)
+    assert [] = get_pending_follower_user_ids_for(locked)
   end
 
   test "clears follow requests when requester is blocked" do
@@ -220,10 +226,10 @@ defmodule Pleroma.UserTest do
     follower = insert(:user)
 
     CommonAPI.follow(follower, followed)
-    assert [_activity] = User.get_follow_requests(followed)
+    assert [_activity] = get_pending_follower_user_ids_for(followed)
 
     {:ok, _user_relationship} = User.block(followed, follower)
-    assert [] = User.get_follow_requests(followed)
+    assert [] = get_pending_follower_user_ids_for(followed)
   end
 
   test "follow_all follows mutliple users" do
@@ -1662,7 +1668,7 @@ defmodule Pleroma.UserTest do
       refute User.following?(follower, user)
       assert %{is_active: false} = User.get_by_id(user.id)
 
-      assert [] == User.get_follow_requests(locked_user)
+      assert [] == get_pending_follower_user_ids_for(locked_user)
 
       user_activities =
         user.ap_id

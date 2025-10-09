@@ -1828,12 +1828,12 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubTest do
       {:ok, _} = CommonAPI.favorite(other_user, a4.id)
       {:ok, _} = CommonAPI.favorite(user, a1.id)
       {:ok, _} = CommonAPI.favorite(other_user, a1.id)
-      result = ActivityPub.fetch_favourites(user)
+      result = ActivityPub.fetch_favourited_with_fav_id(user)
 
-      assert Enum.map(result, & &1.id) == [a1.id, a5.id, a3.id, a4.id]
+      assert Enum.map(result, & &1.entry.id) == [a1.id, a5.id, a3.id, a4.id]
 
-      result = ActivityPub.fetch_favourites(user, %{limit: 2})
-      assert Enum.map(result, & &1.id) == [a1.id, a5.id]
+      result = ActivityPub.fetch_favourited_with_fav_id(user, %{limit: 2})
+      assert Enum.map(result, & &1.entry.id) == [a1.id, a5.id]
     end
   end
 

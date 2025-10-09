@@ -86,6 +86,16 @@ defmodule Pleroma.Pagination do
     |> restrict(:limit, options, table_binding)
   end
 
+  @doc """
+  Unwraps a result list for a query paginated by a foreign id.
+  Usually you want to keep those foreign ids around until after pagination Link headers got generated.
+  """
+  @spec unwrap([%{id: any(), entry: any()}]) :: [any()]
+  def unwrap(list) when is_list(list), do: do_unwrap(list, [])
+
+  defp do_unwrap([%{entry: entry} | rest], acc), do: do_unwrap(rest, [entry | acc])
+  defp do_unwrap([], acc), do: Enum.reverse(acc)
+
   defp cast_params(params) do
     param_types = %{
       min_id: params[:id_type] || :string,
