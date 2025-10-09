@@ -455,10 +455,11 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "GET /api/v1/favourites"
   def favourites(%{assigns: %{user: %User{} = user}} = conn, params) do
-    activities = ActivityPub.fetch_favourites(user, params)
+    activities_keyed = ActivityPub.fetch_favourited_with_fav_id(user, params)
+    activities = Pleroma.Pagination.unwrap(activities_keyed)
 
     conn
-    |> add_link_headers(activities)
+    |> add_link_headers(activities_keyed)
     |> render("index.json",
       activities: activities,
       for: user,
