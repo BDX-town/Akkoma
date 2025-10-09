@@ -857,6 +857,18 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
     assert id == to_string(activity.id)
   end
 
+  test "rejects non-Create, non-Announce activity id" do
+    %{conn: conn} = oauth_access(["read:statuses"])
+    activity = insert(:note_activity)
+    like_user = insert(:user)
+
+    {:ok, like_activity} = CommonAPI.favorite(like_user, activity.id)
+
+    conn = get(conn, "/api/v1/statuses/#{like_activity.id}")
+
+    assert %{"error" => _} = json_response_and_validate_schema(conn, 404)
+  end
+
   defp local_and_remote_activities do
     local = insert(:note_activity)
     remote = insert(:note_activity, local: false)
