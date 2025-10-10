@@ -7,7 +7,6 @@ defmodule Pleroma.HTTP do
     Wrapper for `Tesla.request/2`.
   """
 
-  alias Pleroma.HTTP.AdapterHelper
   alias Tesla.Env
 
   require Logger
@@ -58,17 +57,6 @@ defmodule Pleroma.HTTP do
   @spec request(method(), Request.url(), String.t(), Request.headers(), keyword()) ::
           {:ok, Env.t()} | {:error, any()}
   def request(method, url, body, headers, options) when is_binary(url) do
-    uri = URI.parse(url)
-    adapter_opts = AdapterHelper.options(options[:adapter] || [])
-
-    adapter_opts =
-      if uri.scheme == :https do
-        AdapterHelper.maybe_add_cacerts(adapter_opts, :public_key.cacerts_get())
-      else
-        adapter_opts
-      end
-
-    options = put_in(options[:adapter], adapter_opts)
     params = options[:params] || []
     options = options |> Keyword.delete(:params)
     headers = maybe_add_user_agent(headers)
