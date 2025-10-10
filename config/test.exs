@@ -129,9 +129,7 @@ config :pleroma, :cachex, provider: Pleroma.CachexMock
 
 config :pleroma, Pleroma.Web.WebFinger, update_nickname_on_user_fetch: false
 
-config :pleroma, :side_effects,
-  ap_streamer: Pleroma.Web.ActivityPub.ActivityPubMock,
-  logger: Pleroma.LoggerMock
+config :pleroma, :side_effects, ap_streamer: Pleroma.Web.ActivityPub.ActivityPubMock
 
 config :pleroma, Pleroma.Search, module: Pleroma.Search.DatabaseSearch
 
