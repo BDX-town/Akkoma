@@ -15,12 +15,6 @@ defmodule Pleroma.HTTP.AdapterHelper do
 
   @type proxy :: {Connection.proxy_type(), Connection.host(), pos_integer(), list()}
 
-  def maybe_add_cacerts(opts, nil), do: opts
-
-  def maybe_add_cacerts(opts, cacerts) do
-    put_in(opts, [:pools, :default, :conn_opts, :transport_opts, :cacerts], cacerts)
-  end
-
   @doc """
   Merge default connection & adapter options with received ones.
   """
