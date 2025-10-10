@@ -27,8 +27,6 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
   require Pleroma.Constants
   require Logger
 
-  @logger Pleroma.Config.get([:side_effects, :logger], Logger)
-
   @behaviour Pleroma.Web.ActivityPub.SideEffects.Handling
 
   defp ap_streamer, do: Pleroma.Config.get([:side_effects, :ap_streamer], ActivityPub)
@@ -320,7 +318,7 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
             :ok
           else
             {:actor, _} ->
-              @logger.error("The object doesn't have an actor: #{inspect(deleted_object)}")
+              Logger.error("The object doesn't have an actor: #{inspect(deleted_object)}")
               :no_object_actor
           end
 
