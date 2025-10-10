@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added a reference Grafana dashboard and improved documentation for Prometheus metrics
 - New mix task `clean_inlined_replies` to delete some unused data from objects
 - New mix task `resync_inlined_caches` to retroactively fix various issues with e.g. boosts, emoji reacts and likes
+- It is now possible to allow outgoing requests to use HTTP2 via config option,
+  but due to bugs in the relevant backend this is not the default nor recommended.
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -65,7 +67,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `/api/v1/statuses/:id/reblog` now honours all possible visibilities except `list` and `conversation`
   instead of mapping them down to a boolean private/public
 - we no longer repeatedly try to deliver to explicitly deleted inboxes
-- outgoing requests may now use HTTP2 by default
 - Config option `Pleroma.Web.MediaProxy.Invalidation.Http, :options` and
   the `:http` subkey of `:media_proxy, :proxy_opts` now only accept
   adapter-related settings inside the `:adapter` subkey, no longer on the top-level
