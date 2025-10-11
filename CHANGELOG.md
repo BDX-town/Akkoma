@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### REMOVED
+
+### Added
+- status responses include two new fields for ActivityPub cross-referencing: `akkoma.quote_apid` and `akkoma.in_reply_to_apid`
+
+### Fixed
+- replies and quotes to unresolvable posts now fill out IDs for replied to
+  status, user or quoted status with a 404-ing ID to make them recognisable as
+  replies/quotes instead of pretending they’re root posts
+
+### Changed
+
 
 ## 2025.10
 

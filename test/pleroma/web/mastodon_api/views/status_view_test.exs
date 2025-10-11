@@ -326,7 +326,9 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
         pinned_at: nil
       },
       akkoma: %{
-        source: HTML.filter_tags(object_data["content"])
+        source: HTML.filter_tags(object_data["content"]),
+        in_reply_to_apid: nil,
+        quote_apid: nil
       },
       quote_id: nil,
       quote: nil
@@ -417,6 +419,17 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     assert status.in_reply_to_id == to_string(note.id)
   end
 
+  test "a reply to an unavailable post" do
+    note = insert(:note, data: %{"inReplyTo" => "https://example.org/404"})
+    activity = insert(:note_activity, note: note)
+
+    status = StatusView.render("show.json", %{activity: activity})
+
+    assert status.in_reply_to_id == "_"
+    assert status.in_reply_to_account_id == "_"
+    assert status.akkoma.in_reply_to_apid == "https://example.org/404"
+  end
+
   test "a quote" do
     note = insert(:note_activity)
     user = insert(:user)
@@ -433,12 +446,14 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
   end
 
   test "a quote that we can't resolve" do
-    note = insert(:note_activity, quoteUri: "oopsie")
+    note = insert(:note, data: %{"quoteUri" => "oopsie"})
+    activity = insert(:note_activity, note: note)
 
-    status = StatusView.render("show.json", %{activity: note})
+    status = StatusView.render("show.json", %{activity: activity})
 
-    assert is_nil(status.quote_id)
     assert is_nil(status.quote)
+    assert status.quote_id == "_"
+    assert status.akkoma.quote_apid == "oopsie"
   end
 
   test "a quote from a user we block" do

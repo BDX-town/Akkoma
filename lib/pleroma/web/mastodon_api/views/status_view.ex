@@ -26,6 +26,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
 
   import Pleroma.Web.ActivityPub.Visibility, only: [get_visibility: 1, visible_for_user?: 2]
 
+  # Used as a placeholder to represent known-existing relatives we do cannot resolve locally
+  # will always 404 when supplied to API endpoints
+  @ghost_flake_id "_"
+
   defp fetch_rich_media_for_activities(activities) do
     Enum.each(activities, fn activity ->
       Card.get_by_activity(activity)
@@ -277,9 +281,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
             nil
         end
 
-      reply_to = get_reply_to(activity, opts)
+      reply_to_apid = get_single_apid(object.data, "inReplyTo")
+      reply_to = reply_to_apid && get_reply_to(activity, opts)
+      reply_to_id = reply_to_apid && get_id_or_ghost(reply_to)
 
       reply_to_user = reply_to && CommonAPI.get_user(reply_to.data["actor"])
+      reply_to_user_id = reply_to_apid && get_id_or_ghost(reply_to_user)
 
       history_len =
         1 +
@@ -363,7 +370,10 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
 
       {pinned?, pinned_at} = pin_data(object, user)
 
-      quote = Activity.get_quoted_activity_from_object(object)
+      quote_apid = get_single_apid(object.data, "quoteUri")
+      quote = quote_apid && Activity.get_quoted_activity_from_object(object)
+      quote_id = quote_apid && get_id_or_ghost(quote)
+
       lang = language(object)
 
       %{
@@ -375,8 +385,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
             user: user,
             for: opts[:for]
           }),
-        in_reply_to_id: reply_to && to_string(reply_to.id),
-        in_reply_to_account_id: reply_to_user && to_string(reply_to_user.id),
+        in_reply_to_id: reply_to_id,
+        in_reply_to_account_id: reply_to_user_id,
         reblog: nil,
         card: card,
         content: content_html,
@@ -401,7 +411,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
         application: build_application(object.data["generator"]),
         language: lang,
         emojis: build_emojis(object.data["emoji"]),
-        quote_id: if(quote, do: quote.id, else: nil),
+        quote_id: quote_id,
         quote: maybe_render_quote(quote, opts),
         emoji_reactions: emoji_reactions,
         pleroma: %{
@@ -419,7 +429,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
           pinned_at: pinned_at
         },
         akkoma: %{
-          source: object.data["source"]
+          source: object.data["source"],
+          # Note: these AP IDs will also be filled out if we cannot resolve the actual object
+          # (e.g. because it’s a private post we aren't allowed to access, or just federation woes)
+          # allowing users to potentially discover the full context from other accounts/servers.
+          in_reply_to_apid: reply_to_apid,
+          quote_apid: quote_apid
         }
       }
     else
@@ -632,6 +647,26 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   defp proxied_url(url, page_url_data) do
     if is_binary(url) do
       build_image_url(URI.parse(url), page_url_data) |> MediaProxy.url()
+    else
+      nil
+    end
+  end
+
+  defp get_id_or_ghost(object) do
+    (object && to_string(object.id)) || @ghost_flake_id
+  end
+
+  defp get_single_apid(object, key) do
+    apid = object[key]
+
+    apid =
+      case apid do
+        [head | _] -> head
+        _ -> apid
+      end
+
+    if apid != "" and is_binary(apid) do
+      apid
     else
       nil
     end
