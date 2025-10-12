@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### REMOVED
 - Dropped `accepts_chat_messages` column from users table in database;
   it has been unused for almost 3 years
+- Healtcheck responses no longer contain job queue data;
+  it was useless anyway due to lacking any temporal information about failures
+  and more complete data can be obtained from Prometheus metrics.
 
 ### Added
 - We mark our MFM posts as FEP-c16b compliant, and retain remote HTML representations for incoming posts marked as FEP-c16b-compliant. (Safety scrubbers are still applied)
@@ -29,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New mix task `resync_inlined_caches` to retroactively fix various issues with e.g. boosts, emoji reacts and likes
 - It is now possible to allow outgoing requests to use HTTP2 via config option,
   but due to bugs in the relevant backend this is not the default nor recommended.
+- Prometheus metrics now expose count of scheduled and pending jobs per queue
 
 ### Fixed
 - Internal actors no longer pretend to have unresolvable follow(er|ing) collections
@@ -50,6 +54,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - fixed user endpoint serving invalid ActivityPub for minimal, authfetch-fallback responses
 - remote emoji reacts from IceShrimp.NET instances are now handled consistently and always merged with identical other emoji reactions
 - ActivityPub requests signatures are now renewed when following redirects making sure path and host actually match the final URL
+- private replies no longer increase the publicly visible reply counter
+- unblock activities are no longer federated when block federation is disabled (the default)
+- fix like activity database IDs rendering as misattributed posts
 
 ### Changed
 - Internal and relay actors are now again represented with type "Application"
@@ -70,6 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Config option `Pleroma.Web.MediaProxy.Invalidation.Http, :options` and
   the `:http` subkey of `:media_proxy, :proxy_opts` now only accept
   adapter-related settings inside the `:adapter` subkey, no longer on the top-level
+- follow requests are now ordered reverse chronologically
 
 
 ## 2025.03
