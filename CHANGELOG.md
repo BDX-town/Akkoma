@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## 2025.10
+
 ### REMOVED
 - Dropped `accepts_chat_messages` column from users table in database;
   it has been unused for almost 3 years
-- Healtcheck responses no longer contain job queue data;
+- Healthcheck responses no longer contain job queue data;
   it was useless anyway due to lacking any temporal information about failures
   and more complete data can be obtained from Prometheus metrics.
 
