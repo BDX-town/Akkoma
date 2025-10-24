@@ -18,11 +18,15 @@ defmodule Pleroma.Web.MastodonAPI.InstanceControllerTest do
     thumbnail = Pleroma.Web.Endpoint.url() <> Pleroma.Config.get([:instance, :instance_thumbnail])
     background = Pleroma.Web.Endpoint.url() <> Pleroma.Config.get([:instance, :background_image])
 
+    # if no WebFinger domain is configured (without protocol)
+    uri = Pleroma.Web.Endpoint.host()
+
     # Note: not checking for "max_toot_chars" since it's optional
     assert %{
-             "uri" => _,
+             "uri" => ^uri,
              "title" => _,
              "description" => _,
+             "short_description" => _,
              "version" => _,
              "email" => from_config_email,
              "urls" => %{
@@ -52,6 +56,15 @@ defmodule Pleroma.Web.MastodonAPI.InstanceControllerTest do
     assert email == from_config_email
     assert thumbnail == from_config_thumbnail
     assert background == from_config_background
+  end
+
+  test "get instance information prefers WebFinger domain for uri", %{conn: conn} do
+    webfinger_domain = "webfinger.example"
+    clear_config([Pleroma.Web.WebFinger, :domain], webfinger_domain)
+    conn = get(conn, "/api/v1/instance")
+
+    assert result = json_response_and_validate_schema(conn, 200)
+    assert match?(%{"uri" => ^webfinger_domain}, result)
   end
 
   test "get instance stats", %{conn: conn} do

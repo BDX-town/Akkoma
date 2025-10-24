@@ -7,8 +7,31 @@ defmodule Pleroma.Web.ActivityPub.UserViewTest do
   import Pleroma.Factory
 
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.ObjectValidators.UserValidator
   alias Pleroma.Web.ActivityPub.UserView
   alias Pleroma.Web.CommonAPI
+
+  test "Renders a user such that we accept it ourselves" do
+    user =
+      insert(:user)
+      |> with_signing_key()
+
+    representation = UserView.render("user.json", %{user: user})
+    validation_res = UserValidator.validate(representation, [])
+
+    assert match?({:ok, _user, _meta}, validation_res)
+  end
+
+  test "Renders a minimal user such that we accept it ourselves" do
+    user =
+      insert(:user)
+      |> with_signing_key()
+
+    representation = UserView.render("stripped_user.json", %{user: user})
+    validation_res = UserValidator.validate(representation, [])
+
+    assert match?({:ok, _user, _meta}, validation_res)
+  end
 
   test "Renders a user, including the public key" do
     user =
@@ -125,18 +148,6 @@ defmodule Pleroma.Web.ActivityPub.UserViewTest do
 
       assert result["id"] == user.ap_id
       assert result["endpoints"] == %{}
-    end
-
-    test "instance users do not expose oAuth endpoints" do
-      user =
-        insert(:user, nickname: nil, local: true)
-        |> with_signing_key()
-
-      result = UserView.render("user.json", %{user: user})
-
-      refute result["endpoints"]["oauthAuthorizationEndpoint"]
-      refute result["endpoints"]["oauthRegistrationEndpoint"]
-      refute result["endpoints"]["oauthTokenEndpoint"]
     end
   end
 

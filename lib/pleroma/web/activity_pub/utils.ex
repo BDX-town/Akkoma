@@ -76,18 +76,6 @@ defmodule Pleroma.Web.ActivityPub.Utils do
       [params["to"], params["cc"], params["bto"], params["bcc"]]
       |> Enum.any?(&label_in_collection?(label, &1))
 
-  @spec unaddressed_message?(map()) :: boolean()
-  def unaddressed_message?(params),
-    do:
-      [params["to"], params["cc"], params["bto"], params["bcc"]]
-      |> Enum.all?(&is_nil(&1))
-
-  @spec recipient_in_message(User.t(), User.t(), map()) :: boolean()
-  def recipient_in_message(%User{ap_id: ap_id} = recipient, %User{} = actor, params),
-    do:
-      label_in_message?(ap_id, params) || unaddressed_message?(params) ||
-        User.following?(recipient, actor)
-
   defp extract_list(target) when is_binary(target), do: [target]
   defp extract_list(lst) when is_list(lst), do: lst
   defp extract_list(_), do: []
@@ -114,7 +102,8 @@ defmodule Pleroma.Web.ActivityPub.Utils do
         "https://www.w3.org/ns/activitystreams",
         "#{Endpoint.url()}/schemas/litepub-0.1.jsonld",
         %{
-          "@language" => "und"
+          "@language" => "und",
+          "htmlMfm" => "https://w3id.org/fep/c16b#htmlMfm"
         }
       ]
     }

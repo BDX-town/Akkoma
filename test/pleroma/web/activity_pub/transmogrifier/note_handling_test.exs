@@ -17,6 +17,8 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
   import Mock
   import Pleroma.Factory
 
+  require Pleroma.Constants
+
   setup_all do
     Tesla.Mock.mock_global(fn env -> apply(HttpRequestMock, :request, [env]) end)
     :ok
@@ -274,6 +276,32 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
       {:ok, %Activity{data: data, local: false}} = Transmogrifier.handle_incoming(data)
 
       refute is_nil(data["cc"])
+    end
+
+    test "it fixes Pleroma unlisted" do
+      # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
+      user1 = insert(:user)
+      user2 = insert(:user)
+
+      data =
+        File.read!("test/fixtures/mastodon-post-activity.json")
+        |> Jason.decode!()
+        |> Map.put("actor", user1.ap_id)
+        |> Map.put("cc", [])
+        |> Map.put("to", [user2.ap_id, user1.follower_address])
+
+      object =
+        data["object"]
+        |> Map.put("attributedTo", user1.ap_id)
+        |> Map.put("cc", [Pleroma.Constants.as_public()])
+        |> Map.put("to", [user2.ap_id, user1.follower_address])
+        |> Map.put("id", user1.ap_id <> "/activities/12345678")
+
+      data = Map.put(data, "object", object)
+
+      {:ok, %Activity{} = activity} = Transmogrifier.handle_incoming(data)
+
+      assert "unlisted" == Pleroma.Web.ActivityPub.Visibility.get_visibility(activity)
     end
 
     test "it strips internal likes" do
@@ -653,12 +681,18 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
   describe "set_replies/1" do
     setup do: clear_config([:activitypub, :note_replies_output_limit], 2)
 
-    test "returns unmodified object if activity doesn't have self-replies" do
+    test "still provides reply collection id even if activity doesn't have replies yet" do
       data = Jason.decode!(File.read!("test/fixtures/mastodon-post-activity.json"))
-      assert Transmogrifier.set_replies(data) == data
+      modified = Transmogrifier.set_replies(data)
+
+      refute data["replies"]
+      assert modified["replies"]
+      assert match?(%{"id" => "http" <> _, "totalItems" => 0}, modified["replies"])
+      # first page should be omitted if there are no entries anyway
+      refute modified["replies"]["first"]
     end
 
-    test "sets `replies` collection with a limited number of self-replies" do
+    test "sets `replies` collection with a limited number of replies, preferring oldest" do
       [user, another_user] = insert_list(2, :user)
 
       {:ok, %{id: id1} = activity} = CommonAPI.post(user, %{status: "1"})
@@ -687,7 +721,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
       object = Object.normalize(activity, fetch: false)
       replies_uris = Enum.map([self_reply1, self_reply2], fn a -> a.object.data["id"] end)
 
-      assert %{"type" => "Collection", "items" => ^replies_uris} =
+      assert %{"type" => "OrderedCollection", "first" => %{"orderedItems" => ^replies_uris}} =
                Transmogrifier.set_replies(object.data)["replies"]
     end
   end

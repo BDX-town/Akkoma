@@ -343,8 +343,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
        ) do
     count =
       user
-      |> User.get_follow_requests()
-      |> length()
+      |> User.get_follow_requests_query()
+      |> Pleroma.Repo.aggregate(:count)
 
     data
     |> Kernel.put_in([:follow_requests_count], count)

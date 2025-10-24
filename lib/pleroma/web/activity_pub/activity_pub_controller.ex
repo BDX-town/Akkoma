@@ -22,8 +22,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   alias Pleroma.Web.Plugs.EnsureAuthenticatedPlug
   alias Pleroma.Web.Plugs.FederatingPlug
 
-  require Logger
-
   action_fallback(:errors)
 
   @federating_only_actions [:internal_fetch, :relay, :relay_following, :relay_followers]
@@ -64,7 +62,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   Render the user's AP data
   WARNING: we cannot actually check if the request has a fragment! so let's play defensively
   - IF we have a valid signature, serve full user
-  - IF we do not, and authorized_fetch_mode is enabled, serve the key only
+  - IF we do not, and authorized_fetch_mode is enabled, serve only the key and bare minimum info
   - OTHERWISE, serve the full actor (since we don't need to worry about the signature)
   """
   def user(%{assigns: %{valid_signature: true}} = conn, params) do
@@ -96,7 +94,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
       conn
       |> put_resp_content_type("application/activity+json")
       |> put_view(UserView)
-      |> render("keys.json", %{user: user})
+      |> render("stripped_user.json", %{user: user})
     else
       nil -> {:error, :not_found}
       %{local: false} -> {:error, :not_found}
@@ -115,6 +113,35 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
       |> put_resp_content_type("application/activity+json")
       |> put_view(ObjectView)
       |> render("object.json", object: object)
+    else
+      {:visible?, false} -> {:error, :not_found}
+      nil -> {:error, :not_found}
+    end
+  end
+
+  def object_replies(%{assigns: assigns, query_params: params} = conn, _all_params) do
+    object_ap_id = conn.path_info |> Enum.reverse() |> tl() |> Enum.reverse()
+    object_ap_id = Endpoint.url() <> "/" <> Enum.join(object_ap_id, "/")
+
+    # Most other API params are converted to atoms by OpenAPISpex 3.x
+    # and therefore helper functions assume atoms. For consistency,
+    # also convert our params to atoms here.
+    params =
+      params
+      |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
+      |> Map.put(:object_ap_id, object_ap_id)
+      |> Map.put(:order_asc, true)
+      |> Map.put(:conn, conn)
+
+    with %Object{} = object <- Object.get_cached_by_ap_id(object_ap_id),
+         user <- Map.get(assigns, :user, nil),
+         {_, true} <- {:visible?, Visibility.visible_for_user?(object, user)} do
+      conn
+      |> maybe_skip_cache(user)
+      |> set_cache_ttl_for(object)
+      |> put_resp_content_type("application/activity+json")
+      |> put_view(ObjectView)
+      |> render("object_replies.json", render_params: params)
     else
       {:visible?, false} -> {:error, :not_found}
       nil -> {:error, :not_found}
@@ -287,8 +314,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
       |> put_view(UserView)
       |> render("activity_collection_page.json", %{
         activities: activities,
-        pagination: ControllerHelper.get_pagination_fields(conn, activities),
-        iri: "#{user.ap_id}/outbox"
+        pagination: ControllerHelper.get_pagination_fields(conn, activities)
       })
     end
   end
@@ -304,8 +330,6 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
 
   def inbox(%{assigns: %{valid_signature: true}} = conn, %{"nickname" => nickname} = params) do
     with %User{} = recipient <- User.get_cached_by_nickname(nickname),
-         {:ok, %User{} = actor} <- User.get_or_fetch_by_ap_id(params["actor"]),
-         true <- Utils.recipient_in_message(recipient, actor, params),
          params <- Utils.maybe_splice_recipient(recipient.ap_id, params) do
       Federator.incoming_ap_doc(params)
       json(conn, "ok")
@@ -370,8 +394,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
     |> put_view(UserView)
     |> render("activity_collection_page.json", %{
       activities: activities,
-      pagination: ControllerHelper.get_pagination_fields(conn, activities),
-      iri: "#{user.ap_id}/inbox"
+      pagination: ControllerHelper.get_pagination_fields(conn, activities)
     })
   end
 

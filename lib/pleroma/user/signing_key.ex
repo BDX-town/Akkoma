@@ -136,24 +136,22 @@ defmodule Pleroma.User.SigningKey do
     {:error, "key not found"}
   end
 
-  @spec private_key(User.t()) :: {:ok, binary()} | {:error, String.t()}
+  @spec private_key_binary(__MODULE__) :: {:ok, binary()} | {:error, String.t()}
   @doc """
-  Given a user, return the private key for that user in binary format.
+  Given a key, return the corresponding private key in binary format.
   """
-  def private_key(%User{} = user) do
-    case Repo.preload(user, :signing_key) do
-      %{signing_key: %__MODULE__{private_key: private_key_pem}} ->
-        key =
-          private_key_pem
-          |> :public_key.pem_decode()
-          |> hd()
-          |> :public_key.pem_entry_decode()
+  def private_key_binary(%__MODULE__{private_key: private_key_pem}) do
+    key =
+      private_key_pem
+      |> :public_key.pem_decode()
+      |> hd()
+      |> :public_key.pem_entry_decode()
 
-        {:ok, key}
+    {:ok, key}
+  end
 
-      _ ->
-        {:error, "key not found"}
-    end
+  def private_key_binary(%__MODULE__{} = key) do
+    {:error, "key #{key.key_id} has no private key"}
   end
 
   @spec get_or_fetch_by_key_id(String.t()) :: {:ok, __MODULE__} | {:error, String.t()}
@@ -208,7 +206,12 @@ defmodule Pleroma.User.SigningKey do
     else
       e ->
         Logger.debug("Failed to fetch remote key: #{inspect(e)}")
-        {:error, "Could not fetch key"}
+
+        case e do
+          {:error, e} -> {:error, e}
+          {:reject, reason} -> {:reject, reason}
+          _ -> {:error, {"Could not fetch key", e}}
+        end
     end
   end
 

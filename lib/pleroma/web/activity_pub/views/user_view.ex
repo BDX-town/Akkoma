@@ -8,6 +8,7 @@ defmodule Pleroma.Web.ActivityPub.UserView do
   alias Pleroma.Object
   alias Pleroma.Repo
   alias Pleroma.User
+  alias Pleroma.Web.ActivityPub.CollectionViewHelper
   alias Pleroma.Web.ActivityPub.ObjectView
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.ActivityPub.Utils
@@ -16,9 +17,8 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   import Ecto.Query
 
-  def render("endpoints.json", %{user: %User{nickname: nil, local: true} = _user}) do
-    %{"sharedInbox" => url(~p"/inbox")}
-  end
+  defp maybe_put(map, _, nil), do: map
+  defp maybe_put(map, k, v), do: Map.put(map, k, v)
 
   def render("endpoints.json", %{user: %User{local: true} = _user}) do
     %{
@@ -39,13 +39,11 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     %{
       "id" => user.ap_id,
       "type" => "Application",
-      "following" => "#{user.ap_id}/following",
-      "followers" => "#{user.ap_id}/followers",
       "inbox" => "#{user.ap_id}/inbox",
       "outbox" => "#{user.ap_id}/outbox",
-      "name" => "Pleroma",
+      "name" => "Akkoma",
       "summary" =>
-        "An internal service actor for this Pleroma instance.  No user-serviceable parts inside.",
+        "An internal service actor for this Akkoma instance.  No user-serviceable parts inside.",
       "url" => user.ap_id,
       "manuallyApprovesFollowers" => false,
       "publicKey" => %{
@@ -56,15 +54,14 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "endpoints" => endpoints,
       "invisible" => User.invisible?(user)
     }
+    |> maybe_put("following", user.following_address)
+    |> maybe_put("followers", user.follower_address)
+    |> maybe_put("preferredUsername", user.nickname)
     |> Map.merge(Utils.make_json_ld_header())
   end
 
-  # the instance itself is not a Person, but instead an Application
-  def render("user.json", %{user: %User{nickname: nil} = user}),
+  def render("user.json", %{user: %User{actor_type: "Application"} = user}),
     do: render("service.json", %{user: user})
-
-  def render("user.json", %{user: %User{nickname: "internal." <> _} = user}),
-    do: render("service.json", %{user: user}) |> Map.put("preferredUsername", user.nickname)
 
   def render("user.json", %{user: user}) do
     public_key =
@@ -116,7 +113,10 @@ defmodule Pleroma.Web.ActivityPub.UserView do
     |> Map.merge(Utils.make_json_ld_header())
   end
 
-  def render("keys.json", %{user: user}) do
+  # For unauthenticated requests when authfetch is enabled.
+  # Still serve the key and the bare minimum of required fields
+  # to avoid being stuck in an infinite "cannot verify" loop with remotes.
+  def render("stripped_user.json", %{user: user}) do
     {:ok, public_key} = User.SigningKey.public_key_pem(user)
 
     %{
@@ -125,7 +125,14 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         "id" => User.SigningKey.key_id_of_local_user(user),
         "owner" => user.ap_id,
         "publicKeyPem" => public_key
-      }
+      },
+      # REQUIRED fields per AP spec
+      "inbox" => "#{user.ap_id}/inbox",
+      "outbox" => "#{user.ap_id}/outbox",
+      # allow type-based processing
+      "type" => user.actor_type,
+      # since Mastodon requires a WebFinger address for all users, this seems like a good idea
+      "preferredUsername" => user.nickname
     }
     |> Map.merge(Utils.make_json_ld_header())
   end
@@ -145,7 +152,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         0
       end
 
-    collection(following, "#{user.ap_id}/following", page, showing_items, total)
+    CollectionViewHelper.collection_page_offset(
+      following,
+      "#{user.ap_id}/following",
+      page,
+      showing_items,
+      total
+    )
     |> Map.merge(Utils.make_json_ld_header())
   end
 
@@ -170,7 +183,12 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "totalItems" => total,
       "first" =>
         if showing_items do
-          collection(following, "#{user.ap_id}/following", 1, !user.hide_follows)
+          CollectionViewHelper.collection_page_offset(
+            following,
+            "#{user.ap_id}/following",
+            1,
+            !user.hide_follows
+          )
         else
           "#{user.ap_id}/following?page=1"
         end
@@ -193,7 +211,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
         0
       end
 
-    collection(followers, "#{user.ap_id}/followers", page, showing_items, total)
+    CollectionViewHelper.collection_page_offset(
+      followers,
+      "#{user.ap_id}/followers",
+      page,
+      showing_items,
+      total
+    )
     |> Map.merge(Utils.make_json_ld_header())
   end
 
@@ -217,7 +241,13 @@ defmodule Pleroma.Web.ActivityPub.UserView do
       "type" => "OrderedCollection",
       "first" =>
         if showing_items do
-          collection(followers, "#{user.ap_id}/followers", 1, showing_items, total)
+          CollectionViewHelper.collection_page_offset(
+            followers,
+            "#{user.ap_id}/followers",
+            1,
+            showing_items,
+            total
+          )
         else
           "#{user.ap_id}/followers?page=1"
         end
@@ -237,22 +267,15 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   def render("activity_collection_page.json", %{
         activities: activities,
-        iri: iri,
         pagination: pagination
       }) do
-    collection =
+    display_items =
       Enum.map(activities, fn activity ->
         {:ok, data} = Transmogrifier.prepare_outgoing(activity.data)
         data
       end)
 
-    %{
-      "type" => "OrderedCollectionPage",
-      "partOf" => iri,
-      "orderedItems" => collection
-    }
-    |> Map.merge(Utils.make_json_ld_header())
-    |> Map.merge(pagination)
+    CollectionViewHelper.collection_page_keyset(display_items, pagination)
   end
 
   def render("featured.json", %{
@@ -278,27 +301,6 @@ defmodule Pleroma.Web.ActivityPub.UserView do
 
   defp maybe_put_total_items(map, true, total) do
     Map.put(map, "totalItems", total)
-  end
-
-  def collection(collection, iri, page, show_items \\ true, total \\ nil) do
-    offset = (page - 1) * 10
-    items = Enum.slice(collection, offset, 10)
-    items = Enum.map(items, fn user -> user.ap_id end)
-    total = total || length(collection)
-
-    map = %{
-      "id" => "#{iri}?page=#{page}",
-      "type" => "OrderedCollectionPage",
-      "partOf" => iri,
-      "totalItems" => total,
-      "orderedItems" => if(show_items, do: items, else: [])
-    }
-
-    if offset < total do
-      Map.put(map, "next", "#{iri}?page=#{page + 1}")
-    else
-      map
-    end
   end
 
   defp maybe_make_image(func, key, user) do

@@ -1,7 +1,7 @@
 # How to activate Akkoma in-database configuration
 ## Explanation
 
-The configuration of Akkoma (and Pleroma) has traditionally been managed with a config file, e.g. `config/prod.secret.exs`. This method requires a restart of the application for any configuration changes to take effect. We have made it possible to control most settings in the AdminFE interface after running a migration script.
+The configuration of Akkoma (and Pleroma) has traditionally been managed with a config file, e.g. `config/prod.secret.exs`. This method requires a restart of the application for any configuration changes to take effect. We have made it possible to control most settings in the admin-fe interface after running a migration script.
 
 ## Migration to database config
 
@@ -74,7 +74,7 @@ The configuration of Akkoma (and Pleroma) has traditionally been managed with a 
   config :pleroma, configurable_from_database: true
   ```
 
-5. Restart your instance and you can now access the Settings tab in AdminFE.
+5. Restart your instance and you can now access the Settings tab in admin-fe.
 
 
 ## Reverting back from database config
@@ -130,7 +130,7 @@ You can clear the database config with the following command:
 Additionally, every time you migrate the configuration to the database the config table is automatically truncated to ensure a clean migration.
 
 ### Manually removing a setting
-If you encounter a situation where the server cannot run properly because of an invalid setting in the database and this is preventing you from accessing AdminFE, you can manually remove the offending setting if you know which one it is.
+If you encounter a situation where the server cannot run properly because of an invalid setting in the database and this is preventing you from accessing admin-fe, you can manually remove the offending setting if you know which one it is.
 
 e.g., here is an example showing a the removal of the `config :pleroma, :instance` settings:
 

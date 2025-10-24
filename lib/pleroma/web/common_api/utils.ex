@@ -56,48 +56,70 @@ defmodule Pleroma.Web.CommonAPI.Utils do
     {Enum.map(participation.recipients, & &1.ap_id), []}
   end
 
-  def get_to_and_cc(%{visibility: visibility} = draft) when visibility in ["public", "local"] do
-    to =
-      case visibility do
-        "public" -> [Pleroma.Constants.as_public() | draft.mentions]
-        "local" -> [Utils.as_local_public() | draft.mentions]
+  def get_to_and_cc(%{visibility: visibility} = draft) do
+    # If the OP is a DM already, add the implicit actor
+    mentions =
+      if visibility == "direct" && draft.in_reply_to && Visibility.is_direct?(draft.in_reply_to) do
+        Enum.uniq([draft.in_reply_to.data["actor"] | draft.mentions])
+      else
+        draft.mentions
       end
 
-    cc = [draft.user.follower_address]
-
-    if draft.in_reply_to do
-      {Enum.uniq([draft.in_reply_to.data["actor"] | to]), cc}
-    else
-      {to, cc}
-    end
+    get_to_and_cc_for_visibility(
+      visibility,
+      draft.user.follower_address,
+      draft.in_reply_to && draft.in_reply_to.data["actor"],
+      mentions
+    )
   end
 
-  def get_to_and_cc(%{visibility: "unlisted"} = draft) do
-    to = [draft.user.follower_address | draft.mentions]
-    cc = [Pleroma.Constants.as_public()]
+  def get_to_and_cc_for_visibility("public", follower_collection, parent_actor, mentions) do
+    scope_addr = Pleroma.Constants.as_public()
 
-    if draft.in_reply_to do
-      {Enum.uniq([draft.in_reply_to.data["actor"] | to]), cc}
-    else
-      {to, cc}
-    end
+    to =
+      if parent_actor,
+        do: Enum.uniq([parent_actor, scope_addr | mentions]),
+        else: [scope_addr | mentions]
+
+    {to, [follower_collection]}
   end
 
-  def get_to_and_cc(%{visibility: "private"} = draft) do
-    {to, cc} = get_to_and_cc(struct(draft, visibility: "direct"))
-    {[draft.user.follower_address | to], cc}
+  def get_to_and_cc_for_visibility("local", follower_collection, parent_actor, mentions) do
+    recipients =
+      if parent_actor,
+        do: Enum.uniq([parent_actor | mentions]),
+        else: mentions
+
+    to = [
+      Utils.as_local_public()
+      | Enum.filter(recipients, fn addr ->
+          String.starts_with?(addr, Pleroma.Web.Endpoint.url() <> "/")
+        end)
+    ]
+
+    {to, [follower_collection]}
   end
 
-  def get_to_and_cc(%{visibility: "direct"} = draft) do
-    # If the OP is a DM already, add the implicit actor.
-    if draft.in_reply_to && Visibility.is_direct?(draft.in_reply_to) do
-      {Enum.uniq([draft.in_reply_to.data["actor"] | draft.mentions]), []}
-    else
-      {draft.mentions, []}
-    end
+  def get_to_and_cc_for_visibility("unlisted", follower_collection, parent_actor, mentions) do
+    to =
+      if parent_actor,
+        do: Enum.uniq([parent_actor, follower_collection | mentions]),
+        else: [follower_collection | mentions]
+
+    {to, [Pleroma.Constants.as_public()]}
   end
 
-  def get_to_and_cc(%{visibility: {:list, _}, mentions: mentions}), do: {mentions, []}
+  def get_to_and_cc_for_visibility("private", follower_collection, _, mentions) do
+    {[follower_collection | mentions], []}
+  end
+
+  def get_to_and_cc_for_visibility("direct", _, _, mentions) do
+    {mentions, []}
+  end
+
+  def get_to_and_cc_for_visibility({:list, _}, _, _, mentions) do
+    {mentions, []}
+  end
 
   def get_addressed_users(_, to) when is_list(to) do
     User.get_ap_ids_by_nicknames(to)
@@ -242,13 +264,13 @@ defmodule Pleroma.Web.CommonAPI.Utils do
 
   def add_attachments(text, attachments) do
     attachment_text = Enum.map(attachments, &build_attachment_link/1)
-    Enum.join([text | attachment_text], "<br>")
+    Enum.join([text | attachment_text], "<br/>")
   end
 
   defp build_attachment_link(%{"url" => [%{"href" => href} | _]} = attachment) do
     name = attachment["name"] || URI.decode(Path.basename(href))
     href = MediaProxy.url(href)
-    "<a href=\"#{href}\" class='attachment'>#{shortname(name)}</a>"
+    "<a href=\"#{href}\">#{shortname(name)}</a>"
   end
 
   defp build_attachment_link(_), do: ""

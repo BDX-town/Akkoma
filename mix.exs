@@ -4,11 +4,10 @@ defmodule Pleroma.Mixfile do
   def project do
     [
       app: :pleroma,
-      version: version("3.15.2"),
+      version: version("3.16.0"),
       elixir: "~> 1.14.1 or ~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
-      elixirc_options: [warnings_as_errors: warnings_as_errors()],
       xref: [exclude: [:eldap]],
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -90,8 +89,6 @@ defmodule Pleroma.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp warnings_as_errors, do: System.get_env("CI") == "true"
-
   # Specifies OAuth dependencies.
   defp oauth_deps do
     oauth_strategy_packages =
@@ -162,7 +159,7 @@ defmodule Pleroma.Mixfile do
       {:linkify, "~> 0.5.3"},
       {:http_signatures,
        git: "https://akkoma.dev/AkkomaGang/http_signatures.git",
-       ref: "d44c43d66758c6a73eaa4da9cffdbee0c5da44ae"},
+       ref: "c98a4df78b0dfde15ff1c8b9ce434440be619bf7"},
       {:telemetry, "~> 1.2"},
       {:telemetry_poller, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},
@@ -174,7 +171,9 @@ defmodule Pleroma.Mixfile do
       {:pot, "~> 1.0"},
       {:ex_const, "~> 0.2"},
       {:plug_static_index_html, "~> 1.0.0"},
-      {:flake_id, "~> 0.1.0"},
+      {:flake_id,
+       git: "https://akkoma.dev/AkkomaGang/flake_id.git",
+       ref: "5a68513f7e7353706e788781eff6e56bf00bb41b"},
       {:concurrent_limiter,
        git: "https://akkoma.dev/AkkomaGang/concurrent-limiter.git",
        ref: "a9e0b3d64574bdba761f429bb4fba0cf687b3338"},
@@ -233,6 +232,13 @@ defmodule Pleroma.Mixfile do
       copyright: &add_copyright/1,
       "copyright.bump": &bump_copyright/1
     ]
+    |> then(fn a ->
+      if System.get_env("CI") == "true" do
+        [{:compile, "compile --warnings-as-errors"} | a]
+      else
+        a
+      end
+    end)
   end
 
   # Builds a version string made of:

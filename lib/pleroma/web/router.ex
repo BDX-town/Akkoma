@@ -146,13 +146,11 @@ defmodule Pleroma.Web.Router do
   end
 
   pipeline :optional_http_signature do
-    plug(Pleroma.Web.Plugs.EnsureUserPublicKeyPlug)
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
   end
 
   pipeline :http_signature do
-    plug(Pleroma.Web.Plugs.EnsureUserPublicKeyPlug)
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
     plug(Pleroma.Web.Plugs.EnsureHTTPSignaturePlug)
@@ -826,6 +824,7 @@ defmodule Pleroma.Web.Router do
     get("/users/:nickname/outbox", ActivityPubController, :outbox)
     post("/users/:nickname/inbox", ActivityPubController, :inbox)
     get("/users/:nickname/collections/featured", ActivityPubController, :pinned)
+    get("/objects/:uuid/replies", ActivityPubController, :object_replies)
   end
 
   scope "/relay", Pleroma.Web.ActivityPub do

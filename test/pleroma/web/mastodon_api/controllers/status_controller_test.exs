@@ -162,6 +162,57 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
       )
     end
 
+    test "API paramater overrides user status_ttl_days default" do
+      user = insert(:user, status_ttl_days: 1)
+      %{user: _user, token: _token, conn: conn} = oauth_access(["write:statuses"], user: user)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "aa chikichiki banban",
+          "expires_in" => 2 * 60 * 60
+        })
+
+      assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
+
+      activity = Activity.get_by_id_with_object(id)
+      {:ok, expires_at, _} = DateTime.from_iso8601(activity.data["expires_at"])
+
+      expiry_delay = Timex.diff(expires_at, DateTime.utc_now(), :minutes)
+      assert(expiry_delay in [120, 119])
+
+      assert_enqueued(
+        worker: Pleroma.Workers.PurgeExpiredActivity,
+        args: %{activity_id: id},
+        scheduled_at: expires_at
+      )
+    end
+
+    test "API paramater can disable expiry from user-level status_ttl_default" do
+      user = insert(:user, status_ttl_days: 1)
+      %{user: _user, token: _token, conn: conn} = oauth_access(["write:statuses"], user: user)
+
+      conn =
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> post("/api/v1/statuses", %{
+          "status" => "aa chikichiki banban",
+          "expires_in" => 0
+        })
+
+      assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
+
+      activity = Activity.get_by_id_with_object(id)
+
+      refute activity.data["expires_at"]
+
+      refute_enqueued(
+        worker: Pleroma.Workers.PurgeExpiredActivity,
+        args: %{activity_id: id}
+      )
+    end
+
     test "it fails to create a status if `expires_in` is less or equal than an hour", %{
       conn: conn
     } do
@@ -804,6 +855,18 @@ defmodule Pleroma.Web.MastodonAPI.StatusControllerTest do
 
     assert %{"id" => id} = json_response_and_validate_schema(conn, 200)
     assert id == to_string(activity.id)
+  end
+
+  test "rejects non-Create, non-Announce activity id" do
+    %{conn: conn} = oauth_access(["read:statuses"])
+    activity = insert(:note_activity)
+    like_user = insert(:user)
+
+    {:ok, like_activity} = CommonAPI.favorite(like_user, activity.id)
+
+    conn = get(conn, "/api/v1/statuses/#{like_activity.id}")
+
+    assert %{"error" => _} = json_response_and_validate_schema(conn, 404)
   end
 
   defp local_and_remote_activities do

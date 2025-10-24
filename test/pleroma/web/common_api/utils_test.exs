@@ -34,7 +34,7 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
       clear_config([Pleroma.Upload, :filename_display_max_length], len)
 
       expected =
-        "<br><a href=\"#{URI.encode(name)}\" class='attachment'>#{String.slice(name, 0..len)}…</a>"
+        "<br/><a href=\"#{URI.encode(name)}\">#{String.slice(name, 0..len)}…</a>"
 
       assert Utils.add_attachments("", [attachment]) == expected
     end
@@ -45,7 +45,7 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
     } do
       clear_config([Pleroma.Upload, :filename_display_max_length], 0)
 
-      expected = "<br><a href=\"#{URI.encode(name)}\" class='attachment'>#{name}</a>"
+      expected = "<br/><a href=\"#{URI.encode(name)}\">#{name}</a>"
 
       assert Utils.add_attachments("", [attachment]) == expected
     end
@@ -647,7 +647,7 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
                [attachment],
                true
              ) == {
-               "test<br><a href=\"SakuraPM.png\" class='attachment'>SakuraPM.png</a>",
+               "test<br/><a href=\"SakuraPM.png\">SakuraPM.png</a>",
                [],
                ["tags"]
              }

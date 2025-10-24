@@ -44,9 +44,6 @@ defmodule Pleroma.Application do
     # every time the application is restarted, so we disable module
     # conflicts at runtime
     Code.compiler_options(ignore_module_conflict: true)
-    # Disable warnings_as_errors at runtime, it breaks Phoenix live reload
-    # due to protocol consolidation warnings
-    Code.compiler_options(warnings_as_errors: false)
     Config.Holder.save_default()
     Pleroma.HTML.compile_scrubbers()
     Pleroma.Config.Oban.warn()
@@ -71,7 +68,6 @@ defmodule Pleroma.Application do
         http_children() ++
         [
           Pleroma.Stats,
-          Pleroma.JobQueueMonitor,
           {Majic.Pool, [name: Pleroma.MajicPool, pool_size: Config.get([:majic_pool, :size], 2)]},
           {Oban, Config.get(Oban)},
           Pleroma.Web.Endpoint,
@@ -161,7 +157,6 @@ defmodule Pleroma.Application do
       build_cachex("banned_urls", default_ttl: :timer.hours(24 * 30), limit: 5_000),
       build_cachex("translations", default_ttl: :timer.hours(24 * 30), limit: 2500),
       build_cachex("instances", default_ttl: :timer.hours(24), ttl_interval: 1000, limit: 2500),
-      build_cachex("request_signatures", default_ttl: :timer.hours(24 * 30), limit: 3000),
       build_cachex("rel_me", default_ttl: :timer.hours(24 * 30), limit: 300),
       build_cachex("host_meta", default_ttl: :timer.minutes(120), limit: 5000),
       build_cachex("http_backoff", default_ttl: :timer.hours(24 * 30), limit: 10000)
@@ -262,23 +257,11 @@ defmodule Pleroma.Application do
   end
 
   defp http_children do
-    proxy_url = Config.get([:http, :proxy_url])
-    proxy = Pleroma.HTTP.AdapterHelper.format_proxy(proxy_url)
-    pool_size = Config.get([:http, :pool_size], 10)
-    pool_timeout = Config.get([:http, :pool_timeout], 60_000)
-    connection_timeout = Config.get([:http, :conn_max_idle_time], 10_000)
-
     :public_key.cacerts_load()
 
     config =
-      [:http, :adapter]
-      |> Config.get([])
-      |> Pleroma.HTTP.AdapterHelper.add_pool_size(pool_size)
-      |> Pleroma.HTTP.AdapterHelper.maybe_add_proxy_pool(proxy)
-      |> Pleroma.HTTP.AdapterHelper.ensure_ipv6()
-      |> Pleroma.HTTP.AdapterHelper.add_default_conn_max_idle_time(connection_timeout)
-      |> Pleroma.HTTP.AdapterHelper.add_default_pool_max_idle_time(pool_timeout)
-      |> Keyword.put(:name, MyFinch)
+      Config.get([:http, :adapter])
+      |> Pleroma.HTTP.AdapterHelper.options()
 
     [{Finch, config}]
   end

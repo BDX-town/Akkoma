@@ -326,7 +326,9 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
         pinned_at: nil
       },
       akkoma: %{
-        source: HTML.filter_tags(object_data["content"])
+        source: HTML.filter_tags(object_data["content"]),
+        in_reply_to_apid: nil,
+        quote_apid: nil
       },
       quote_id: nil,
       quote: nil
@@ -417,6 +419,17 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
     assert status.in_reply_to_id == to_string(note.id)
   end
 
+  test "a reply to an unavailable post" do
+    note = insert(:note, data: %{"inReplyTo" => "https://example.org/404"})
+    activity = insert(:note_activity, note: note)
+
+    status = StatusView.render("show.json", %{activity: activity})
+
+    assert status.in_reply_to_id == "_"
+    assert status.in_reply_to_account_id == "_"
+    assert status.akkoma.in_reply_to_apid == "https://example.org/404"
+  end
+
   test "a quote" do
     note = insert(:note_activity)
     user = insert(:user)
@@ -433,12 +446,14 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
   end
 
   test "a quote that we can't resolve" do
-    note = insert(:note_activity, quoteUri: "oopsie")
+    note = insert(:note, data: %{"quoteUri" => "oopsie"})
+    activity = insert(:note_activity, note: note)
 
-    status = StatusView.render("show.json", %{activity: note})
+    status = StatusView.render("show.json", %{activity: activity})
 
-    assert is_nil(status.quote_id)
     assert is_nil(status.quote)
+    assert status.quote_id == "_"
+    assert status.akkoma.quote_apid == "oopsie"
   end
 
   test "a quote from a user we block" do
@@ -507,6 +522,44 @@ defmodule Pleroma.Web.MastodonAPI.StatusViewTest do
 
     assert length(mentions) == 1
     assert mention.url == recipient_ap_id
+  end
+
+  test "inlined images are media proxied" do
+    clear_config([:media_proxy, :enabled], true)
+    user = insert(:user)
+
+    {:ok, activity} =
+      CommonAPI.post(user, %{
+        content_type: "text/html",
+        status: "hii <img src=\"https://example.org/a.png\" />"
+      })
+
+    activity = Repo.get(Activity, activity.id)
+    status = StatusView.render("show.json", activity: activity)
+
+    assert_schema(status, "Status", Pleroma.Web.ApiSpec.spec())
+
+    assert status[:content] =~
+             ~r/^hii <img src="https?:\/\/[^\/]+\/proxy\/[^\/]+\/aHR0cHM6Ly9leGFtcGxlLm9yZy9hLnBuZw\/a.png"/
+  end
+
+  test "inlined images using network-path ref are media proxied" do
+    clear_config([:media_proxy, :enabled], true)
+    user = insert(:user)
+
+    {:ok, activity} =
+      CommonAPI.post(user, %{
+        content_type: "text/html",
+        status: "hii <img src=\"//example.org/a.png\" />"
+      })
+
+    activity = Repo.get(Activity, activity.id)
+    status = StatusView.render("show.json", activity: activity)
+
+    assert_schema(status, "Status", Pleroma.Web.ApiSpec.spec())
+
+    assert status[:content] =~
+             ~r/^hii <img src="https?:\/\/[^\/]+\/proxy\/[^\/]+\/aHR0cHM6Ly9leGFtcGxlLm9yZy9hLnBuZw\/a.png"/
   end
 
   test "create mentions from the 'tag' field" do

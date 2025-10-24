@@ -22,8 +22,6 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   alias Pleroma.Web.ActivityPub.ObjectValidators.CommonFixes
   alias Pleroma.Web.Federator
 
-  import Ecto.Query
-
   require Pleroma.Constants
   require Logger
 
@@ -118,7 +116,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
         Map.put(map, field, new_fval)
       else
-        map
+        Map.put(map, field, [])
       end
 
     normalise_addressing_public_list(map, fields)
@@ -207,6 +205,19 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   end
 
   def fix_in_reply_to(object, _options), do: object
+
+  # Pleroma sends unlisted posts without addressing public scope in the enclosing activity
+  # but we only use the ativity for access perm cheks, see:
+  # https://git.pleroma.social/pleroma/pleroma/-/issues/3323
+  defp fix_create_visibility(%{"type" => "Create", "object" => %{} = object} = activity) do
+    activity
+    |> Map.put("to", object["to"])
+    |> Map.put("cc", object["cc"])
+    |> Map.put("bto", object["bto"])
+    |> Map.put("bcc", object["bcc"])
+  end
+
+  defp fix_create_visibility(activity), do: activity
 
   def fix_quote_url(object, options \\ [])
 
@@ -513,6 +524,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
        )
        when objtype in ~w{Question Answer Audio Video Event Article Note Page} do
     fetch_options = Keyword.put(options, :depth, (options[:depth] || 0) + 1)
+    data = fix_create_visibility(data)
 
     object =
       data["object"]
@@ -672,6 +684,16 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
+  defp handle_incoming_normalised(
+         %{
+           "type" => "Undo",
+           "object" => %{"type" => "Delete"}
+         },
+         _options
+       ) do
+    {:error, :unsupported}
+  end
+
   # For Undos that don't have the complete object attached, try to find it in our database.
   defp handle_incoming_normalised(
          %{
@@ -713,7 +735,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     end
   end
 
-  defp handle_incoming_normalised(_, _), do: :error
+  defp handle_incoming_normalised(_, _), do: {:error, :unsupported}
 
   @spec get_obj_helper(String.t(), Keyword.t()) :: {:ok, Object.t()} | nil
   def get_obj_helper(id, options \\ []) do
@@ -766,48 +788,23 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def set_quote_url(obj), do: obj
 
   @doc """
-  Serialized Mastodon-compatible `replies` collection containing _self-replies_.
-  Based on Mastodon's ActivityPub::NoteSerializer#replies.
+  Inline first page of the `replies` collection,
+  containing any replies in chronological order.
   """
   def set_replies(obj_data) do
-    replies_uris =
-      with limit when limit > 0 <-
-             Pleroma.Config.get([:activitypub, :note_replies_output_limit], 0),
-           %Object{} = object <- Object.get_cached_by_ap_id(obj_data["id"]) do
-        object
-        |> Object.self_replies()
-        |> select([o], fragment("?->>'id'", o.data))
-        |> limit(^limit)
-        |> Repo.all()
-      else
-        _ -> []
-      end
-
-    set_replies(obj_data, replies_uris)
+    with obj_ap_id when obj_ap_id != nil <- obj_data["id"],
+         limit when limit > 0 <-
+           Pleroma.Config.get([:activitypub, :note_replies_output_limit], 0),
+         collection <-
+           Pleroma.Web.ActivityPub.ObjectView.render("object_replies.json", %{
+             render_params: %{object_ap_id: obj_data["id"], limit: limit, skip_ap_ctx: true}
+           }) do
+      Map.put(obj_data, "replies", collection)
+    else
+      0 -> Map.put(obj_data, "replies", obj_data["id"] <> "/replies")
+      _ -> obj_data
+    end
   end
-
-  defp set_replies(obj, []) do
-    obj
-  end
-
-  defp set_replies(obj, replies_uris) do
-    replies_collection = %{
-      "type" => "Collection",
-      "items" => replies_uris
-    }
-
-    Map.merge(obj, %{"replies" => replies_collection})
-  end
-
-  def replies(%{"replies" => %{"first" => %{"items" => items}}}) when not is_nil(items) do
-    items
-  end
-
-  def replies(%{"replies" => %{"items" => items}}) when not is_nil(items) do
-    items
-  end
-
-  def replies(_), do: []
 
   # Prepares the object of an outgoing create activity.
   def prepare_object(object) do

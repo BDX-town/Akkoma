@@ -144,7 +144,8 @@ defmodule Pleroma.Web.ActivityPub.UtilsTest do
                "https://www.w3.org/ns/activitystreams",
                "http://localhost:4001/schemas/litepub-0.1.jsonld",
                %{
-                 "@language" => "und"
+                 "@language" => "und",
+                 "htmlMfm" => "https://w3id.org/fep/c16b#htmlMfm"
                }
              ]
            }
@@ -329,74 +330,6 @@ defmodule Pleroma.Web.ActivityPub.UtilsTest do
       assert {:ok, %Activity{} = activity} = CommonAPI.block(user1, user2)
 
       assert Utils.fetch_latest_block(user1, user2) == activity
-    end
-  end
-
-  describe "recipient_in_message/3" do
-    test "returns true when recipient in `to`" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      assert Utils.recipient_in_message(recipient, actor, %{"to" => recipient.ap_id})
-
-      assert Utils.recipient_in_message(
-               recipient,
-               actor,
-               %{"to" => [recipient.ap_id], "cc" => ""}
-             )
-    end
-
-    test "returns true when recipient in `cc`" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      assert Utils.recipient_in_message(recipient, actor, %{"cc" => recipient.ap_id})
-
-      assert Utils.recipient_in_message(
-               recipient,
-               actor,
-               %{"cc" => [recipient.ap_id], "to" => ""}
-             )
-    end
-
-    test "returns true when recipient in `bto`" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      assert Utils.recipient_in_message(recipient, actor, %{"bto" => recipient.ap_id})
-
-      assert Utils.recipient_in_message(
-               recipient,
-               actor,
-               %{"bcc" => "", "bto" => [recipient.ap_id]}
-             )
-    end
-
-    test "returns true when recipient in `bcc`" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      assert Utils.recipient_in_message(recipient, actor, %{"bcc" => recipient.ap_id})
-
-      assert Utils.recipient_in_message(
-               recipient,
-               actor,
-               %{"bto" => "", "bcc" => [recipient.ap_id]}
-             )
-    end
-
-    test "returns true when message without addresses fields" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      assert Utils.recipient_in_message(recipient, actor, %{"bccc" => recipient.ap_id})
-
-      assert Utils.recipient_in_message(
-               recipient,
-               actor,
-               %{"btod" => "", "bccc" => [recipient.ap_id]}
-             )
-    end
-
-    test "returns false" do
-      recipient = insert(:user)
-      actor = insert(:user)
-      refute Utils.recipient_in_message(recipient, actor, %{"to" => "ap_id"})
     end
   end
 

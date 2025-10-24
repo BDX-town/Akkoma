@@ -181,20 +181,22 @@ config :tesla, :adapter, {Tesla.Adapter.Finch, name: MyFinch}
 
 # Configures http settings, upstream proxy etc.
 config :pleroma, :http,
-  pool_timeout: :timer.seconds(5),
+  pool_timeout: :timer.seconds(60),
   receive_timeout: :timer.seconds(15),
   proxy_url: nil,
+  protocols: [:http1],
   user_agent: :default,
   pool_size: 10,
-  adapter: [],
-  # see: https://hexdocs.pm/finch/Finch.html#start_link/1
-  pool_max_idle_time: :timer.seconds(30)
+  adapter: []
 
 config :pleroma, :instance,
   name: "Akkoma",
   email: "example@example.com",
   notify_email: "noreply@example.com",
+  # allowed to use HTML (if short_description is set)
   description: "Akkoma: The cooler fediverse server",
+  # only plain text (defaults to description)
+  short_description: nil,
   background_image: "/images/city.jpg",
   instance_thumbnail: "/instance/thumbnail.jpeg",
   limit: 5_000,
@@ -251,7 +253,7 @@ config :pleroma, :instance,
   registration_reason_length: 500,
   external_user_synchronization: true,
   extended_nickname_format: true,
-  cleanup_attachments: false,
+  cleanup_attachments: true,
   cleanup_attachments_delay: 1800,
   multi_factor_authentication: [
     totp: [
@@ -578,6 +580,7 @@ config :pleroma, Oban,
     remote_fetcher: 2,
     attachments_cleanup: 1,
     new_users_digest: 1,
+    digest_emails: 1,
     mute_expire: 5,
     search_indexing: 10,
     nodeinfo_fetcher: 1,
@@ -598,7 +601,7 @@ config :pleroma, Oban,
 config :pleroma, :workers,
   retries: [
     federator_incoming: 5,
-    federator_outgoing: 5,
+    federator_outgoing: 6,
     search_indexing: 2,
     rich_media_backfill: 1
   ],

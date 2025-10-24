@@ -47,8 +47,7 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   end
 
   def create(user, params) do
-    user
-    |> new(params)
+    new(user, params)
     |> status()
     |> summary()
     |> with_valid(&attachments/1)
@@ -236,6 +235,7 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
       end
 
     emoji = Map.merge(emoji, summary_emoji)
+    media_type = Utils.get_content_type(draft.params[:content_type])
     {:ok, note_data, _meta} = Builder.note(draft)
 
     object =
@@ -243,13 +243,17 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
       |> Map.put("emoji", emoji)
       |> Map.put("source", %{
         "content" => draft.status,
-        "mediaType" => Utils.get_content_type(draft.params[:content_type])
+        "mediaType" => media_type
       })
+      |> maybe_put("htmlMfm", true, media_type == "text/x.misskeymarkdown")
       |> Map.put("generator", draft.params[:generator])
       |> Map.put("contentMap", draft.content_map)
 
     %__MODULE__{draft | object: object}
   end
+
+  defp maybe_put(map, key, value, true), do: map |> Map.put(key, value)
+  defp maybe_put(map, _, _, _), do: map
 
   defp preview?(draft) do
     preview? = Pleroma.Web.Utils.Params.truthy_param?(draft.params[:preview])

@@ -286,11 +286,6 @@ defmodule Pleroma.User do
   defdelegate following_ap_ids(user), to: FollowingRelationship
   defdelegate get_follow_requests_query(user), to: FollowingRelationship
 
-  def get_follow_requests(user) do
-    get_follow_requests_query(user)
-    |> Repo.all()
-  end
-
   defdelegate search(query, opts \\ []), to: User.Search
 
   @doc """
@@ -720,13 +715,6 @@ defmodule Pleroma.User do
   # Used to auto-register LDAP accounts which won't have a password hash stored locally
   def register_changeset_ldap(struct, params = %{password: password})
       when is_nil(password) do
-    params =
-      if Map.has_key?(params, :email) do
-        Map.put_new(params, :email, params[:email])
-      else
-        params
-      end
-
     struct
     |> cast(params, [
       :name,
@@ -2022,12 +2010,13 @@ defmodule Pleroma.User do
   Creates an internal service actor by URI if missing.
   Optionally takes nickname for addressing.
   """
-  @spec get_or_create_service_actor_by_ap_id(String.t(), String.t()) :: User.t() | nil
-  def get_or_create_service_actor_by_ap_id(uri, nickname) do
+  @spec get_or_create_service_actor_by_ap_id(String.t(), String.t(), Keyword.t()) ::
+          User.t() | nil
+  def get_or_create_service_actor_by_ap_id(uri, nickname, create_opts \\ []) do
     {_, user} =
       case get_cached_by_ap_id(uri) do
         nil ->
-          with {:error, %{errors: errors}} <- create_service_actor(uri, nickname) do
+          with {:error, %{errors: errors}} <- create_service_actor(uri, nickname, create_opts) do
             Logger.error("Cannot create service actor: #{uri}/.\n#{inspect(errors)}")
             {:error, nil}
           end
@@ -2049,15 +2038,27 @@ defmodule Pleroma.User do
     |> update_and_set_cache()
   end
 
-  @spec create_service_actor(String.t(), String.t()) ::
+  @spec create_service_actor(String.t(), String.t(), Keyword.t()) ::
           {:ok, User.t()} | {:error, Ecto.Changeset.t()}
-  defp create_service_actor(uri, nickname) do
+  defp create_service_actor(uri, nickname, opts) do
     %User{
       invisible: true,
       local: true,
       ap_id: uri,
       nickname: nickname,
-      follower_address: uri <> "/followers"
+      actor_type: "Application",
+      follower_address:
+        if Keyword.get(opts, :followable, false) do
+          uri <> "/followers"
+        else
+          nil
+        end,
+      following_address:
+        if Keyword.get(opts, :following, false) do
+          uri <> "/following"
+        else
+          nil
+        end
     }
     |> change
     |> put_private_key()

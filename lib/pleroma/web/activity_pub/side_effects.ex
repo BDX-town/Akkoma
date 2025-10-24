@@ -19,14 +19,13 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
   alias Pleroma.Web.ActivityPub.Builder
   alias Pleroma.Web.ActivityPub.Pipeline
   alias Pleroma.Web.ActivityPub.Utils
+  alias Pleroma.Web.ActivityPub.Visibility
   alias Pleroma.Web.Push
   alias Pleroma.Web.Streamer
   alias Pleroma.Workers.PollWorker
 
   require Pleroma.Constants
   require Logger
-
-  @logger Pleroma.Config.get([:side_effects, :logger], Logger)
 
   @behaviour Pleroma.Web.ActivityPub.SideEffects.Handling
 
@@ -204,7 +203,9 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
       {:ok, _user} = ActivityPub.increase_note_count_if_public(user, object)
       {:ok, _user} = ActivityPub.update_last_status_at_if_public(user, object)
 
-      if in_reply_to = object.data["type"] != "Answer" && object.data["inReplyTo"] do
+      if in_reply_to =
+           object.data["type"] != "Answer" && Visibility.is_public?(object.data) &&
+             object.data["inReplyTo"] do
         Object.increase_replies_count(in_reply_to)
       end
 
@@ -307,7 +308,8 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
 
             {:ok, user} = ActivityPub.decrease_note_count_if_public(user, deleted_object)
 
-            if in_reply_to = deleted_object.data["inReplyTo"] do
+            if in_reply_to =
+                 Visibility.is_public?(deleted_object.data) && deleted_object.data["inReplyTo"] do
               Object.decrease_replies_count(in_reply_to)
             end
 
@@ -316,7 +318,7 @@ defmodule Pleroma.Web.ActivityPub.SideEffects do
             :ok
           else
             {:actor, _} ->
-              @logger.error("The object doesn't have an actor: #{inspect(deleted_object)}")
+              Logger.error("The object doesn't have an actor: #{inspect(deleted_object)}")
               :no_object_actor
           end
 

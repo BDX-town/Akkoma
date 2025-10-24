@@ -1,8 +1,13 @@
 labels:
   platform: linux/amd64
 
-depends_on:
-  - test
+when:
+  event:
+    - push
+    - tag
+  branch:
+    - develop
+    - stable
 
 variables:
   - &scw-secrets
@@ -13,14 +18,6 @@ variables:
     SCW_DEFAULT_ORGANIZATION_ID:
       from_secret: SCW_DEFAULT_ORGANIZATION_ID
   - &setup-hex "mix local.hex --force && mix local.rebar --force"
-  - &on-release
-    when:
-      event:
-        - push
-        - tag
-      branch:
-        - develop
-        - stable
   - &on-stable
     when:
       event:
@@ -28,10 +25,6 @@ variables:
         - tag
       branch:
         - stable
-  - &on-pr-open
-    when:
-      event:
-        - pull_request
 
   - &tag-build "export BUILD_TAG=$${CI_COMMIT_TAG:-\"$CI_COMMIT_BRANCH\"} && export PLEROMA_BUILD_BRANCH=$BUILD_TAG"
 
@@ -42,7 +35,6 @@ steps:
   # Canonical amd64
   debian-bookworm:
     image: hexpm/elixir:1.15.4-erlang-26.0.2-debian-bookworm-20230612
-    <<: *on-release
     environment:
       MIX_ENV: prod
       DEBIAN_FRONTEND: noninteractive
@@ -58,7 +50,6 @@ steps:
 
   release-debian-bookworm:
     image: akkoma/releaser
-    <<: *on-release
     environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64.zip
@@ -71,7 +62,6 @@ steps:
 
   debian-bullseye:
     image: hexpm/elixir:1.15.4-erlang-26.0.2-debian-bullseye-20230612
-    <<: *on-release
     environment:
       MIX_ENV: prod
       DEBIAN_FRONTEND: noninteractive
@@ -88,7 +78,6 @@ steps:
 
   release-debian-bullseye:
     image: akkoma/releaser
-    <<: *on-release
     environment: *scw-secrets
     commands:
       - export SOURCE=akkoma-amd64-debian-bullseye.zip

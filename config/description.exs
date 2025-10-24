@@ -298,7 +298,7 @@ config :pleroma, :config_description, [
         key: :ssl,
         label: "Use SSL",
         type: :boolean,
-        description: "Use Implicit SSL/TLS. e.g. port 465"
+        description: "Use Implicit SSL/TLS. e.g. port 465; default: true"
       },
       %{
         group: {:subgroup, Swoosh.Adapters.SMTP},
@@ -566,7 +566,16 @@ config :pleroma, :config_description, [
         key: :description,
         type: :string,
         description:
-          "The instance's description. It can be seen in nodeinfo and `/api/v1/instance`",
+          "The instance's description. It may use HTML and can be seen in `/api/v1/instance` and nodeifno if no short description is set",
+        suggestions: [
+          "Very cool instance"
+        ]
+      },
+      %{
+        key: :short_description,
+        type: :string,
+        description:
+          "A brief instance description. It must be plain text and can be seen in `/api/v1/instance` and nodeinfo",
         suggestions: [
           "Very cool instance"
         ]
@@ -3241,8 +3250,7 @@ config :pleroma, :config_description, [
         suggestions: [
           Pleroma.Web.Preload.Providers.Instance,
           Pleroma.Web.Preload.Providers.User,
-          Pleroma.Web.Preload.Providers.Timelines,
-          Pleroma.Web.Preload.Providers.StatusNet
+          Pleroma.Web.Preload.Providers.Timelines
         ]
       }
     ]

@@ -128,6 +128,26 @@ defmodule Pleroma.Web.CommonAPITest do
       assert {:ok, :no_activity} == CommonAPI.unblock(blocker, blocked)
       refute User.blocks?(blocker, blocked)
     end
+
+    test "it unblocks and does not federate if outgoing blocks are disabled" do
+      clear_config([:instance, :federating], true)
+      clear_config([:activitypub, :outgoing_blocks], false)
+
+      blocked = insert(:user)
+      blocker = insert(:user)
+
+      with_mock Pleroma.Web.Federator,
+        publish: fn _ -> nil end do
+        assert {:ok, block} = CommonAPI.block(blocker, blocked)
+        assert block.local
+        assert User.blocks?(blocker, blocked)
+
+        assert {:ok, unblock} = CommonAPI.unblock(blocker, blocked)
+        assert unblock.local
+        refute User.blocks?(blocker, blocked)
+        assert_not_called(Pleroma.Web.Federator.publish(:_))
+      end
+    end
   end
 
   describe "deletion" do
@@ -532,6 +552,34 @@ defmodule Pleroma.Web.CommonAPITest do
       assert activity.data["bcc"] == [list.ap_id]
       assert activity.recipients == [list.ap_id, user.ap_id]
       assert activity.data["listMessage"] == list.ap_id
+    end
+
+    test "it adds the htmlMFM term to MFM posts and properly processes it" do
+      user = insert(:user)
+
+      assert {:ok,
+              %Pleroma.Activity{
+                object: %Pleroma.Object{
+                  data: %{
+                    "content" => content,
+                    "source" => %{
+                      "content" => source_content,
+                      "mediaType" => "text/x.misskeymarkdown"
+                    },
+                    "htmlMfm" => html_mfm
+                  }
+                }
+              }} =
+               CommonAPI.post(user, %{
+                 status: "<p class='scrub-this'>$[spin 13:37]</p>",
+                 content_type: "text/x.misskeymarkdown"
+               })
+
+      assert html_mfm == true
+      assert content =~ "mfm-spin"
+      assert content =~ "13:37"
+      refute content =~ "scrub-this"
+      assert source_content == "<p class='scrub-this'>$[spin 13:37]</p>"
     end
 
     test "it returns error when status is empty and no attachments" do
