@@ -67,7 +67,7 @@ defmodule Pleroma.UserRelationship do
       target_id: target.id
     })
     |> Repo.insert(
-      on_conflict: {:replace_all_except, [:id, :inserted_at]},
+      on_conflict: :nothing,
       conflict_target: [:source_id, :relationship_type, :target_id],
       returning: true
     )
