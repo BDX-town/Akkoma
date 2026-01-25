@@ -1218,24 +1218,10 @@ Loads JSON generated from `config/descriptions.exs`.
 
 ## `GET /api/v1/pleroma/admin/stats`
 
-### Stats
+**DEPRECATED; DO NOT USE**!!
 
-- Query Params:
-  - *optional* `instance`: **string** instance hostname (without protocol) to get stats for
-- Example: `https://mypleroma.org/api/v1/pleroma/admin/stats?instance=lain.com`
-
-- Response:
-
-```json
-{
-  "status_visibility": {
-    "direct": 739,
-    "private": 9,
-    "public": 17,
-    "unlisted": 14
-  }
-}
-```
+Returned information is only stubbed out.
+The endpoint will be removed entirely in an upcoming release.
 
 ## `GET /api/v1/pleroma/admin/oauth_app`
 

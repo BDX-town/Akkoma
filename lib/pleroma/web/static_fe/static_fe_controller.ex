@@ -12,7 +12,7 @@ defmodule Pleroma.Web.StaticFE.StaticFEController do
   alias Pleroma.Web.ActivityPub.Visibility
   alias Pleroma.Web.Metadata
 
-  plug(:put_layout, :static_fe)
+  plug(:put_layout, html: {Pleroma.Web.LayoutView, :static_fe})
   plug(:assign_id)
 
   @page_keys ["max_id", "min_id", "limit", "since_id", "order"]

@@ -5,17 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
+## 2025.12
+
 ### REMOVED
+- DEPRECATE `/api/v1/timelines/direct`.  
+    Technically this was already deprecated, given we extend mastodon 2.7.2 API
+    and Mastodon already deprecated it in 2.6.0 before removing it in 3.0.0.
+    But now we have concrete plans to remove this endpoint in a coming release.
+    The few remaining useres should switch to the conversations API.
+- DEPRECATE `config :pleroma, :instance, skip_thread_containment: false`.
+  It is due to be removed in one of the next releases if no strong arguments for keeping it are brought up.
+  It is already semi-broken for large threads and conflicts with pending optimisation and cleanup work.
+- support for `exclude_visibilities` in timeline and notification endpoints has been dropped
+- support for list visibility / list addressing has been dropped due to lack of usage, maintenance burden and redundancy with the still supported explicit-addressing feature
+- support for conversations addressing has been dropped due to lack of usage, maintenance burden and being mostly redundant with explicit addressing
+- per-visibility status counters have been dropped from `/api/v1/pleroma/admin/stats`
+  due to unreasonably perf costs added on most database operations.
+  For now, the response still contains the fields, but with stubbed-out values.
 
 ### Added
 - status responses include two new fields for ActivityPub cross-referencing: `akkoma.quote_apid` and `akkoma.in_reply_to_apid`
+- attempting to reply to an already deleted post will return an error
+  (in akkoma-fe the error will be shown and your draft message retained so you can decide
+   for yourself whether to discard it or copy and repost as a, now intentional, new thread)
+- the notification endpoint now supports the `types` parameter for filtering added in vanilla Mastodon
+- the mute endpoint now supports the `duration` parameter added in vanilla Mastodon
+  (fixes temporary mutes created via e.g. Husky)
 
 ### Fixed
 - replies and quotes to unresolvable posts now fill out IDs for replied to
   status, user or quoted status with a 404-ing ID to make them recognisable as
   replies/quotes instead of pretending they’re root posts
+- querying a status using the ID of a non-post AP activity no longer displays
+  a duplicate of the post referenced by said activity with mangled author information
+- fix users being able to interact (like, emoji react, ...) with posts they cannot access
+- fix AP fetches of local non-Create, non-Undo activities exposing the raw, unsanitised content of the referenced object
+- the above two combined allowed local users to gain access to private posts
+  of user they do not follow, but follow a follower of the author.
+  (remote users and other scenarios were to our knowledge not able to achieve this due to other restrictions)
+- fix RSS and Atom feeds of hashtag timelines potentially exposing more information than Mastodon API when restricting unauthenticated API access
+- fix mentioning and sending DMs to users with non-ASCII-alphanumerical usernames
+- correctly hide and show inlined fallback links for quotes from Mastodon instances
+- API requests with multiple unsupported parameters now will ignore all of them up to a certain limit.
+  If there are too many unsupported parameters this is indicated in the returned error message.
+- expose generic type of attachment via Masto API if remote did not send a full MIME type but indicated a generic one
+  (the \*oma-specific full mime type field in the API response remains generic however, since we don't have this info)
+- add back the default banner image we advertise in Masto API
+- correctly redirect `/users/:nickname.rss` to the RSS instead of Atom feed
 
 ### Changed
+- depreacted the `included_types` parameter in the notification endpoint; replaced by `types`
+- depreacted the `expires_in` parameter in the mute endpoint; replaced by `duration`
+- optimised emoji addition and removal
+- emoji reloading now happens asynchronously so you won't run into timeout issues with many emoji and/or a slow disk
+- upgraded all of our dependencies; this should reduce issues when running akoma with OTP28
+- prefer "summary" over "name" for the attachment alt text of incoming ActivityPub documents;
+  this fixes alt text federation from GtS and Honk
+- slightly improve index overhead for the users table
 
 
 ## 2025.10

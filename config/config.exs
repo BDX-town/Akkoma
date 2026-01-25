@@ -51,6 +51,11 @@ config :pleroma, Pleroma.Repo,
   queue_target: 20_000,
   migration_lock: nil
 
+# password hash strength
+config :argon2_elixir,
+  t_cost: 8,
+  parallelism: 2
+
 config :pleroma, Pleroma.Captcha,
   enabled: true,
   seconds_valid: 300,
@@ -776,7 +781,9 @@ config :pleroma, :frontends,
   available: %{
     "pleroma-fe" => %{
       "name" => "pleroma-fe",
-      "git" => "https://akkoma.dev/AkkomaGang/pleroma-fe",
+      "blind_trust" => true,
+      "git" => "https://akkoma.dev/AkkomaGang/akkoma-fe",
+      "bugtracker" => "https://akkoma.dev/AkkomaGang/akkoma-fe/issues",
       "build_url" =>
         "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/akkoma-fe.zip",
       "ref" => "stable",
@@ -785,7 +792,9 @@ config :pleroma, :frontends,
     # Mastodon-Fe cannot be set as a primary - this is only here so we can update this seperately
     "mastodon-fe" => %{
       "name" => "mastodon-fe",
+      "blind_trust" => true,
       "git" => "https://akkoma.dev/AkkomaGang/masto-fe",
+      "bugtracker" => "https://akkoma.dev/AkkomaGang/masto-fe/issues",
       "build_url" =>
         "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/masto-fe.zip",
       "build_dir" => "distribution",
@@ -793,7 +802,9 @@ config :pleroma, :frontends,
     },
     "fedibird-fe" => %{
       "name" => "fedibird-fe",
+      "blind_trust" => true,
       "git" => "https://akkoma.dev/AkkomaGang/fedibird-fe",
+      "bugtracker" => "https://akkoma.dev/AkkomaGang/fedibird-fe/issues",
       "build_url" =>
         "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/fedibird-fe.zip",
       "build_dir" => "distribution",
@@ -801,7 +812,9 @@ config :pleroma, :frontends,
     },
     "admin-fe" => %{
       "name" => "admin-fe",
+      "blind_trust" => true,
       "git" => "https://akkoma.dev/AkkomaGang/admin-fe",
+      "bugtracker" => "https://akkoma.dev/AkkomaGang/admin-fe/issues",
       "build_url" =>
         "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ref}/admin-fe.zip",
       "ref" => "stable"
@@ -809,10 +822,31 @@ config :pleroma, :frontends,
     # For developers - enables a swagger frontend to view the openapi spec
     "swagger-ui" => %{
       "name" => "swagger-ui",
+      "blind_trust" => true,
       "git" => "https://github.com/swagger-api/swagger-ui",
+      # API spec definitions are part of the backend (and the swagger-ui build outdated)
+      "bugtracker" => "https://akkoma.dev/AkkomaGang/akkoma/issues",
       "build_url" => "https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/swagger-ui.zip",
       "build_dir" => "dist",
       "ref" => "stable"
+    },
+    # Third-party frontends
+    "pleroma-fe-vanilla" => %{
+      "name" => "pleroma-fe-vanilla",
+      "git" => "https://git.pleroma.social/pleroma/pleroma-fe/",
+      "build_url" =>
+        "https://git.pleroma.social/pleroma/pleroma-fe/-/jobs/artifacts/${ref}/download?job=build",
+      "ref" => "develop",
+      "build_dir" => "dist",
+      "bugtracker" => "https://git.pleroma.social/pleroma/pleroma-fe/-/issues"
+    },
+    "pl-fe" => %{
+      "name" => "pl-fe",
+      "git" => "https://codeberg.org/mkljczk/pl-fe",
+      "build_url" => "https://pl.mkljczk.pl/pl-fe.zip",
+      "ref" => "develop",
+      "build_dir" => ".",
+      "bugtracker" => "https://codeberg.org/mkljczk/pl-fe/issues"
     }
   }
 

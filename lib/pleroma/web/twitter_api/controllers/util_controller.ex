@@ -4,6 +4,7 @@
 
 defmodule Pleroma.Web.TwitterAPI.UtilController do
   use Pleroma.Web, :controller
+  use Gettext, backend: Pleroma.Web.Gettext
 
   require Logger
 
@@ -64,7 +65,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
           nickname: nick,
           avatar: nil,
           error:
-            Pleroma.Web.Gettext.dpgettext(
+            dpgettext(
               "static_pages",
               "remote follow error message - user not found",
               "Could not find user"
@@ -92,7 +93,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
           status_id: id,
           avatar: nil,
           error:
-            Pleroma.Web.Gettext.dpgettext(
+            dpgettext(
               "static_pages",
               "status interact error message - status not found",
               "Could not find status"
@@ -120,7 +121,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
           nickname: nick,
           avatar: nil,
           error:
-            Pleroma.Web.Gettext.dpgettext(
+            dpgettext(
               "static_pages",
               "remote follow error message - unknown error",
               "Something went wrong."
@@ -141,7 +142,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
           status_id: id,
           avatar: nil,
           error:
-            Pleroma.Web.Gettext.dpgettext(
+            dpgettext(
               "static_pages",
               "status interact error message - unknown error",
               "Something went wrong."

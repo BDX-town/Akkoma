@@ -541,6 +541,70 @@ defmodule Pleroma.Web.ActivityPub.TransmogrifierTest do
                }
              } = prepared["object"]
     end
+
+    test "Correctly handles Undo activities" do
+      blocked = insert(:user)
+      blocker = insert(:user, local: true)
+
+      blocked_ap_id = blocked.ap_id
+      blocker_ap_id = blocker.ap_id
+
+      {:ok, %Activity{} = block_activity} = CommonAPI.block(blocker, blocked)
+      {:ok, %Activity{} = undo_activity} = CommonAPI.unblock(blocker, blocked)
+      {:ok, data} = Transmogrifier.prepare_outgoing(undo_activity.data)
+
+      block_ap_id = block_activity.data["id"]
+      assert is_binary(block_ap_id)
+
+      assert match?(
+               %{
+                 "@context" => [_ | _],
+                 "type" => "Undo",
+                 "id" => "http://localhost" <> _,
+                 "actor" => ^blocker_ap_id,
+                 "object" => ^block_ap_id,
+                 "to" => [^blocked_ap_id],
+                 "cc" => [],
+                 "bto" => [],
+                 "bcc" => []
+               },
+               data
+             )
+    end
+
+    test "Correctly handles EmojiReact activities" do
+      user = insert(:user, local: true)
+      note_activity = insert(:note_activity)
+
+      user_ap_id = user.ap_id
+      user_followers = user.follower_address
+      note_author = note_activity.data["actor"]
+      note_ap_id = note_activity.data["object"]
+
+      assert is_binary(note_author)
+      assert is_binary(note_ap_id)
+
+      {:ok, react_activity} = CommonAPI.react_with_emoji(note_activity.id, user, "🐈")
+      {:ok, data} = Transmogrifier.prepare_outgoing(react_activity.data)
+
+      assert match?(
+               %{
+                 "@context" => [_ | _],
+                 "type" => "EmojiReact",
+                 "actor" => ^user_ap_id,
+                 "to" => [^user_followers, ^note_author],
+                 "cc" => ["https://www.w3.org/ns/activitystreams#Public"],
+                 "bto" => [],
+                 "bcc" => [],
+                 "content" => "🐈",
+                 "context" => "2hu",
+                 "id" => "http://localhost" <> _,
+                 "object" => ^note_ap_id,
+                 "tag" => []
+               },
+               data
+             )
+    end
   end
 
   describe "actor rewriting" do

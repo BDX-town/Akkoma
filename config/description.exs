@@ -62,6 +62,18 @@ frontend_options = [
     description: "The directory inside the zip file "
   },
   %{
+    key: "blind_trust",
+    label: "Blindly trust frontend devs?",
+    type: :boolean,
+    description: "Do NOT change this unless you’re really sure"
+  },
+  %{
+    key: "bugtracker",
+    label: "Bug tracker",
+    type: :string,
+    description: "Where to report bugs (for third-party FEs)"
+  },
+  %{
     key: "custom-http-headers",
     label: "Custom HTTP headers",
     type: {:list, :string},

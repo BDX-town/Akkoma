@@ -339,6 +339,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
           }
           |> Maps.put_if_present("mediaType", media_type)
           |> Maps.put_if_present("name", data["name"])
+          |> Maps.put_if_present("summary", data["summary"])
           |> Maps.put_if_present("blurhash", data["blurhash"])
         else
           nil
@@ -904,6 +905,10 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
       |> Map.delete("bcc")
 
     {:ok, data}
+  end
+
+  def prepare_outgoing(%{"type" => "Update", "object" => %{}} = data) do
+    raise "Requested to serve an Update for non-updateable object type:  #{inspect(data)}"
   end
 
   def prepare_outgoing(%{"type" => "Announce", "actor" => ap_id, "object" => object_id} = data) do

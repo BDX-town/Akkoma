@@ -7,7 +7,9 @@ defmodule Pleroma.User.Backup do
 
   import Ecto.Changeset
   import Ecto.Query
-  import Pleroma.Web.Gettext
+
+  use Gettext,
+    backend: Pleroma.Web.Gettext
 
   require Pleroma.Constants
 

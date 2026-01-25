@@ -7,7 +7,9 @@ defmodule Pleroma.ConfigDB do
 
   import Ecto.Changeset
   import Ecto.Query, only: [select: 3, from: 2]
-  import Pleroma.Web.Gettext
+
+  use Gettext,
+    backend: Pleroma.Web.Gettext
 
   alias __MODULE__
   alias Pleroma.Repo

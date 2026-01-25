@@ -42,7 +42,7 @@ defmodule Pleroma.Web.AkkomaAPI.TranslationController do
 
     @cachex.fetch!(:translations_cache, "languages:#{module}}", fn _ ->
       with {:ok, source_languages, dest_languages} <- module.languages() do
-        {:ok, source_languages, dest_languages}
+        {:commit, {:ok, source_languages, dest_languages}}
       else
         {:error, err} -> {:ignore, {:error, err}}
       end

@@ -94,7 +94,7 @@ defmodule Pleroma.HTTP.Backoff do
         log_ratelimit(status, host, timestamp)
         ttl = Timex.diff(timestamp, DateTime.utc_now(), :seconds)
         # we will cache the host for 5 minutes
-        @cachex.put(@backoff_cache, host, true, ttl: ttl)
+        @cachex.put(@backoff_cache, host, true, expire: ttl)
         {:error, :ratelimit}
 
       _ ->

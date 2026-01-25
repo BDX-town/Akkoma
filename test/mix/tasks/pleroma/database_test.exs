@@ -522,7 +522,6 @@ defmodule Mix.Tasks.Pleroma.DatabaseTest do
                ["conversation_participation_recipient_ships"],
                ["conversation_participations"],
                ["conversations"],
-               ["counter_cache"],
                ["data_migration_failed_ids"],
                ["data_migrations"],
                ["deliveries"],

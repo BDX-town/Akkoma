@@ -53,25 +53,11 @@ defmodule Pleroma.Web.ActivityPub.Visibility do
     !is_public?(activity) && !is_private?(activity)
   end
 
-  def is_list?(%{data: %{"listMessage" => _}}), do: true
-  def is_list?(_), do: false
-
   @spec visible_for_user?(Object.t() | Activity.t() | nil, User.t() | nil) :: boolean()
   def visible_for_user?(%Object{data: %{"type" => "Tombstone"}}, _), do: false
   def visible_for_user?(%Activity{actor: ap_id}, %User{ap_id: ap_id}), do: true
   def visible_for_user?(%Object{data: %{"actor" => ap_id}}, %User{ap_id: ap_id}), do: true
   def visible_for_user?(nil, _), do: false
-  def visible_for_user?(%Activity{data: %{"listMessage" => _}}, nil), do: false
-
-  def visible_for_user?(
-        %Activity{data: %{"listMessage" => list_ap_id}} = activity,
-        %User{} = user
-      ) do
-    user.ap_id in activity.data["to"] ||
-      list_ap_id
-      |> Pleroma.List.get_by_ap_id()
-      |> Pleroma.List.member?(user)
-  end
 
   def visible_for_user?(%{__struct__: module} = message, nil)
       when module in [Activity, Object] do
@@ -140,9 +126,6 @@ defmodule Pleroma.Web.ActivityPub.Visibility do
 
       object.data["directMessage"] == true ->
         "direct"
-
-      is_binary(object.data["listMessage"]) ->
-        "list"
 
       length(cc) > 0 ->
         "private"

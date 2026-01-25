@@ -144,7 +144,7 @@ defmodule Pleroma.Object do
     Logger.debug("Backtrace: #{inspect(Process.info(:erlang.self(), :current_stacktrace))}")
   end
 
-  def normalize(_, options \\ [fetch: false, id_only: false])
+  def normalize(_, options \\ [fetch: false])
 
   # If we pass an Activity to Object.normalize(), we can try to use the preloaded object.
   # Use this whenever possible, especially when walking graphs in an O(N) loop!
@@ -173,9 +173,6 @@ defmodule Pleroma.Object do
 
   def normalize(ap_id, options) when is_binary(ap_id) do
     cond do
-      Keyword.get(options, :id_only) ->
-        ap_id
-
       Keyword.get(options, :fetch) ->
         case Fetcher.fetch_object_from_id(ap_id, options) do
           {:ok, object} -> object

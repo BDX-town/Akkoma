@@ -22,6 +22,27 @@ defmodule Pleroma.Config.DeprecationWarnings do
      "\n* `config :pleroma, :instance, :quarantined_instances` is now covered by `:pleroma, :mrf_simple, :reject`"}
   ]
 
+  def check_skip_thread_containment do
+    # The default in config/config.exs is "true" since 593b8b1e6a8502cca9bf5559b8bec86f172bbecb
+    # but when the default is retrieved in code the fallback is still "false"
+    uses_thread_visibility_filtering = !Config.get([:instance, :skip_thread_containment], false)
+
+    if uses_thread_visibility_filtering do
+      Logger.warning("""
+      !!!DEPRECATION WARNING!!!
+      Your config is explicitly enabling thread-based visibility containment by setting the below:
+      ```
+      config :pleroma, :instance, skip_thread_containment: false
+      ```
+
+      This feature comes with a very high performance overhead and is considered for removal.
+      If you actually need or strongly prefer keeping it, speak up NOW(!) by filing a ticket at
+         https://akkoma.dev/AkkomaGang/akkoma/issues
+      Complaints only after the removal happened are much less likely to have any effect.
+      """)
+    end
+  end
+
   def check_exiftool_filter do
     filters = Config.get([Pleroma.Upload]) |> Keyword.get(:filters, [])
 
@@ -222,7 +243,8 @@ defmodule Pleroma.Config.DeprecationWarnings do
       check_http_adapter(),
       check_uploader_base_url_set(),
       check_uploader_base_url_is_not_base_domain(),
-      check_exiftool_filter()
+      check_exiftool_filter(),
+      check_skip_thread_containment()
     ]
     |> Enum.reduce(:ok, fn
       :ok, :ok -> :ok

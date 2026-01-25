@@ -14,8 +14,6 @@ by the administrator. It is available under `/api/v1/timelines/bubble`.
 
 Adding the parameter `with_muted=true` to the timeline queries will also return activities by muted (not by blocked!) users.
 
-Adding the parameter `exclude_visibilities` to the timeline queries will exclude the statuses with the given visibilities. The parameter accepts an array of visibility types (`public`, `unlisted`, `private`, `direct`), e.g., `exclude_visibilities[]=direct&exclude_visibilities[]=private`.
-
 Adding the parameter `reply_visibility` to the public, bubble or home timelines queries will filter replies. Possible values: without parameter (default) shows all replies, `following` - replies directed to you or users you follow, `self` - replies directed to you.
 
 Adding the parameter `instance=lain.com` to the public timeline will show only statuses originating from `lain.com` (or any remote instance).
@@ -32,7 +30,7 @@ Home, public, hashtag & list timelines further accept:
 
 ## Statuses
 
-- `visibility`: has additional possible values `list` and `local` (for local-only statuses)
+- `visibility`: has additional possible value `local` (for local-only statuses)
 - `emoji_reactions`: additional field since Akkoma 3.2.0; identical to `pleroma/emoji_reactions`
 
 Has these additional fields under the `pleroma` object:
@@ -60,6 +58,7 @@ The `GET /api/v1/statuses/:id/source` endpoint additionally has the following at
 Has these additional fields in `params`:
 
 - `expires_in`: the number of seconds the posted activity should expire in.
+    **Deprecated**; replaced by Mastodon-compatible `duration`
 
 ## Media Attachments
 
@@ -90,7 +89,6 @@ The `id` parameter can also be the `nickname` of the user. This only works in th
 - `with_muted`: include statuses/reactions from muted accounts
 - `exclude_reblogs`: exclude reblogs
 - `exclude_replies`: exclude replies
-- `exclude_visibilities`: exclude visibilities
 
 Endpoints which accept `with_relationships` parameter:
 
@@ -191,8 +189,8 @@ The `type` value is `pleroma:report`
 
 Accepts additional parameters:
 
-- `exclude_visibilities`: will exclude the notifications for activities with the given visibilities. The parameter accepts an array of visibility types (`public`, `unlisted`, `private`, `direct`). Usage example: `GET /api/v1/notifications?exclude_visibilities[]=direct&exclude_visibilities[]=private`.
 - `include_types`: will include the notifications for activities with the given types. The parameter accepts an array of types (`mention`, `follow`, `reblog`, `favourite`, `move`, `pleroma:emoji_reaction`, `pleroma:report`). Usage example: `GET /api/v1/notifications?include_types[]=mention&include_types[]=reblog`.
+    **Deprecated:** replaced by `types` which is equivalent but (by now) also supported by vanilla Mastodon.
 
 ## DELETE `/api/v1/notifications/destroy_multiple`
 
@@ -214,8 +212,8 @@ Additional parameters can be added to the JSON body/Form data:
 - `content_type`: string, contain the MIME type of the status, it is transformed into HTML by the backend. You can get the list of the supported MIME types with the nodeinfo endpoint.
 - `to`: A list of nicknames (like `admin@otp.akkoma.dev` or `admin` on the local server) that will be used to determine who is going to be addressed by this post. Using this will disable the implicit addressing by mentioned names in the `status` body, only the people in the `to` list will be addressed. The normal rules for post visibility are not affected by this and will still apply.
 - `visibility`: string, besides standard MastoAPI values (`direct`, `private`, `unlisted`, `local` or `public`) it can be used to address a List by setting it to `list:LIST_ID`.
-- `expires_in`: The number of seconds the posted activity should expire in. When a posted activity expires it will be deleted from the server, and a delete request for it will be federated. This needs to be longer than an hour.
-- `in_reply_to_conversation_id`: Will reply to a given conversation, addressing only the people who are part of the recipient set of that conversation. Sets the visibility to `direct`.
+- `expires_in`: **Deprecated**; replaced by `duration`.  
+    The number of seconds the posted activity should expire in. When a posted activity expires it will be deleted from the server, and a delete request for it will be federated. This needs to be longer than an hour.
 
 ## GET `/api/v1/statuses`
 
@@ -360,10 +358,6 @@ The message payload consists of:
   - `id`: user ID
   - `follower_count`: follower count
   - `following_count`: following count
-
-## User muting and thread muting
-
-Both user muting and thread muting can be done for only a certain time by adding an `expires_in` parameter to the API calls and giving the expiration time in seconds.
 
 ## Not implemented
 

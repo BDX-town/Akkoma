@@ -91,6 +91,9 @@ defmodule Pleroma.User do
 
   @cachex Pleroma.Config.get([:cachex, :provider], Cachex)
 
+  # hide sensitive data from logs
+  @derive {Inspect, except: [:password, :password_hash, :email]}
+
   schema "users" do
     field(:bio, :string, default: "")
     field(:raw_bio, :string)
@@ -270,13 +273,13 @@ defmodule Pleroma.User do
 
   def cached_blocked_users_ap_ids(user) do
     @cachex.fetch!(:user_cache, "blocked_users_ap_ids:#{user.ap_id}", fn _ ->
-      blocked_users_ap_ids(user)
+      {:commit, blocked_users_ap_ids(user)}
     end)
   end
 
   def cached_muted_users_ap_ids(user) do
     @cachex.fetch!(:user_cache, "muted_users_ap_ids:#{user.ap_id}", fn _ ->
-      muted_users_ap_ids(user)
+      {:commit, muted_users_ap_ids(user)}
     end)
   end
 
@@ -1162,7 +1165,7 @@ defmodule Pleroma.User do
   @spec get_cached_user_friends_ap_ids(User.t()) :: [String.t()]
   def get_cached_user_friends_ap_ids(user) do
     @cachex.fetch!(:user_cache, "friends_ap_ids:#{user.ap_id}", fn _ ->
-      get_user_friends_ap_ids(user)
+      {:commit, get_user_friends_ap_ids(user)}
     end)
   end
 
@@ -1472,17 +1475,17 @@ defmodule Pleroma.User do
           {:ok, list(UserRelationship.t())} | {:error, String.t()}
   def mute(%User{} = muter, %User{} = mutee, params \\ %{}) do
     notifications? = Map.get(params, :notifications, true)
-    expires_in = Map.get(params, :expires_in, 0)
+    duration = Map.get(params, :duration, 0)
 
     with {:ok, user_mute} <- UserRelationship.create_mute(muter, mutee),
          {:ok, user_notification_mute} <-
            (notifications? && UserRelationship.create_notification_mute(muter, mutee)) ||
              {:ok, nil} do
-      if expires_in > 0 do
+      if duration > 0 do
         Pleroma.Workers.MuteExpireWorker.enqueue(
           "unmute_user",
           %{"muter_id" => muter.id, "mutee_id" => mutee.id},
-          schedule_in: expires_in
+          schedule_in: duration
         )
       end
 

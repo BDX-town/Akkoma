@@ -43,6 +43,7 @@ defmodule Mix.Tasks.Pleroma.NotificationSettings do
   defp build_query(hide_notification_contents, options) do
     query =
       from(u in Pleroma.User,
+        where: u.local,
         update: [
           set: [
             notification_settings:

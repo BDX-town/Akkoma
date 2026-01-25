@@ -8,6 +8,7 @@ defmodule Pleroma.User.SigningKey do
 
   require Logger
 
+  @derive {Inspect, only: [:user_id, :key_id]}
   @primary_key false
   schema "signing_keys" do
     belongs_to(:user, Pleroma.User, type: FlakeId.Ecto.CompatType)

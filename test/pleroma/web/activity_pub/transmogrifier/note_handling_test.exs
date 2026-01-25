@@ -383,6 +383,32 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
       assert ["http://mastodon.example.org/users/admin/followers"] == activity.data["cc"]
       assert ["https://www.w3.org/ns/activitystreams#Public"] == activity.data["to"]
     end
+
+    test "preserves both name and summary of attachments until the end" do
+      name = "marvellous.png"
+      summary = "The most wondrous thing you’ve ever seen."
+
+      data =
+        Jason.decode!(File.read!("test/fixtures/mastodon-post-activity.json"))
+        |> put_in(["object", "attachment"], [
+          %{
+            "type" => "Image",
+            "mediaType" => "image/png",
+            "blurhash" => "LIN1M;~p~W%gt-RPjENI-=RiM_WE",
+            "name" => name,
+            "summary" => summary,
+            "url" => "https://example.org/marvellous.png"
+          }
+        ])
+
+      {:ok, activity} = Transmogrifier.handle_incoming(data)
+      %Object{} = obj = Object.normalize(activity)
+
+      [attach] = obj.data["attachment"]
+
+      assert attach["name"] == name
+      assert attach["summary"] == summary
+    end
   end
 
   describe "`handle_incoming/2`, Mastodon format `replies` handling" do

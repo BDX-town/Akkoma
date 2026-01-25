@@ -4,7 +4,6 @@
 
 defmodule Pleroma.Web.CommonAPI do
   alias Pleroma.Activity
-  alias Pleroma.Conversation.Participation
   alias Pleroma.Object
   alias Pleroma.ThreadMute
   alias Pleroma.User
@@ -16,7 +15,9 @@ defmodule Pleroma.Web.CommonAPI do
   alias Pleroma.Web.ActivityPub.Visibility
   alias Pleroma.Web.CommonAPI.ActivityDraft
 
-  import Pleroma.Web.Gettext
+  use Gettext,
+    backend: Pleroma.Web.Gettext
+
   import Pleroma.Web.CommonAPI.Utils
 
   require Pleroma.Constants
@@ -156,7 +157,7 @@ defmodule Pleroma.Web.CommonAPI do
       {:ok, _} = res ->
         res
 
-      {:error, :not_found} = res ->
+      {:error, reason} = res when reason in [:not_found, :forbidden] ->
         res
 
       {:error, e} ->
@@ -167,6 +168,7 @@ defmodule Pleroma.Web.CommonAPI do
 
   def favorite_helper(user, id) do
     with {_, %Activity{object: object}} <- {:find_object, Activity.get_by_id_with_object(id)},
+         {_, true} <- {:visible, Visibility.visible_for_user?(object, user)},
          {_, {:ok, like_object, meta}} <- {:build_object, Builder.like(user, object)},
          {_, {:ok, %Activity{} = activity, _meta}} <-
            {:common_pipeline,
@@ -175,6 +177,9 @@ defmodule Pleroma.Web.CommonAPI do
     else
       {:find_object, _} ->
         {:error, :not_found}
+
+      {:visible, _} ->
+        {:error, :forbidden}
 
       {:common_pipeline, {:error, {:validate, {:error, changeset}}}} = e ->
         if {:object, {"already liked by this actor", []}} in changeset.errors do
@@ -204,11 +209,15 @@ defmodule Pleroma.Web.CommonAPI do
 
   def react_with_emoji(id, user, emoji) do
     with %Activity{} = activity <- Activity.get_by_id(id),
+         {_, true} <- {:visible, Visibility.visible_for_user?(activity, user)},
          object <- Object.normalize(activity, fetch: false),
          {:ok, emoji_react, _} <- Builder.emoji_react(user, object, emoji),
          {:ok, activity, _} <- Pipeline.common_pipeline(emoji_react, local: true) do
       {:ok, activity}
     else
+      {:visible, _} ->
+        {:error, dgettext("errors", "Must be able to access post to interact with it")}
+
       _ ->
         {:error, dgettext("errors", "Could not add reaction emoji")}
     end
@@ -292,23 +301,16 @@ defmodule Pleroma.Web.CommonAPI do
 
   def announce_visibility(object, _), do: Visibility.get_visibility(object)
 
-  def get_visibility(_, _, %Participation{}), do: {"direct", "direct"}
-
-  def get_visibility(%{visibility: visibility}, in_reply_to, _)
+  def get_visibility(%{visibility: visibility}, in_reply_to)
       when visibility in ~w{public local unlisted private direct},
       do: {visibility, get_replied_to_visibility(in_reply_to)}
 
-  def get_visibility(%{visibility: "list:" <> list_id}, in_reply_to, _) do
-    visibility = {:list, String.to_integer(list_id)}
-    {visibility, get_replied_to_visibility(in_reply_to)}
-  end
-
-  def get_visibility(_, in_reply_to, _) when not is_nil(in_reply_to) do
+  def get_visibility(_, in_reply_to) when not is_nil(in_reply_to) do
     visibility = get_replied_to_visibility(in_reply_to)
     {visibility, visibility}
   end
 
-  def get_visibility(_, in_reply_to, _), do: {"public", get_replied_to_visibility(in_reply_to)}
+  def get_visibility(_, nil), do: {"public", nil}
 
   def get_replied_to_visibility(nil), do: nil
 

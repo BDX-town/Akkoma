@@ -422,7 +422,7 @@ defmodule Pleroma.Object.Fetcher do
 
       # connection/protocol-related error
       {:ok, %Tesla.Env{} = env} ->
-        {:error, {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}}
+        {:error, {:http_error, :connect, env}}
 
       {:error, e} ->
         {:error, e}

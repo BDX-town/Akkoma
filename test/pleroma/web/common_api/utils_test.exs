@@ -609,27 +609,6 @@ defmodule Pleroma.Web.CommonAPI.UtilsTest do
     end
   end
 
-  describe "maybe_add_list_data/3" do
-    test "adds list params when found user list" do
-      user = insert(:user)
-      {:ok, %Pleroma.List{} = list} = Pleroma.List.create("title", user)
-
-      assert Utils.maybe_add_list_data(%{additional: %{}, object: %{}}, user, {:list, list.id}) ==
-               %{
-                 additional: %{"bcc" => [list.ap_id], "listMessage" => list.ap_id},
-                 object: %{"listMessage" => list.ap_id}
-               }
-    end
-
-    test "returns original params when list not found" do
-      user = insert(:user)
-      {:ok, %Pleroma.List{} = list} = Pleroma.List.create("title", insert(:user))
-
-      assert Utils.maybe_add_list_data(%{additional: %{}, object: %{}}, user, {:list, list.id}) ==
-               %{additional: %{}, object: %{}}
-    end
-  end
-
   describe "maybe_add_attachments/3" do
     test "returns parsed results when attachment_links is false" do
       assert Utils.maybe_add_attachments(

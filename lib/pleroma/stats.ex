@@ -109,15 +109,6 @@ defmodule Pleroma.Stats do
     }
   end
 
-  @spec get_status_visibility_count(String.t() | nil) :: map()
-  def get_status_visibility_count(instance \\ nil) do
-    if is_nil(instance) do
-      CounterCache.get_sum()
-    else
-      CounterCache.get_by_instance(instance)
-    end
-  end
-
   @impl true
   def handle_continue(:calculate_stats, _) do
     stats = calculate_stat_data()

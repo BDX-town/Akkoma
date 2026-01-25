@@ -1,9 +1,6 @@
 labels:
   platform: linux/amd64
 
-depends_on:
-  - build-amd64
-
 when:
   event:
     - push

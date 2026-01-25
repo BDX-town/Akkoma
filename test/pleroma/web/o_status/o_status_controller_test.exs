@@ -126,6 +126,24 @@ defmodule Pleroma.Web.OStatus.OStatusControllerTest do
       |> get("/activities/123")
       |> response(404)
     end
+
+    test "404s on non-Create activities", %{conn: conn} do
+      activity = insert(:note_activity)
+      like_user = insert(:user)
+
+      {:ok, like_activity} = CommonAPI.favorite(like_user, activity.id)
+
+      like_url_path =
+        like_activity.data["id"]
+        |> String.trim_leading(Pleroma.Web.Endpoint.url())
+
+      assert String.starts_with?(like_url_path, "/activities/")
+      assert Pleroma.Web.Endpoint.url() <> like_url_path == like_activity.data["id"]
+
+      conn
+      |> get(like_url_path)
+      |> response(404)
+    end
   end
 
   describe "GET notice/2" do

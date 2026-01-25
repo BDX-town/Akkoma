@@ -58,8 +58,14 @@ defmodule Pleroma.HTML.Scrubber.Default do
   Meta.allow_tag_with_these_attributes(:u, [])
   Meta.allow_tag_with_these_attributes(:ul, [])
 
+  Meta.allow_tag_with_this_attribute_values(:p, "class", [
+    # mastodon-style quote fallbacks
+    "quote-inline"
+  ])
+
   Meta.allow_tag_with_this_attribute_values(:span, "class", [
     "h-card",
+    # *oma-style quote fallbacks
     "quote-inline",
     # "FEP-c16b: Formatting MFM functions" tags that Akkoma supports
     # NOTE: Maybe it would be better to have something like "allow `mfm-*`,

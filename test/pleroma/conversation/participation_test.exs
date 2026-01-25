@@ -29,14 +29,14 @@ defmodule Pleroma.Conversation.ParticipationTest do
     user = insert(:user)
     other_user = insert(:user)
 
-    {:ok, _} =
+    {:ok, op_activity} =
       CommonAPI.post(user, %{status: "Hey @#{other_user.nickname}.", visibility: "direct"})
 
     user = User.get_cached_by_id(user.id)
     other_user = User.get_cached_by_id(other_user.id)
 
     [%{read: true}] = Participation.for_user(user)
-    [%{read: false} = participation] = Participation.for_user(other_user)
+    [%{read: false}] = Participation.for_user(other_user)
     assert Participation.unread_count(user) == 0
     assert Participation.unread_count(other_user) == 1
 
@@ -44,7 +44,7 @@ defmodule Pleroma.Conversation.ParticipationTest do
       CommonAPI.post(other_user, %{
         status: "Hey @#{user.nickname}.",
         visibility: "direct",
-        in_reply_to_conversation_id: participation.id
+        in_reply_to_id: op_activity.id
       })
 
     user = User.get_cached_by_id(user.id)
@@ -317,7 +317,7 @@ defmodule Pleroma.Conversation.ParticipationTest do
       blocked = insert(:user)
       third_user = insert(:user)
 
-      {:ok, _direct1} =
+      {:ok, direct1} =
         CommonAPI.post(blocker, %{
           status: "Hi @#{third_user.nickname}, @#{blocked.nickname}",
           visibility: "direct"
@@ -327,27 +327,25 @@ defmodule Pleroma.Conversation.ParticipationTest do
       assert [%{read: true}] = Participation.for_user(blocker)
 
       assert Participation.unread_count(blocker) == 0
-      assert [blocked_participation] = Participation.for_user(blocked)
 
       # When it's a reply from the blocked user
-      {:ok, _direct2} =
+      {:ok, direct2} =
         CommonAPI.post(blocked, %{
-          status: "reply",
+          status: "@#{third_user.nickname}, #{blocker.nickname} reply",
           visibility: "direct",
-          in_reply_to_conversation_id: blocked_participation.id
+          in_reply_to_id: direct1.id
         })
 
       assert [%{read: true}] = Participation.for_user(blocker)
 
       assert Participation.unread_count(blocker) == 0
-      assert [third_user_participation] = Participation.for_user(third_user)
 
-      # When it's a reply from the third user
+      # When it's a reply from the third user to the blocked user
       {:ok, _direct3} =
         CommonAPI.post(third_user, %{
           status: "reply",
           visibility: "direct",
-          in_reply_to_conversation_id: third_user_participation.id
+          in_reply_to_id: direct2.id
         })
 
       assert [%{read: true}] = Participation.for_user(blocker)

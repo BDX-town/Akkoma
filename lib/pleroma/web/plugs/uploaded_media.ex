@@ -7,7 +7,10 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
   """
 
   import Plug.Conn
-  import Pleroma.Web.Gettext
+
+  use Gettext,
+    backend: Pleroma.Web.Gettext
+
   require Logger
 
   alias Pleroma.Web.MediaProxy

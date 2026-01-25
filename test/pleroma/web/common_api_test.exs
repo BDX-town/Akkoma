@@ -318,49 +318,6 @@ defmodule Pleroma.Web.CommonAPITest do
     assert object.data["announcement_count"] == 20
   end
 
-  test "when replying to a conversation / participation, it will set the correct context id even if no explicit reply_to is given" do
-    user = insert(:user)
-    {:ok, activity} = CommonAPI.post(user, %{status: ".", visibility: "direct"})
-
-    [participation] = Participation.for_user(user)
-
-    {:ok, convo_reply} =
-      CommonAPI.post(user, %{status: ".", in_reply_to_conversation_id: participation.id})
-
-    assert Visibility.is_direct?(convo_reply)
-
-    assert activity.data["context"] == convo_reply.data["context"]
-  end
-
-  test "when replying to a conversation / participation, it only mentions the recipients explicitly declared in the participation" do
-    har = insert(:user)
-    jafnhar = insert(:user)
-    tridi = insert(:user)
-
-    {:ok, activity} =
-      CommonAPI.post(har, %{
-        status: "@#{jafnhar.nickname} hey",
-        visibility: "direct"
-      })
-
-    assert har.ap_id in activity.recipients
-    assert jafnhar.ap_id in activity.recipients
-
-    [participation] = Participation.for_user(har)
-
-    {:ok, activity} =
-      CommonAPI.post(har, %{
-        status: "I don't really like @#{tridi.nickname}",
-        visibility: "direct",
-        in_reply_to_status_id: activity.id,
-        in_reply_to_conversation_id: participation.id
-      })
-
-    assert har.ap_id in activity.recipients
-    assert jafnhar.ap_id in activity.recipients
-    refute tridi.ap_id in activity.recipients
-  end
-
   test "with the safe_dm_mention option set, it does not mention people beyond the initial tags" do
     har = insert(:user)
     jafnhar = insert(:user)
@@ -541,17 +498,6 @@ defmodule Pleroma.Web.CommonAPITest do
 
       # The OP is not added
       refute user.ap_id in secret_answer.recipients
-    end
-
-    test "it allows to address a list" do
-      user = insert(:user)
-      {:ok, list} = Pleroma.List.create("foo", user)
-
-      {:ok, activity} = CommonAPI.post(user, %{status: "foobar", visibility: "list:#{list.id}"})
-
-      assert activity.data["bcc"] == [list.ap_id]
-      assert activity.recipients == [list.ap_id, user.ap_id]
-      assert activity.data["listMessage"] == list.ap_id
     end
 
     test "it adds the htmlMFM term to MFM posts and properly processes it" do

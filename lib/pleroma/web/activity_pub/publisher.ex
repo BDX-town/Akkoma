@@ -86,7 +86,7 @@ defmodule Pleroma.Web.ActivityPub.Publisher do
     do: {:http_error, code, headers}
 
   defp format_error_response(%Tesla.Env{} = env),
-    do: {:http_error, :connect, Pleroma.HTTP.Middleware.HTTPSignature.redact_keys(env)}
+    do: {:http_error, :connect, env}
 
   defp format_error_response(response), do: response
 

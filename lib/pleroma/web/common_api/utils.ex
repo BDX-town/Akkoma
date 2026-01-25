@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule Pleroma.Web.CommonAPI.Utils do
-  import Pleroma.Web.Gettext
+  use Gettext,
+    backend: Pleroma.Web.Gettext
 
   alias Calendar.Strftime
   alias Pleroma.Activity
   alias Pleroma.Config
-  alias Pleroma.Conversation.Participation
   alias Pleroma.Formatter
   alias Pleroma.Object
   alias Pleroma.Repo
@@ -50,11 +50,6 @@ defmodule Pleroma.Web.CommonAPI.Utils do
   end
 
   @spec get_to_and_cc(ActivityDraft.t()) :: {list(String.t()), list(String.t())}
-
-  def get_to_and_cc(%{in_reply_to_conversation: %Participation{} = participation}) do
-    participation = Repo.preload(participation, :recipients)
-    {Enum.map(participation.recipients, & &1.ap_id), []}
-  end
 
   def get_to_and_cc(%{visibility: visibility} = draft) do
     # If the OP is a DM already, add the implicit actor
@@ -117,30 +112,11 @@ defmodule Pleroma.Web.CommonAPI.Utils do
     {mentions, []}
   end
 
-  def get_to_and_cc_for_visibility({:list, _}, _, _, mentions) do
-    {mentions, []}
-  end
-
   def get_addressed_users(_, to) when is_list(to) do
     User.get_ap_ids_by_nicknames(to)
   end
 
   def get_addressed_users(mentioned_users, _), do: mentioned_users
-
-  def maybe_add_list_data(activity_params, user, {:list, list_id}) do
-    case Pleroma.List.get(list_id, user) do
-      %Pleroma.List{} = list ->
-        activity_params
-        |> put_in([:additional, "bcc"], [list.ap_id])
-        |> put_in([:additional, "listMessage"], list.ap_id)
-        |> put_in([:object, "listMessage"], list.ap_id)
-
-      _ ->
-        activity_params
-    end
-  end
-
-  def maybe_add_list_data(activity_params, _, _), do: activity_params
 
   def make_poll_data(%{"poll" => %{"expires_in" => expires_in}} = data)
       when is_binary(expires_in) do
@@ -245,10 +221,6 @@ defmodule Pleroma.Web.CommonAPI.Utils do
     else
       "text/plain"
     end
-  end
-
-  def make_context(%{in_reply_to_conversation: %Participation{} = participation}) do
-    Repo.preload(participation, :conversation).conversation.ap_id
   end
 
   def make_context(%{in_reply_to: %Activity{data: %{"context" => context}}}), do: context

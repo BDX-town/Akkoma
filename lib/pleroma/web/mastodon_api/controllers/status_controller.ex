@@ -283,6 +283,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
   @doc "DELETE /api/v1/statuses/:id"
   def delete(%{assigns: %{user: user}} = conn, %{id: id}) do
     with %Activity{} = activity <- Activity.get_by_id_with_object(id),
+         # CommonAPI already chcks whether user is allowed to delete
          {:ok, %Activity{}} <- CommonAPI.delete(id, user) do
       try_render(conn, "show.json",
         activity: activity,
@@ -297,6 +298,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "POST /api/v1/statuses/:id/reblog"
   def reblog(%{assigns: %{user: user}, body_params: params} = conn, %{id: ap_id_or_id}) do
+    # CommonAPI checks if allowed to reblog
     with {:ok, announce} <- CommonAPI.repeat(ap_id_or_id, user, params),
          %Activity{} = announce <- Activity.normalize(announce.data) do
       try_render(conn, "show.json", %{activity: announce, for: user, as: :activity})
@@ -313,6 +315,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "POST /api/v1/statuses/:id/favourite"
   def favourite(%{assigns: %{user: user}} = conn, %{id: activity_id}) do
+    # CommonAPI checks if allowed to fav
     with {:ok, _fav} <- CommonAPI.favorite(user, activity_id),
          %Activity{} = activity <- Activity.get_by_id(activity_id) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
@@ -531,7 +534,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
         value = translation_module.translate(text, source_language, target_language)
 
         with {:ok, _, _} <- value do
-          value
+          {:commit, value}
         else
           _ -> {:ignore, value}
         end

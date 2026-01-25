@@ -4,13 +4,14 @@
 
 defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   alias Pleroma.Activity
-  alias Pleroma.Conversation.Participation
   alias Pleroma.Object
   alias Pleroma.Web.ActivityPub.Builder
+  alias Pleroma.Web.ActivityPub.Visibility
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.CommonAPI.Utils
 
-  import Pleroma.Web.Gettext
+  use Gettext,
+    backend: Pleroma.Web.Gettext
 
   defstruct valid?: true,
             errors: [],
@@ -21,7 +22,6 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
             full_payload: nil,
             attachments: [],
             in_reply_to: nil,
-            in_reply_to_conversation: nil,
             language: nil,
             content_map: %{},
             quote_id: nil,
@@ -55,7 +55,6 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
     |> expires_at()
     |> poll()
     |> with_valid(&in_reply_to/1)
-    |> with_valid(&in_reply_to_conversation/1)
     |> with_valid(&visibility/1)
     |> with_valid(&quote_id/1)
     |> content()
@@ -104,7 +103,30 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   defp in_reply_to(%{params: %{in_reply_to_status_id: ""}} = draft), do: draft
 
   defp in_reply_to(%{params: %{in_reply_to_status_id: id}} = draft) when is_binary(id) do
-    %__MODULE__{draft | in_reply_to: Activity.get_by_id(id)}
+    # If a post was deleted all its activities (except the newly added Delete) are purged too,
+    # thus lookup by Create db ID will yield nil just as if it never existed in the first place.
+    # We allow replying to Announce here, due to an akkomafe quirk where if presented with a Announce id
+    # it will render it as if it was just the normal referenced post, but use the announce ID for all interaction.
+    # (XXX: fix this in akkoma-fe, then drop such workarounds here and in all other affected places)
+    with %Activity{} = activity <- Activity.get_by_id(id),
+         true <- Visibility.visible_for_user?(activity, draft.user),
+         {_, type} when type in ["Create", "Announce"] <- {:type, activity.data["type"]} do
+      %__MODULE__{draft | in_reply_to: activity}
+    else
+      nil ->
+        add_error(draft, dgettext("errors", "Parent post does not exist or was deleted"))
+
+      false ->
+        add_error(draft, dgettext("errors", "Must be able to access post to interact with it"))
+
+      {:type, type} ->
+        add_error(
+          draft,
+          dgettext("errors", "Can only reply to posts, not %{type} activities",
+            type: inspect(type)
+          )
+        )
+    end
   end
 
   defp in_reply_to(%{params: %{in_reply_to_status_id: %Activity{} = in_reply_to}} = draft) do
@@ -112,11 +134,6 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   end
 
   defp in_reply_to(draft), do: draft
-
-  defp in_reply_to_conversation(draft) do
-    in_reply_to_conversation = Participation.get(draft.params[:in_reply_to_conversation_id])
-    %__MODULE__{draft | in_reply_to_conversation: in_reply_to_conversation}
-  end
 
   defp quote_id(%{params: %{quote_id: ""}} = draft), do: draft
 
@@ -155,7 +172,7 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
   end
 
   defp visibility(%{params: params} = draft) do
-    case CommonAPI.get_visibility(params, draft.in_reply_to, draft.in_reply_to_conversation) do
+    case CommonAPI.get_visibility(params, draft.in_reply_to) do
       {visibility, "direct"} when visibility != "direct" ->
         add_error(draft, dgettext("errors", "The message visibility must be direct"))
 
@@ -278,7 +295,6 @@ defmodule Pleroma.Web.CommonAPI.ActivityDraft do
         object: draft.object,
         additional: additional
       }
-      |> Utils.maybe_add_list_data(draft.user, draft.visibility)
 
     %__MODULE__{draft | changes: changes}
   end

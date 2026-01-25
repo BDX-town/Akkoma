@@ -165,7 +165,6 @@ defmodule Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy do
 
       if !Enum.empty?(new_emojis) do
         Logger.info("Stole new emojis: #{inspect(new_emojis)}")
-        Pleroma.Emoji.reload()
       end
     end
 

@@ -8,7 +8,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
   alias Pleroma.Web.ApiSpec.Schemas.ApiError
   alias Pleroma.Web.ApiSpec.Schemas.BooleanLike
   alias Pleroma.Web.ApiSpec.Schemas.Status
-  alias Pleroma.Web.ApiSpec.Schemas.VisibilityScope
 
   import Pleroma.Web.ApiSpec.Helpers
 
@@ -28,7 +27,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         remote_param(),
         only_media_param(),
         with_muted_param(),
-        exclude_visibilities_param(),
         reply_visibility_param() | pagination_params()
       ],
       operationId: "TimelineController.home",
@@ -64,7 +62,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         only_media_param(),
         remote_param(),
         with_muted_param(),
-        exclude_visibilities_param(),
         reply_visibility_param() | pagination_params()
       ],
       operationId: "TimelineController.public",
@@ -85,7 +82,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         only_media_param(),
         remote_param(),
         with_muted_param(),
-        exclude_visibilities_param(),
         reply_visibility_param() | pagination_params()
       ],
       operationId: "TimelineController.bubble",
@@ -131,8 +127,7 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         local_param(),
         only_media_param(),
         remote_param(),
-        with_muted_param(),
-        exclude_visibilities_param() | pagination_params()
+        with_muted_param()
       ],
       operationId: "TimelineController.hashtag",
       responses: %{
@@ -159,8 +154,8 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         with_muted_param(),
         local_param(),
         remote_param(),
-        only_media_param(),
-        exclude_visibilities_param() | pagination_params()
+        only_media_param()
+        | pagination_params()
       ],
       operationId: "TimelineController.list",
       responses: %{
@@ -198,15 +193,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
 
   defp with_muted_param do
     Operation.parameter(:with_muted, :query, BooleanLike, "Include activities by muted users")
-  end
-
-  defp exclude_visibilities_param do
-    Operation.parameter(
-      :exclude_visibilities,
-      :query,
-      %Schema{type: :array, items: VisibilityScope},
-      "Exclude the statuses with the given visibilities"
-    )
   end
 
   defp reply_visibility_param do

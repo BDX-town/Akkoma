@@ -482,17 +482,18 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
       assert [%{"id" => ^post_id}] = json_response_and_validate_schema(conn, 200)
     end
 
-    test "the user views their own timelines and excludes direct messages", %{
+    test "the user views their own timelines and exclude_visibilites will be ignored", %{
       user: user,
       conn: conn
     } do
-      {:ok, %{id: public_activity_id}} =
+      {:ok, %{id: _public_activity_id}} =
         CommonAPI.post(user, %{status: ".", visibility: "public"})
 
       {:ok, _direct_activity} = CommonAPI.post(user, %{status: ".", visibility: "direct"})
 
       conn = get(conn, "/api/v1/accounts/#{user.id}/statuses?exclude_visibilities[]=direct")
-      assert [%{"id" => ^public_activity_id}] = json_response_and_validate_schema(conn, 200)
+      # assert [%{"id" => ^public_activity_id}] = json_response_and_validate_schema(conn, 200)
+      %{"error" => "Unexpected field: exclude_visibilities."} = json_response(conn, 400)
     end
 
     test "muted reactions", %{user: user, conn: conn} do

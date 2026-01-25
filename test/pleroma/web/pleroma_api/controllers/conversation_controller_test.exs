@@ -45,8 +45,7 @@ defmodule Pleroma.Web.PleromaAPI.ConversationControllerTest do
     {:ok, activity_two} =
       CommonAPI.post(other_user, %{
         status: "Hi!",
-        in_reply_to_status_id: activity.id,
-        in_reply_to_conversation_id: participation.id
+        in_reply_to_status_id: activity.id
       })
 
     result =
@@ -63,8 +62,7 @@ defmodule Pleroma.Web.PleromaAPI.ConversationControllerTest do
     {:ok, %{id: id_three}} =
       CommonAPI.post(other_user, %{
         status: "Bye!",
-        in_reply_to_status_id: activity.id,
-        in_reply_to_conversation_id: participation.id
+        in_reply_to_status_id: activity.id
       })
 
     assert [%{"id" => ^id_two}, %{"id" => ^id_three}] =
