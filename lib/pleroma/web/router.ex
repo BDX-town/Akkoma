@@ -146,11 +146,13 @@ defmodule Pleroma.Web.Router do
   end
 
   pipeline :optional_http_signature do
+    plug(Pleroma.Web.Plugs.EnsureHostPlug)
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
   end
 
   pipeline :http_signature do
+    plug(Pleroma.Web.Plugs.EnsureHostPlug)
     plug(Pleroma.Web.Plugs.HTTPSignaturePlug)
     plug(Pleroma.Web.Plugs.MappedSignatureToIdentityPlug)
     plug(Pleroma.Web.Plugs.EnsureHTTPSignaturePlug)
@@ -614,7 +616,8 @@ defmodule Pleroma.Web.Router do
     post("/statuses/:id/unbookmark", StatusController, :unbookmark)
     post("/statuses/:id/mute", StatusController, :mute_conversation)
     post("/statuses/:id/unmute", StatusController, :unmute_conversation)
-    get("/statuses/:id/translations/:language", StatusController, :translate)
+    post("/statuses/:id/translate", StatusController, :translate)
+    get("/statuses/:id/translations/:language", StatusController, :translate_legacy)
 
     post("/push/subscription", SubscriptionController, :create)
     get("/push/subscription", SubscriptionController, :show)
@@ -625,7 +628,6 @@ defmodule Pleroma.Web.Router do
     delete("/suggestions/:account_id", SuggestionController, :dismiss)
 
     get("/timelines/home", TimelineController, :home)
-    get("/timelines/direct", TimelineController, :direct)
     get("/timelines/list/:list_id", TimelineController, :list)
 
     get("/announcements", AnnouncementController, :index)
@@ -667,6 +669,7 @@ defmodule Pleroma.Web.Router do
     post("/accounts", AccountController, :create)
 
     get("/instance", InstanceController, :show)
+    get("/instance/translation_languages", InstanceController, :translation_languages)
     get("/instance/peers", InstanceController, :peers)
 
     get("/statuses", StatusController, :index)

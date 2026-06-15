@@ -18,8 +18,8 @@
 3. Go to the working directory of Akkoma (default is `/opt/akkoma`)
 4. Copy the above-mentioned files back to their original position.
 5. Drop the existing database and user[¹]. `sudo -Hu postgres psql -c 'DROP DATABASE akkoma;';` `sudo -Hu postgres psql -c 'DROP USER akkoma;'`
-6. Restore the database schema and akkoma role[¹] (replace the password with the one you find in the configuration file), `sudo -Hu postgres psql -c "CREATE USER akkoma WITH ENCRYPTED PASSWORD '<database-password-wich-you-can-find-in-your-configuration-file>';"` `sudo -Hu postgres psql -c "CREATE DATABASE akkoma OWNER akkoma;"`.
-7. Now restore the Akkoma instance's data into the empty database schema[¹]: `sudo -Hu postgres pg_restore -d akkoma -v -1 </path/to/backup_location/akkoma.pgdump>`
+6. Restore the database schema and akkoma role[¹] (replace the password with the one you find in the configuration file), `sudo -Hu postgres psql -c "CREATE USER akkoma WITH ENCRYPTED PASSWORD '<database-password-wich-you-can-find-in-your-configuration-file>';";` `sudo -Hu postgres psql -c "CREATE DATABASE akkoma OWNER akkoma;"`.
+7. Now restore the Akkoma instance's data into the empty database schema[¹]: `sudo -Hu postgres pg_restore -j "$(nproc)" -d akkoma -v </path/to/backup_location/akkoma.pgdump>`
 8. If you installed a newer Akkoma version, you should run the database migrations `./bin/pleroma_ctl migrate`[²].
 9. Restart the Akkoma service.
 10. Run `sudo -Hu postgres vacuumdb --all --analyze-in-stages`. This will quickly generate the statistics so that postgres can properly plan queries.

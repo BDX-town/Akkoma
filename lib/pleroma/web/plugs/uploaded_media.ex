@@ -20,7 +20,7 @@ defmodule Pleroma.Web.Plugs.UploadedMedia do
   # no slashes
   @path "media"
 
-  @default_cache_control_header "public, max-age=1209600"
+  @default_cache_control_header "public, max-age=1209600, immutable"
 
   def init(_opts) do
     static_plug_opts =

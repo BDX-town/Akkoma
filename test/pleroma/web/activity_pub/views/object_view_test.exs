@@ -36,6 +36,27 @@ defmodule Pleroma.Web.ActivityPub.ObjectViewTest do
     assert result["@context"]
   end
 
+  test "renders a local poll with anonymitiy promise" do
+    poller = insert(:user, local: true)
+
+    {:ok, activity} =
+      CommonAPI.post(poller, %{
+        status: "nemui...",
+        poll: %{options: ["suya", "nini", "eep"], expires_in: 10}
+      })
+
+    result = ObjectView.render("object.json", %{object: activity})
+
+    assert result["id"] == activity.data["id"]
+    assert result["type"] == "Create"
+
+    resobj = result["object"]
+
+    assert is_map(resobj)
+    assert resobj["type"] == "Question"
+    assert resobj["nonAnonymous"] == false
+  end
+
   describe "note activity's `replies` collection rendering" do
     setup do: clear_config([:activitypub, :note_replies_output_limit], 5)
 

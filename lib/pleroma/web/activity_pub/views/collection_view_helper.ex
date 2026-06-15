@@ -6,10 +6,49 @@
 defmodule Pleroma.Web.ActivityPub.CollectionViewHelper do
   alias Pleroma.Web.ActivityPub.Utils
 
+  @doc """
+  Renders the root of a larger (or private) OrderedCollection
+  possibly with a link to or an inlined first page.
+  (For small public collections to be served all at once
+  a version with orderedItems may be preferable for simplicity)
+  """
+  @spec collection_root_ordered(
+          String.t(),
+          integer() | nil | false,
+          String.t() | map() | nil | false
+        ) :: map()
+  def collection_root_ordered(iri, total_count \\ nil, first \\ nil) do
+    collection_root(iri, true, total_count, first)
+  end
+
+  @spec collection_root(
+          String.t(),
+          boolean(),
+          integer() | nil | false,
+          String.t() | map() | nil | false
+        ) :: map()
+  defp collection_root(iri, ordered, total_count, first) do
+    type = if ordered, do: "OrderedCollection", else: "Collection"
+
+    %{
+      "type" => type,
+      "id" => iri
+    }
+    |> put_truthy("totalItems", total_count)
+    |> put_truthy("first", first)
+  end
+
+  defp put_truthy(map, key, val) do
+    if val do
+      Map.put(map, key, val)
+    else
+      map
+    end
+  end
+
   def collection_page_offset(collection, iri, page, show_items \\ true, total \\ nil) do
     offset = (page - 1) * 10
     items = Enum.slice(collection, offset, 10)
-    items = Enum.map(items, fn user -> user.ap_id end)
     total = total || length(collection)
 
     map = %{

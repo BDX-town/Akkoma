@@ -53,6 +53,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
     conn =
       conn
+      |> assign(:host_matches, true)
       |> put_req_header(
         "signature",
         "keyId=\"#{user.signing_key.key_id}\""
@@ -71,7 +72,11 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
       clear_config([:activitypub, :authorized_fetch_mode], true)
 
       params = %{"actor" => "http://mastodon.example.org/users/admin"}
-      conn = build_conn(:get, "/doesntmattter", params) |> put_format("activity+json")
+
+      conn =
+        build_conn(:get, "/doesntmattter", params)
+        |> put_format("activity+json")
+        |> assign(:host_matches, true)
 
       [conn: conn]
     end
@@ -138,6 +143,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   test "fakes success on gone key when receiving Delete" do
     build_conn(:post, "/inbox", %{"type" => "Delete"})
     |> put_format("activity+json")
+    |> assign(:host_matches, true)
     |> assign(:gone_signature_key, true)
     |> put_req_header(
       "signature",
@@ -150,6 +156,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
   test "fails on gone key for non-Delete" do
     conn =
       build_conn(:post, "/inbox", %{"type" => "Note"})
+      |> assign(:host_matches, true)
       |> put_format("activity+json")
       |> assign(:gone_signature_key, true)
       |> put_req_header(
@@ -165,6 +172,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
   test "fakes accept for POST on rejected keys", %{user: user} do
     build_conn(:post, "/inbox", %{"type" => "Note"})
+    |> assign(:host_matches, true)
     |> put_format("activity+json")
     |> assign(:rejected_key_id, true)
     |> put_req_header(
@@ -177,6 +185,7 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
 
   test "fakes not found for GET on rejected keys", %{user: user} do
     build_conn(:get, "/doesntmattter", %{"user" => user.ap_id})
+    |> assign(:host_matches, true)
     |> put_format("activity+json")
     |> assign(:rejected_key_id, true)
     |> put_req_header(
@@ -185,5 +194,20 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlugTest do
     )
     |> HTTPSignaturePlug.call(%{})
     |> response(404)
+  end
+
+  test "does not assign anything when a host match has not been run", %{user: user} do
+    conn =
+      build_conn(:get, "/doesntmattter", %{"user" => user.ap_id})
+      |> assign(:host_matches, false)
+      |> put_format("activity+json")
+      |> put_req_header(
+        "signature",
+        "keyId=\"#{user.signing_key.key_id}\""
+      )
+      |> HTTPSignaturePlug.call(%{})
+
+    refute Map.has_key?(conn.assigns, :valid_signature)
+    refute Map.has_key?(conn.assigns, :signature_user)
   end
 end

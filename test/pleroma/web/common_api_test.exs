@@ -8,7 +8,6 @@ defmodule Pleroma.Web.CommonAPITest do
   @moduletag :mocked
 
   alias Pleroma.Activity
-  alias Pleroma.Conversation.Participation
   alias Pleroma.Notification
   alias Pleroma.Object
   alias Pleroma.Repo
@@ -960,6 +959,47 @@ defmodule Pleroma.Web.CommonAPITest do
              } = flag_activity
     end
 
+    test "doesn't create a report when post is not visible to user" do
+      reporter = insert(:user)
+      target_user = insert(:user)
+      {:ok, post} = CommonAPI.post(target_user, %{status: "Eric", visibility: "private"})
+
+      assert Pleroma.Web.ActivityPub.Visibility.is_private?(post)
+      refute Pleroma.Web.ActivityPub.Visibility.visible_for_user?(post, reporter)
+
+      # Fails when all status are invisible
+      report_data = %{
+        account_id: target_user.id,
+        comment: "foobar",
+        status_ids: [post.id]
+      }
+
+      assert {:error, :visibility} = CommonAPI.report(reporter, report_data)
+    end
+
+    test "doesn't create a report when some posts are not visible to user" do
+      reporter = insert(:user)
+      target_user = insert(:user)
+
+      {:ok, visible_activity} = CommonAPI.post(target_user, %{status: "cofe"})
+
+      {:ok, invisibile_activity} =
+        CommonAPI.post(target_user, %{status: "cawfee", visibility: "private"})
+
+      assert Pleroma.Web.ActivityPub.Visibility.is_private?(invisibile_activity)
+      assert Pleroma.Web.ActivityPub.Visibility.is_public?(visible_activity)
+      refute Pleroma.Web.ActivityPub.Visibility.visible_for_user?(invisibile_activity, reporter)
+
+      # Fails when some statuses are invisible
+      report_data_partial = %{
+        account_id: target_user.id,
+        comment: "foobar",
+        status_ids: [visible_activity.id, invisibile_activity.id]
+      }
+
+      assert {:error, :visibility} = CommonAPI.report(reporter, report_data_partial)
+    end
+
     test "updates report state" do
       [reporter, target_user] = insert_pair(:user)
       activity = insert(:note_activity, user: target_user)
@@ -1216,11 +1256,6 @@ defmodule Pleroma.Web.CommonAPITest do
     test "gets user by ap_id" do
       user = insert(:user)
       assert CommonAPI.get_user(user.ap_id) == user
-    end
-
-    test "gets user by guessed nickname" do
-      user = insert(:user, ap_id: "", nickname: "mario@mushroom.kingdom")
-      assert CommonAPI.get_user("https://mushroom.kingdom/users/mario") == user
     end
 
     test "fallback" do

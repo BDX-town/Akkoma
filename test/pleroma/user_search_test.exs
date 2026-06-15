@@ -117,6 +117,19 @@ defmodule Pleroma.UserSearchTest do
       end)
     end
 
+    test "doesn't explode if GIN fuzzy limit is set" do
+      clear_config([Pleroma.Search.DatabaseSearch, :gin_fuzzy_search_limit], 10_000)
+
+      user = insert(:user, %{nickname: "john"})
+
+      Enum.each(["john", "jo", "j"], fn query ->
+        assert user ==
+                 User.search(query)
+                 |> List.first()
+                 |> clear_virtual_fields()
+      end)
+    end
+
     test "finds a user by full name or leading fragment(s) of its words" do
       user = insert(:user, %{name: "John Doe"})
 

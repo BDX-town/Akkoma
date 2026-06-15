@@ -1029,8 +1029,29 @@ defmodule Pleroma.UserTest do
 
       res = User.get_followers(user)
 
+      assert length(res) == 2
       assert Enum.member?(res, follower_one)
       assert Enum.member?(res, follower_two)
+      refute Enum.member?(res, not_follower)
+    end
+
+    test "does not return deactivated followers" do
+      user = insert(:user)
+      follower_one = insert(:user)
+      follower_two = insert(:user)
+      not_follower = insert(:user)
+
+      {:ok, follower_one, user} = User.follow(follower_one, user)
+      {:ok, follower_two, user} = User.follow(follower_two, user)
+
+      User.delete(follower_two)
+      follower_two = User.get_cached_by_id(follower_two.id)
+
+      res = User.get_followers(user)
+
+      assert length(res) == 1
+      assert Enum.member?(res, follower_one)
+      refute Enum.member?(res, follower_two)
       refute Enum.member?(res, not_follower)
     end
 
@@ -1047,8 +1068,32 @@ defmodule Pleroma.UserTest do
 
       followed_one = User.get_cached_by_ap_id(followed_one.ap_id)
       followed_two = User.get_cached_by_ap_id(followed_two.ap_id)
+
+      assert length(res) == 2
       assert Enum.member?(res, followed_one)
       assert Enum.member?(res, followed_two)
+      refute Enum.member?(res, not_followed)
+    end
+
+    test "does not return deactivated followed users (friends)" do
+      user = insert(:user)
+      followed_one = insert(:user)
+      followed_two = insert(:user)
+      not_followed = insert(:user)
+
+      {:ok, user, followed_one} = User.follow(user, followed_one)
+      {:ok, user, followed_two} = User.follow(user, followed_two)
+
+      User.delete(followed_two)
+
+      res = User.get_friends(user)
+
+      followed_one = User.get_cached_by_id(followed_one.id)
+      followed_two = User.get_cached_by_id(followed_two.id)
+
+      assert length(res) == 1
+      assert Enum.member?(res, followed_one)
+      refute Enum.member?(res, followed_two)
       refute Enum.member?(res, not_followed)
     end
   end
@@ -2215,7 +2260,7 @@ defmodule Pleroma.UserTest do
     test "removes report notifs when user isn't superuser any more" do
       report_activity = insert(:report_activity)
       user = insert(:user, is_moderator: true, is_admin: true)
-      {:ok, _} = Notification.create_notifications(report_activity)
+      {:ok, _, []} = Notification.create_notifications(report_activity)
 
       assert [%Pleroma.Notification{type: "pleroma:report"}] = Notification.for_user(user)
 
@@ -2557,8 +2602,10 @@ defmodule Pleroma.UserTest do
 
     assert {:ok, user} = User.update_last_active_at(user)
 
-    assert user.last_active_at >= test_started_at
-    assert user.last_active_at <= NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+    test_ended_at = NaiveDateTime.utc_now()
+
+    assert NaiveDateTime.compare(user.last_active_at, test_started_at) in [:gt, :eq]
+    assert NaiveDateTime.compare(user.last_active_at, test_ended_at) in [:lt, :eq]
 
     last_active_at =
       NaiveDateTime.utc_now()
@@ -2572,8 +2619,11 @@ defmodule Pleroma.UserTest do
 
     assert user.last_active_at == last_active_at
     assert {:ok, user} = User.update_last_active_at(user)
-    assert user.last_active_at >= test_started_at
-    assert user.last_active_at <= NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
+    after_update = NaiveDateTime.utc_now()
+
+    assert NaiveDateTime.compare(user.last_active_at, test_started_at) in [:gt, :eq]
+    assert NaiveDateTime.compare(user.last_active_at, after_update) in [:lt, :eq]
   end
 
   test "active_user_count/1" do

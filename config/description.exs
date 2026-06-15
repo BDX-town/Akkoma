@@ -864,11 +864,6 @@ config :pleroma, :config_description, [
         ]
       },
       %{
-        key: :skip_thread_containment,
-        type: :boolean,
-        description: "Skip filtering out broken threads. Default: enabled."
-      },
-      %{
         key: :limit_to_local_content,
         type: {:dropdown, :atom},
         description:
@@ -1501,8 +1496,7 @@ config :pleroma, :config_description, [
     group: :pleroma,
     key: :manifest,
     type: :group,
-    description:
-      "This section describe PWA manifest instance-specific values. Currently this option relate only for MastoFE.",
+    description: "This section describe PWA manifest instance-specific values.",
     children: [
       %{
         key: :icons,
@@ -3509,7 +3503,7 @@ config :pleroma, :config_description, [
         key: :module,
         type: :module,
         description: "Translation module.",
-        suggestions: {:list_behaviour_implementations, Pleroma.Akkoma.Translator}
+        suggestions: {:list_behaviour_implementations, Pleroma.Akkoma.Translator.Provider}
       }
     ]
   },

@@ -290,6 +290,10 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     |> Map.drop(["conversation"])
   end
 
+  defp is_valid_mime(mimestr) do
+    is_binary(mimestr) && MIME.extensions(mimestr) != []
+  end
+
   def fix_attachments(%{"attachment" => attachment} = object) when is_list(attachment) do
     attachments =
       Enum.map(attachment, fn data ->
@@ -302,13 +306,13 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
 
         media_type =
           cond do
-            is_map(url) && MIME.extensions(url["mediaType"]) != [] ->
+            is_map(url) && is_valid_mime(url["mediaType"]) ->
               url["mediaType"]
 
-            is_bitstring(data["mediaType"]) && MIME.extensions(data["mediaType"]) != [] ->
+            is_valid_mime(data["mediaType"]) ->
               data["mediaType"]
 
-            is_bitstring(data["mimeType"]) && MIME.extensions(data["mimeType"]) != [] ->
+            is_valid_mime(data["mimeType"]) ->
               data["mimeType"]
 
             true ->
@@ -907,8 +911,27 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
     {:ok, data}
   end
 
+  def prepare_outgoing(%{"type" => "Update", "object" => %{"type" => objtype} = object} = data)
+      when objtype in Pleroma.Constants.actor_types() do
+    object =
+      object
+      |> maybe_fix_user_object()
+      |> strip_internal_fields()
+
+    data =
+      data
+      |> Map.put("object", object)
+      |> strip_internal_fields()
+      |> Map.merge(Utils.make_json_ld_header())
+      |> Map.delete("bcc")
+
+    {:ok, data}
+  end
+
   def prepare_outgoing(%{"type" => "Update", "object" => %{}} = data) do
-    raise "Requested to serve an Update for non-updateable object type:  #{inspect(data)}"
+    err_msg = "Requested to serve an Update for non-updateable object type:  #{inspect(data)}"
+    Logger.error(err_msg)
+    raise err_msg
   end
 
   def prepare_outgoing(%{"type" => "Announce", "actor" => ap_id, "object" => object_id} = data) do
@@ -1037,28 +1060,18 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier do
   def take_emoji_tags(%User{emoji: emoji}) do
     emoji
     |> Map.to_list()
-    |> Enum.map(&build_emoji_tag/1)
+    |> Enum.map(&Builder.emoji_object!/1)
   end
 
-  # TODO: we should probably send mtime instead of unix epoch time for updated
   def add_emoji_tags(%{"emoji" => emoji} = object) do
     tags = object["tag"] || []
 
-    out = Enum.map(emoji, &build_emoji_tag/1)
+    out = Enum.map(emoji, &Builder.emoji_object!/1)
 
     Map.put(object, "tag", tags ++ out)
   end
 
   def add_emoji_tags(object), do: object
-
-  defp build_emoji_tag({name, url}) do
-    %{
-      "icon" => %{"url" => "#{URI.encode(url)}", "type" => "Image"},
-      "name" => ":" <> name <> ":",
-      "type" => "Emoji",
-      "updated" => "1970-01-01T00:00:00Z"
-    }
-  end
 
   def set_conversation(object) do
     Map.put(object, "conversation", object["context"])

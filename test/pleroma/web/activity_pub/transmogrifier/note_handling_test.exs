@@ -203,7 +203,7 @@ defmodule Pleroma.Web.ActivityPub.Transmogrifier.NoteHandlingTest do
       assert match?(
                %{
                  "href" => "http://mastodon.example.org/tags/moo",
-                 "name" => "#moo",
+                 "name" => "moo",
                  "type" => "Hashtag"
                },
                Enum.at(object.data["tag"], 1)

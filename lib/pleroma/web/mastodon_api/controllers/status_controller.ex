@@ -41,6 +41,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
            :show,
            :context,
            :translate,
+           :translate_legacy,
            :show_history,
            :show_source
          ]
@@ -134,7 +135,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
   """
   # Creates a scheduled status when `scheduled_at` param is present and it's far enough
   def create(
-        %{
+        %Plug.Conn{
           assigns: %{user: user},
           body_params: %{status: _, scheduled_at: scheduled_at} = params
         } = conn,
@@ -202,7 +203,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
     end
   end
 
-  def create(%{assigns: %{user: _user}, body_params: %{media_ids: _} = params} = conn, _) do
+  def create(%Plug.Conn{assigns: %{user: _user}, body_params: %{media_ids: _} = params} = conn, _) do
     params = Map.put(params, :status, "")
     create(%Plug.Conn{conn | body_params: params}, %{})
   end
@@ -351,8 +352,15 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "POST /api/v1/statuses/:id/unpin"
   def unpin(%{assigns: %{user: user}} = conn, %{id: ap_id_or_id}) do
+    # CommonAPI already checks whether user can unpin
     with {:ok, activity} <- CommonAPI.unpin(ap_id_or_id, user) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
+    else
+      {:error, :ownership_error} ->
+        {:error, :unprocessable_entity, "Someone else's status cannot be unpinned"}
+
+      error ->
+        error
     end
   end
 
@@ -363,6 +371,12 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
          true <- Visibility.visible_for_user?(activity, user),
          {:ok, _bookmark} <- Bookmark.create(user.id, activity.id) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
+    else
+      none when none in [nil, false] ->
+        {:error, :not_found, "Record not found"}
+
+      error ->
+        error
     end
   end
 
@@ -370,25 +384,48 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
   def unbookmark(%{assigns: %{user: user}} = conn, %{id: id}) do
     with %Activity{} = activity <- Activity.get_by_id_with_object(id),
          %User{} = user <- User.get_cached_by_nickname(user.nickname),
-         true <- Visibility.visible_for_user?(activity, user),
-         {:ok, _bookmark} <- Bookmark.destroy(user.id, activity.id) do
+         # order matters: if a user bookmarked a post but later lost access rights via unfollow
+         # we want to allow cleaning up the now useless entry (if it was still cached locally)
+         # but never return a success response which contains the current status content
+         :ok <- Bookmark.destroy(user.id, activity.id),
+         true <- Visibility.visible_for_user?(activity, user) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
+    else
+      none when none in [nil, false] ->
+        {:error, :not_found, "Record not found"}
+
+      error ->
+        error
     end
   end
 
   @doc "POST /api/v1/statuses/:id/mute"
   def mute_conversation(%{assigns: %{user: user}, body_params: params} = conn, %{id: id}) do
     with %Activity{} = activity <- Activity.get_by_id(id),
+         # CommonAPI already checks whether user is allowed to mute
          {:ok, activity} <- CommonAPI.add_mute(user, activity, params) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
+    else
+      {:error, :visibility_error} ->
+        {:error, :not_found, "Record not found"}
+
+      error ->
+        error
     end
   end
 
   @doc "POST /api/v1/statuses/:id/unmute"
   def unmute_conversation(%{assigns: %{user: user}} = conn, %{id: id}) do
     with %Activity{} = activity <- Activity.get_by_id(id),
+         # CommonAPI already checks whether user is allowed to unmute
          {:ok, activity} <- CommonAPI.remove_mute(user, activity) do
       try_render(conn, "show.json", activity: activity, for: user, as: :activity)
+    else
+      {:error, :visibility_error} ->
+        {:error, :not_found, "Record not found"}
+
+      error ->
+        error
     end
   end
 
@@ -447,17 +484,21 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
   @doc "GET /api/v1/statuses/:id/context"
   def context(%{assigns: %{user: user}} = conn, %{id: id}) do
-    with %Activity{} = activity <- Activity.get_by_id(id) do
+    with %Activity{} = activity <- Activity.get_by_id(id),
+         true <- Visibility.visible_for_user?(activity, user) do
       activities =
         activity.data["context"]
         |> ActivityPub.fetch_activities_for_context(%{
           blocking_user: user,
           user: user,
+          with_muted: true,
           exclude_id: activity.id
         })
         |> Enum.filter(fn activity -> Visibility.visible_for_user?(activity, user) end)
 
       render(conn, "context.json", activity: activity, activities: activities, user: user)
+    else
+      _ -> {:error, :not_found}
     end
   end
 
@@ -497,20 +538,34 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
     )
   end
 
-  @doc "GET /api/v1/statuses/:id/translations/:language"
-  def translate(%{assigns: %{user: user}} = conn, %{id: id, language: language} = params) do
-    with {:enabled, true} <- {:enabled, Config.get([:translator, :enabled])},
-         %Activity{} = activity <- Activity.get_by_id_with_object(id),
-         {:visible, true} <- {:visible, Visibility.visible_for_user?(activity, user)},
-         translation_module <- Config.get([:translator, :module]),
-         {:ok, detected, translation} <-
-           fetch_or_translate(
-             activity.id,
-             activity.object.data["content"],
-             Map.get(params, :from, nil),
-             language,
-             translation_module
+  @doc "POST /api/v1/statuses/:id/translate"
+  def translate(%{assigns: %{user: user}, body_params: params} = conn, %{id: id}) do
+    with {:ok, translation} <-
+           do_translate(
+             id,
+             user,
+             Map.get(params, :source_lang, nil),
+             Map.get(params, :lang, nil)
            ) do
+      json(conn, translation)
+    else
+      {:enabled, false} ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{"error" => "Translation is not enabled"})
+
+      {:visible, false} ->
+        {:error, :not_found}
+
+      e ->
+        e
+    end
+  end
+
+  @doc "GET /api/v1/statuses/:id/translations/:language"
+  def translate_legacy(%{assigns: %{user: user}} = conn, %{id: id, language: language} = params) do
+    with {:ok, %{content: translation, detected_source_language: detected}} <-
+           do_translate(id, user, Map.get(params, :from, nil), language) do
       json(conn, %{detected_language: detected, text: translation})
     else
       {:enabled, false} ->
@@ -523,6 +578,28 @@ defmodule Pleroma.Web.MastodonAPI.StatusController do
 
       e ->
         e
+    end
+  end
+
+  defp do_translate(id, user, source_language, target_language) do
+    with {:enabled, true} <- {:enabled, Config.get([:translator, :enabled])},
+         %Activity{} = activity <- Activity.get_by_id_with_object(id),
+         {:visible, true} <- {:visible, Visibility.visible_for_user?(activity, user)},
+         translation_module <- Config.get([:translator, :module]),
+         {:ok, detected, translation} <-
+           fetch_or_translate(
+             activity.id,
+             activity.object.data["content"],
+             source_language,
+             target_language,
+             translation_module
+           ) do
+      {:ok,
+       %{
+         content: translation,
+         detected_source_language: detected,
+         provider: translation_module.name()
+       }}
     end
   end
 

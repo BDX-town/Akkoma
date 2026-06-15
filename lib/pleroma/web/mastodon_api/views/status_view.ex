@@ -620,7 +620,7 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   def render("attachment_meta.json", %{
         attachment: %{"url" => [%{"width" => width, "height" => height} | _]}
       })
-      when is_integer(width) and is_integer(height) do
+      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     %{
       original: %{
         width: width,
@@ -792,8 +792,8 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
   defp maybe_render_quote(nil, _), do: nil
 
   defp maybe_render_quote(quote, opts) do
-    with %User{} = quoted_user <- User.get_cached_by_ap_id(quote.actor),
-         false <- Map.get(opts, :do_not_recurse, false),
+    with false <- Map.get(opts, :do_not_recurse, false),
+         %User{} = quoted_user <- User.get_cached_by_ap_id(quote.actor),
          true <- visible_for_user?(quote, opts[:for]),
          false <- User.blocks?(opts[:for], quoted_user),
          false <- User.mutes?(opts[:for], quoted_user) do
@@ -802,7 +802,14 @@ defmodule Pleroma.Web.MastodonAPI.StatusView do
         |> Map.put(:activity, quote)
         |> Map.put(:do_not_recurse, true)
 
-      render("show.json", opts)
+      qdata = render("show.json", opts)
+
+      # For Masto-API compat we need to stuff the quote into itself
+      # such that the "quote" object meets both the old *oma convention
+      # being directly a status itself and the new Masto flavour with a sub-object
+      qdata
+      |> Map.put(:state, "accepted")
+      |> Map.put(:quoted_status, qdata)
     else
       _ -> nil
     end

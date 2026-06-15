@@ -27,6 +27,8 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubController do
   @federating_only_actions [:internal_fetch, :relay, :relay_following, :relay_followers]
 
   plug(FederatingPlug when action in @federating_only_actions)
+  # see AP spec section 5.2
+  plug(FederatingPlug, [fail_status: 405] when action in [:inbox])
 
   plug(
     EnsureAuthenticatedPlug,

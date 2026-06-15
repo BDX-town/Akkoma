@@ -152,7 +152,13 @@ defmodule Pleroma.Web.CommonAPI.Utils do
         |> DateTime.to_iso8601()
 
       key = if Params.truthy_param?(data.poll[:multiple]), do: "anyOf", else: "oneOf"
-      poll = %{"type" => "Question", key => option_notes, "closed" => end_time}
+
+      poll = %{
+        "type" => "Question",
+        key => option_notes,
+        "closed" => end_time,
+        "nonAnonymous" => false
+      }
 
       {:ok, {poll, emoji}}
     end

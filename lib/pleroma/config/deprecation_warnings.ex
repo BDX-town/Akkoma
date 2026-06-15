@@ -25,20 +25,34 @@ defmodule Pleroma.Config.DeprecationWarnings do
   def check_skip_thread_containment do
     # The default in config/config.exs is "true" since 593b8b1e6a8502cca9bf5559b8bec86f172bbecb
     # but when the default is retrieved in code the fallback is still "false"
-    uses_thread_visibility_filtering = !Config.get([:instance, :skip_thread_containment], false)
+    uses_thread_visibility_filtering = Config.get([:instance, :skip_thread_containment]) != nil
 
     if uses_thread_visibility_filtering do
       Logger.warning("""
-      !!!DEPRECATION WARNING!!!
-      Your config is explicitly enabling thread-based visibility containment by setting the below:
-      ```
+      !!!CONFIG ERROR!!!
       config :pleroma, :instance, skip_thread_containment: false
-      ```
+      was removed after a deprecation window during which no complaints were raised.
+      You should drop this setting from your config.
+      """)
 
-      This feature comes with a very high performance overhead and is considered for removal.
-      If you actually need or strongly prefer keeping it, speak up NOW(!) by filing a ticket at
+      :error
+    else
+      :ok
+    end
+  end
+
+  def check_truncated_nodeinfo_in_accounts do
+    if !Config.get!([:instance, :filter_embedded_nodeinfo]) do
+      Logger.warning("""
+      !!!BUG WORKAROUND DETECTED!!!
+      Your config is explicitly disabling filtering of nodeinfo data embedded in other Masto API responses
+
+        config :pleroma, :instance, filter_embedded_nodeinfo: false
+
+      This setting will soon be removed. Any usage of it merely serves as a temporary workaround.
+      Make sure to file a bug telling us which problems you encountered and circumvented by setting this!
          https://akkoma.dev/AkkomaGang/akkoma/issues
-      Complaints only after the removal happened are much less likely to have any effect.
+      We can’t fix bugs we don’t know about.
       """)
     end
   end

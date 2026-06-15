@@ -15,7 +15,7 @@ defmodule Pleroma.User.SigningKeyTests do
   defp maybe_put(map, _, nil), do: map
   defp maybe_put(map, key, val), do: Kernel.put_in(map, key, val)
 
-  defp get_body_actor(key_id \\ nil, user_id \\ nil, owner_id \\ nil) do
+  defp get_body_actor(key_id, user_id, owner_id \\ nil) do
     owner_id = owner_id || user_id
 
     File.read!("test/fixtures/tesla_mock/admin@mastdon.example.org.json")
@@ -244,6 +244,7 @@ defmodule Pleroma.User.SigningKeyTests do
       |> with_signing_key(%{key_id: key_id})
 
     key_owner = "https://mastodon.example.org/#"
+    key_owner_doc = get_body_actor(key_id, key_owner)
 
     user2_ap_id = user1.ap_id <> "22"
     user2_doc = get_body_actor(user1.signing_key.key_id, user2_ap_id, key_owner)
@@ -252,7 +253,7 @@ defmodule Pleroma.User.SigningKeyTests do
     user3_doc = get_body_actor(user1.signing_key.key_id, user2_ap_id)
 
     standalone_key_doc =
-      get_body_rawkey(key_id, "https://mastodon.example.org/#", user1.signing_key.public_key)
+      get_body_rawkey(key_id, key_owner, user1.signing_key.public_key)
 
     ap_headers = [
       {"content-type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""}
@@ -264,6 +265,14 @@ defmodule Pleroma.User.SigningKeyTests do
           status: 200,
           body: standalone_key_doc,
           url: key_id,
+          headers: ap_headers
+        }
+
+      %{method: :get, url: ^key_owner} ->
+        %Tesla.Env{
+          status: 200,
+          body: key_owner_doc,
+          url: key_owner,
           headers: ap_headers
         }
 
@@ -284,7 +293,11 @@ defmodule Pleroma.User.SigningKeyTests do
         }
     end)
 
-    {:error, _} = SigningKey.fetch_remote_key(key_id)
+    assert match?({:ok, _}, SigningKey.public_key_pem(user1))
+
+    # No further associations for the same key id can be inserted,
+    # but new users still fetched (without signing keys)
+    assert_raise Ecto.ConstraintError, fn -> SigningKey.fetch_remote_key(key_id) end
 
     {:ok, user2} = User.get_or_fetch_by_ap_id(user2_ap_id)
     {:ok, user3} = User.get_or_fetch_by_ap_id(user3_ap_id)
@@ -298,8 +311,8 @@ defmodule Pleroma.User.SigningKeyTests do
     assert match?([%SigningKey{}], keys)
     assert [db_key] == keys
     assert db_key.user_id == user1.id
-    assert match?({:ok, _}, SigningKey.public_key(user1))
-    assert {:error, "key not found"} == SigningKey.public_key(user2)
-    assert {:error, "key not found"} == SigningKey.public_key(user3)
+    assert match?({:ok, _}, SigningKey.public_key_pem(user1))
+    assert {:error, "key not found"} == SigningKey.public_key_pem(user2)
+    assert {:error, "key not found"} == SigningKey.public_key_pem(user3)
   end
 end

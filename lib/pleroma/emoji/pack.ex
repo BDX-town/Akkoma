@@ -93,9 +93,13 @@ defmodule Pleroma.Emoji.Pack do
   @spec delete(String.t()) ::
           {:ok, [binary()]} | {:error, File.posix(), binary()} | {:error, :empty_values}
   def delete(name) do
-    with :ok <- validate_not_empty([name]),
-         pack_path <- path_join_name_safe(emoji_path(), name) do
-      File.rm_rf(pack_path)
+    with {_, :ok} <- {:empty, validate_not_empty([name])},
+         {:ok, pack} <- load_pack(name) do
+      Enum.each(pack.files, fn {shortcode, _} -> Emoji.delete(shortcode) end)
+      File.rm_rf(pack.path)
+    else
+      {:empty, error} -> error
+      _ -> {:ok, []}
     end
   end
 
@@ -176,12 +180,7 @@ defmodule Pleroma.Emoji.Pack do
 
   defp do_add_file(pack, shortcode, filename, file) do
     with :ok <- save_file(file, pack, filename),
-         pack <- put_emoji(pack, shortcode, filename),
-         {:ok, pack} <- save_pack(pack) do
-      {shortcode, filename, tags(pack)}
-      |> Emoji.build()
-      |> Emoji.add_or_update()
-
+         {:ok, pack} <- put_emoji(pack, shortcode, filename) do
       {:ok, pack}
     end
   end
@@ -207,14 +206,8 @@ defmodule Pleroma.Emoji.Pack do
          {:ok, updated_pack} <-
            pack
            |> delete_emoji(shortcode)
-           |> put_emoji(new_shortcode, new_filename)
-           |> save_pack() do
-      Emoji.delete(shortcode)
-
-      {new_shortcode, new_filename, tags(pack)}
-      |> Emoji.build()
-      |> Emoji.add_or_update()
-
+           |> put_emoji(new_shortcode, new_filename) do
+      if shortcode != new_shortcode, do: Emoji.delete(shortcode)
       {:ok, updated_pack}
     end
   end
@@ -528,7 +521,17 @@ defmodule Pleroma.Emoji.Pack do
 
   defp put_emoji(pack, shortcode, filename) do
     files = Map.put(pack.files, shortcode, filename)
-    %{pack | files: files, files_count: length(Map.keys(files))}
+    pack = %{pack | files: files, files_count: length(Map.keys(files))}
+
+    url_path = path_join_name_safe("/emoji/", pack.name) |> path_join_safe(filename)
+
+    with {:ok, pack} <- save_pack(pack) do
+      {shortcode, url_path, tags(pack)}
+      |> Emoji.build()
+      |> Emoji.add_or_update()
+
+      {:ok, pack}
+    end
   end
 
   defp delete_emoji(pack, shortcode) do

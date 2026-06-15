@@ -205,3 +205,17 @@ Once you have modified the JSON file, you can load it back into the database.
     An instance reboot is needed for many changes to take effect,
     you may want to visit `/api/v1/pleroma/admin/restart` on your instance
     to soft-restart the instance.
+
+## Remove non-whitelisted configs from the database
+
+This removes any configuration value that is not explicitly whitelisted by `:pleroma, :database_config_whitelist`. Might be useful after updating the whitelist.
+
+=== "OTP"
+    ```sh
+    ./bin/pleroma_ctl config filter_whitelisted
+    ```
+
+=== "From Source"
+    ```sh
+    mix pleroma.config filter_whitelisted
+    ```

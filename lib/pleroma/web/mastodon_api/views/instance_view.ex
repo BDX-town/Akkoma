@@ -14,7 +14,7 @@ defmodule Pleroma.Web.MastodonAPI.InstanceView do
     instance = Config.get(:instance)
 
     %{
-      uri: Pleroma.Web.WebFinger.domain(),
+      uri: Pleroma.Web.WebFinger.Schema.domain(),
       title: Keyword.get(instance, :name),
       description: Keyword.get(instance, :description),
       short_description:
@@ -53,6 +53,18 @@ defmodule Pleroma.Web.MastodonAPI.InstanceView do
         vapid_public_key: Keyword.get(Pleroma.Web.Push.vapid_config(), :public_key)
       }
     }
+  end
+
+  def render("translation_languages.json", %{
+        source_languages: source_languages,
+        destination_languages: destination_languages
+      }) do
+    source_language_codes = Enum.map(source_languages, fn lang -> lang.code end)
+    dest_language_codes = Enum.map(destination_languages, fn lang -> lang.code end)
+
+    Map.new(source_language_codes, fn language ->
+      {language, dest_language_codes -- [language]}
+    end)
   end
 
   def features do

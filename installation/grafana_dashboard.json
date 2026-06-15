@@ -723,6 +723,8 @@
           },
           "displayName": "Run Queue",
           "mappings": [],
+          "max": 1.5,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -732,11 +734,11 @@
               },
               {
                 "color": "yellow",
-                "value": 15
+                "value": 0.2
               },
               {
                 "color": "red",
-                "value": 25
+                "value": 1
               }
             ]
           },
@@ -784,6 +786,12 @@
               {
                 "id": "displayName",
                 "value": "Memory"
+              },
+              {
+                "id": "min"
+              },
+              {
+                "id": "max"
               }
             ]
           },
@@ -836,7 +844,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_memory_total_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
+          "expr": "increase(vm_memory_total_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -854,7 +862,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_memory_total_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
+          "expr": "increase(vm_memory_total_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -882,7 +890,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_total_run_queue_lengths_cpu_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__rate_interval])",
+          "expr": "increase(vm_total_run_queue_lengths_cpu_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -900,7 +908,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_total_run_queue_lengths_cpu_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__rate_interval])",
+          "expr": "increase(vm_total_run_queue_lengths_cpu_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -928,7 +936,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_total_run_queue_lengths_io_fsum_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__rate_interval])",
+          "expr": "increase(vm_total_run_queue_lengths_io_fsum_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -946,7 +954,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "rate(vm_total_run_queue_lengths_io_fsum_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__rate_interval])",
+          "expr": "increase(vm_total_run_queue_lengths_io_fsum_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -1974,6 +1982,7 @@
         "type": "prometheus",
         "uid": "${DATASOURCE}"
       },
+      "description": "Times are counted upon job completion/failure and may contain IO or network wait times.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2356,7 +2365,7 @@
         "type": "prometheus",
         "uid": "${DATASOURCE}"
       },
-      "description": "Jobs intentionally held back until a later start data",
+      "description": "Jobs intentionally held back until a later start date. This also (but not only) includes retries of previously failed jobs since there’s a cooldown between re-attempts.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2681,7 +2690,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rate(vm_memory_total_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
+          "expr": "increase(vm_memory_total_psum{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -2698,7 +2707,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rate(vm_memory_total_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
+          "expr": "increase(vm_memory_total_pcount{instance=\"${INSTANCE}\", job=\"${SCRAPE_JOB}\"}[$__interval])",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -3598,6 +3607,6 @@
   "timezone": "utc",
   "title": "Akkoma Dashboard",
   "uid": "edzowz85niznkc",
-  "version": 29,
+  "version": 54,
   "weekStart": ""
 }

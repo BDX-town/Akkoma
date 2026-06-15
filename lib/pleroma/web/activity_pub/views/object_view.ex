@@ -56,27 +56,24 @@ defmodule Pleroma.Web.ActivityPub.ObjectView do
 
     first_pagination = reply_collection_first_pagination(items, opts)
 
-    col_ap =
-      %{
-        "id" => object_ap_id <> "/replies",
-        "type" => "OrderedCollection",
-        "totalItems" => total
-      }
-
-    col_ap =
+    first_page =
       if total > 0 do
-        first_page =
-          CollectionViewHelper.collection_page_keyset(
-            display_items,
-            first_pagination,
-            params[:limit],
-            true
-          )
-
-        Map.put(col_ap, "first", first_page)
+        CollectionViewHelper.collection_page_keyset(
+          display_items,
+          first_pagination,
+          params[:limit],
+          true
+        )
       else
-        col_ap
+        false
       end
+
+    col_ap =
+      CollectionViewHelper.collection_root_ordered(
+        object_ap_id <> "/replies",
+        total,
+        first_page
+      )
 
     if params[:skip_ap_ctx] do
       col_ap

@@ -20,7 +20,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
     conn
   end
 
-  def call(conn, _opts) do
+  # ensure host check is run before this without mixing the two up here
+  def call(%{assigns: %{host_matches: true}} = conn, _opts) do
     if get_format(conn) in ["json", "activity+json"] do
       conn
       |> maybe_assign_valid_signature()
@@ -28,6 +29,8 @@ defmodule Pleroma.Web.Plugs.HTTPSignaturePlug do
       conn
     end
   end
+
+  def call(conn, _opts), do: conn
 
   def route_aliases(%{path_info: ["objects", id], query_string: query_string, method: method}) do
     ap_id = url(~p[/objects/#{id}])

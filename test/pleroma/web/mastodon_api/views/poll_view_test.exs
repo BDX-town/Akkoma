@@ -43,7 +43,11 @@ defmodule Pleroma.Web.MastodonAPI.PollViewTest do
         %{title: "why are you even asking?", votes_count: 0}
       ],
       votes_count: 0,
-      voters_count: nil
+      voters_count: nil,
+      akkoma: %{
+        # locally created polls are always anonymous
+        anonymous: true
+      }
     }
 
     result = PollView.render("show.json", %{object: object})
@@ -135,6 +139,27 @@ defmodule Pleroma.Web.MastodonAPI.PollViewTest do
 
     assert result[:expires_at] == nil
     assert result[:expired] == false
+  end
+
+  test "does not make false claims in absence of vote anonymity information" do
+    object = Object.normalize("https://skippers-bin.com/notes/7x9tmrp97i", fetch: true)
+    result = PollView.render("show.json", %{object: object})
+
+    assert result[:akkoma][:anonymous] == nil
+  end
+
+  test "indicates promise of anonymity" do
+    object = Object.normalize("https://smithereen.example/posts/poll-anon", fetch: true)
+    result = PollView.render("show.json", %{object: object})
+
+    assert result[:akkoma][:anonymous] == true
+  end
+
+  test "indicates assured vote and identity disclosure" do
+    object = Object.normalize("https://smithereen.example/posts/poll-disclosed", fetch: true)
+    result = PollView.render("show.json", %{object: object})
+
+    assert result[:akkoma][:anonymous] == false
   end
 
   test "doesn't strips HTML tags" do

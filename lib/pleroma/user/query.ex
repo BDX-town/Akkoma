@@ -144,11 +144,6 @@ defmodule Pleroma.User.Query do
     |> where([u], u.is_confirmed == true)
   end
 
-  defp compose_query({:legacy_active, _}, query) do
-    query
-    |> where([u], fragment("not (?->'deactivated' @> 'true')", u.info))
-  end
-
   defp compose_query({:deactivated, false}, query) do
     where(query, [u], u.is_active == true)
   end

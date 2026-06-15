@@ -7,10 +7,14 @@ defmodule Pleroma.Web.ManifestView do
   alias Pleroma.Config
   alias Pleroma.Web.Endpoint
 
-  def render("manifest.json", _params) do
-    manifest_config = Config.get([:manifest], []) |> Enum.into(%{})
+  def render("manifest.json", params) do
+    user_overrides = Config.get([:manifest], []) |> Enum.into(%{})
 
-    defaults = %{
+    api_overrides =
+      params[:api_manifest_overrides] ||
+        %{start_url: "/", serviceworker: %{src: "/sw-pleroma.js"}}
+
+    %{
       name: Config.get([:instance, :name]),
       description: Config.get([:instance, :description]),
       icons: Config.get([:manifest, :icons]),
@@ -18,13 +22,11 @@ defmodule Pleroma.Web.ManifestView do
       background_color: Config.get([:manifest, :background_color]),
       display: "standalone",
       scope: Endpoint.url(),
-      start_url: "/",
-      categories: ["social"],
-      serviceworker: %{
-        src: "/sw-pleroma.js"
-      }
+      categories: [
+        "social"
+      ]
     }
-
-    Map.merge(manifest_config, defaults)
+    |> Map.merge(user_overrides)
+    |> Map.merge(api_overrides)
   end
 end

@@ -162,8 +162,9 @@ defmodule Mix.Tasks.Pleroma.Uploads do
     Map.put(link, "href", rewrite_url(id, href, from_url, to_url))
   end
 
-  defp rewrite_url_object(id, %{"type" => "Document", "url" => urls} = object, from_url, to_url) do
-    # Document will contain url field, which will be an array of links
+  defp rewrite_url_object(id, %{"type" => type, "url" => urls} = object, from_url, to_url)
+       when type in ["Document", "Image"] do
+    # Document and Image contain url field, which will always be an array of links
     Map.put(
       object,
       "url",

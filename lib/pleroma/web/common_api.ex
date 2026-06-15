@@ -199,10 +199,15 @@ defmodule Pleroma.Web.CommonAPI do
          %Object{} = note <- Object.normalize(activity, fetch: false),
          %Activity{} = like <- Utils.get_existing_like(user.ap_id, note),
          {:ok, undo, _} <- Builder.undo(user, like),
-         {:ok, activity, _} <- Pipeline.common_pipeline(undo, local: true) do
+         {:ok, activity, _} <- Pipeline.common_pipeline(undo, local: true),
+         # to avoid exposing post data in API response, lie to user and
+         # claim the operation failed if they aren’t (anymore) allowed to access it.
+         # But only check at end to allow retracting the fav if ID still available
+         {_, true} <- {:visibility, Visibility.visible_for_user?(note, user)} do
       {:ok, activity}
     else
       {:find_activity, _} -> {:error, :not_found}
+      {:visibility, _} -> {:error, :not_found}
       _ -> {:error, dgettext("errors", "Could not unfavorite")}
     end
   end
@@ -425,6 +430,7 @@ defmodule Pleroma.Web.CommonAPI do
   @spec unpin(String.t(), User.t()) :: {:ok, User.t()} | {:error, term()}
   def unpin(id, user) do
     with %Activity{} = activity <- create_activity_by_id(id),
+         true <- activity_belongs_to_actor(activity, user.ap_id),
          {:ok, unpin_data, _} <- Builder.unpin(user, activity.object),
          {:ok, _unpin, _} <-
            Pipeline.common_pipeline(unpin_data,
@@ -440,7 +446,8 @@ defmodule Pleroma.Web.CommonAPI do
   def add_mute(user, activity, params \\ %{}) do
     expires_in = Map.get(params, :expires_in, 0)
 
-    with {:ok, _} <- ThreadMute.add_mute(user.id, activity.data["context"]),
+    with true <- Visibility.visible_for_user?(activity, user),
+         {:ok, _} <- ThreadMute.add_mute(user.id, activity.data["context"]),
          _ <- Pleroma.Notification.mark_context_as_read(user, activity.data["context"]) do
       if expires_in > 0 do
         Pleroma.Workers.MuteExpireWorker.enqueue(
@@ -453,12 +460,17 @@ defmodule Pleroma.Web.CommonAPI do
       {:ok, activity}
     else
       {:error, _} -> {:error, dgettext("errors", "conversation is already muted")}
+      false -> {:error, :visibility_error}
     end
   end
 
   def remove_mute(%User{} = user, %Activity{} = activity) do
-    ThreadMute.remove_mute(user.id, activity.data["context"])
-    {:ok, activity}
+    if Visibility.visible_for_user?(activity, user) do
+      ThreadMute.remove_mute(user.id, activity.data["context"])
+      {:ok, activity}
+    else
+      {:error, :visibility_error}
+    end
   end
 
   def remove_mute(user_id, activity_id) do
@@ -485,7 +497,8 @@ defmodule Pleroma.Web.CommonAPI do
   def report(user, data) do
     with {:ok, account} <- get_reported_account(data.account_id),
          {:ok, {content_html, _, _}} <- make_report_content_html(data[:comment]),
-         {:ok, statuses} <- get_report_statuses(account, data) do
+         {:ok, statuses} <- get_report_statuses(account, data),
+         {_, true} <- {:visibility, check_statuses_visibility(user, statuses)} do
       ActivityPub.flag(%{
         context: Utils.generate_context_id(),
         actor: user,
@@ -494,8 +507,21 @@ defmodule Pleroma.Web.CommonAPI do
         content: content_html,
         forward: Map.get(data, :forward, false)
       })
+    else
+      {:visibility, _} ->
+        {:error, :visibility}
+
+      error ->
+        error
     end
   end
+
+  defp check_statuses_visibility(user, statuses) when is_list(statuses) do
+    Enum.all?(statuses, fn status -> Visibility.visible_for_user?(status, user) end)
+  end
+
+  # There are no statuses associated with the report, pass!
+  defp check_statuses_visibility(_, status) when status == nil, do: true
 
   defp get_reported_account(account_id) do
     case User.get_cached_by_id(account_id) do
@@ -565,9 +591,6 @@ defmodule Pleroma.Web.CommonAPI do
   def get_user(ap_id, fake_record_fallback \\ true) do
     cond do
       user = User.get_cached_by_ap_id(ap_id) ->
-        user
-
-      user = User.get_by_guessed_nickname(ap_id) ->
         user
 
       fake_record_fallback ->

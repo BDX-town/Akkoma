@@ -53,6 +53,10 @@ curl -i -H 'Authorization: Bearer $ACCESS_TOKEN' https://myinstance.example/api/
 You may use the eponymous [Prometheus](https://prometheus.io/)
 or anything compatible with it like e.g. [VictoriaMetrics](https://victoriametrics.com/).
 The latter claims better performance and storage efficiency.
+However, at the moment our reference dashboard only works with VictoriaMetrics,
+thus if you wish to use use the reference as an easy dropin template you must
+use VictoriaMetrics.
+Patches to allow the dashboard to work with plain Prometheus are welcome though.
 
 Both of them can usually be easily installed via distro-packages or docker.
 Depending on your distro or installation method the preferred way to change the CLI arguments and the location of config files may differ; consult the documentation of your chosen method to find out.  
@@ -237,7 +241,7 @@ If this makes too much noise, consider filtering out telltale delivery failures.
 
 On the opposite side of things, a `http_401` error for example is always worth looking into!
 
-## Built-in Dashboard
+## Built-in Dashboard (Phoenix)
 
 Administrators can access a live dashboard under `/phoenix/live_dashboard`
 giving an overview of uptime, software versions, database stats and more.
@@ -254,6 +258,44 @@ as well as database diagnostics.
 BEAM VM stats include detailed memory consumption breakdowns
 and a full list of running processes for example.
 
+### Postgres Statements Statistics
+
+The built-in dashboard can list the queries your instances spends the 
+most accumulative time on giving insight into potential bottlenecks
+and what might be worth optimising.
+This is the “Outliers” tab in “Ecto Stats”.  
+However for this to work you first need to enable a PostgreSQL extension
+as follows:
+
+Add the following two lines two your `postgresql.conf` (typically placed in your data dir):
+
+```
+shared_preload_libraries = 'pg_stat_statements'
+pg_stat_statements.track = all
+```
+
+Now restart PostgreSQL. Then connect to your akkoma database using `psql` and run:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+```
+
+Execution time statistics will now start to be gathered.
+To get a representative sample of your instances workload you should wait a week or at least a day.
+
+These statistics are never reset automatically, but with new Akkoma releases and
+changes in the servers your instance federates with the workload will evolve.
+Thus it’s a good idea to reset this occasionally using:
+
+```sql
+-- get user oid:  SELECT oid FROM pg_roles WHERE rolname = 'akkoma';
+-- get db oid: SELECT oid FROM pg_database WHERE datname = 'akkoma';
+SELECT pg_stat_statements_reset('<akkoma user oid>'::regclass::oid, '<akkoma database oid>'::regclass::oid);
+
+-- or alternatively, to just reset stats for all users and databases:
+--   SELECT pg_stat_statements_reset();
+```
+
 ## Oban Web
 
 This too requires administrator rights to access and can be found under `/akkoma/oban` if enabled.
@@ -265,6 +307,7 @@ but it additionally also:
   *(keep this in mind when granting people administrator rights!)*
 
 However, there are two caveats:
+
 1. Just as with the other built-in dashboard, data is not kept around
     (although here a **short** backlog actually exists);
     when you notice an issue during use and go here to check it likely is already too late.
@@ -272,4 +315,4 @@ However, there are two caveats:
     by default failed and succeeded jobs will disappear after about a minute.
 2. This dashboard comes with some seemingly constant-ish overhead.
     For large instances this appears to be negligible, but small instances on weaker hardware might suffer.
-    Thus this dashboard can be disabled in the [config](../cheatsheet.md#oban-web).
+    Thus this dashboard can be disabled in the [config](../configuration/cheatsheet.md#oban-web).

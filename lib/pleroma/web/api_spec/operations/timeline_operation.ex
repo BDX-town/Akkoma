@@ -36,21 +36,6 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
     }
   end
 
-  def direct_operation do
-    %Operation{
-      tags: ["Timelines"],
-      summary: "Direct timeline",
-      description:
-        "View statuses with a “direct” scope addressed to the account. Using this endpoint is discouraged, please use [conversations](#tag/Conversations).",
-      parameters: [with_muted_param() | pagination_params()],
-      security: [%{"oAuth" => ["read:statuses"]}],
-      operationId: "TimelineController.direct",
-      responses: %{
-        200 => Operation.response("Array of Status", "application/json", array_of_statuses())
-      }
-    }
-  end
-
   def public_operation do
     %Operation{
       tags: ["Timelines"],
@@ -128,6 +113,7 @@ defmodule Pleroma.Web.ApiSpec.TimelineOperation do
         only_media_param(),
         remote_param(),
         with_muted_param()
+        | pagination_params()
       ],
       operationId: "TimelineController.hashtag",
       responses: %{

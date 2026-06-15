@@ -14,6 +14,7 @@ defmodule Pleroma.Web.Feed.UserControllerTest do
   alias Pleroma.Web.Feed.FeedView
 
   setup do: clear_config([:static_fe, :enabled], false)
+  setup :request_host_header
 
   describe "feed" do
     setup do: clear_config([:feed])

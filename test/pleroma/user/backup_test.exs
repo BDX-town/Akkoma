@@ -157,6 +157,7 @@ defmodule Pleroma.User.BackupTest do
              "@context" => [
                "https://www.w3.org/ns/activitystreams",
                "http://localhost:4001/schemas/litepub-0.1.jsonld",
+               "https://purl.archive.org/socialweb/webfinger",
                %{"@language" => "und"}
              ],
              "bookmarks" => "bookmarks.json",

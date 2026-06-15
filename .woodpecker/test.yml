@@ -4,12 +4,12 @@ when:
 matrix:
   # test the lowest and highest versions
   include:
-    - ELIXIR_VERSION: 1.14
+    - ELIXIR_VERSION: 1.15
       OTP_VERSION: 25
       LINT: NO
       PLATFORM: linux/amd64
-    - ELIXIR_VERSION: 1.18
-      OTP_VERSION: 27
+    - ELIXIR_VERSION: 1.19
+      OTP_VERSION: 28
       LINT: YES
       PLATFORM: linux/arm64
 

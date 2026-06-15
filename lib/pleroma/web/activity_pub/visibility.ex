@@ -5,7 +5,6 @@
 defmodule Pleroma.Web.ActivityPub.Visibility do
   alias Pleroma.Activity
   alias Pleroma.Object
-  alias Pleroma.Repo
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.Utils
 
@@ -74,16 +73,6 @@ defmodule Pleroma.Web.ActivityPub.Visibility do
     user_is_local = user.local
     federatable = not is_local_public?(message)
     (is_public?(message) || Enum.any?(x, &(&1 in y))) and (user_is_local || federatable)
-  end
-
-  def entire_thread_visible_for_user?(%Activity{} = activity, %User{} = user) do
-    {:ok, %{rows: [[result]]}} =
-      Ecto.Adapters.SQL.query(Repo, "SELECT thread_visibility($1, $2)", [
-        user.ap_id,
-        activity.data["id"]
-      ])
-
-    result
   end
 
   def restrict_unauthenticated_access?(%Activity{local: local}) do

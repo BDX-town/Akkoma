@@ -16,6 +16,7 @@ defmodule Pleroma.Web.StaticFE.StaticFEControllerTest do
 
   setup_all do: clear_config([:static_fe, :enabled], true)
   setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+  setup :request_host_header
 
   setup %{conn: conn} do
     conn = put_req_header(conn, "accept", "text/html")

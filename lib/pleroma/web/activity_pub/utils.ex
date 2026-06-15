@@ -101,9 +101,13 @@ defmodule Pleroma.Web.ActivityPub.Utils do
       "@context" => [
         "https://www.w3.org/ns/activitystreams",
         "#{Endpoint.url()}/schemas/litepub-0.1.jsonld",
+        # FEP-2c59
+        "https://purl.archive.org/socialweb/webfinger",
         %{
           "@language" => "und",
-          "htmlMfm" => "https://w3id.org/fep/c16b#htmlMfm"
+          "htmlMfm" => "https://w3id.org/fep/c16b#htmlMfm",
+          "sm" => "http://smithereen.software/ns#",
+          "nonAnonymous" => "sm:nonAnonymous"
         }
       ]
     }
@@ -516,7 +520,7 @@ defmodule Pleroma.Web.ActivityPub.Utils do
       |> where([activity], fragment("?->>'content' = ?
         AND EXISTS (
           SELECT FROM jsonb_array_elements(?->'tag') elem
-          WHERE elem->>'id' ILIKE ?
+          WHERE COALESCE(elem->'icon'->>'url', '') ILIKE ?
         )", activity.data, ^emoji_pattern, activity.data, ^domain_pattern))
     else
       query
@@ -797,10 +801,14 @@ defmodule Pleroma.Web.ActivityPub.Utils do
     [actor | reported_activities] = activity.data["object"]
 
     stripped_activities =
-      Enum.map(reported_activities, fn
+      reported_activities
+      |> Enum.map(fn
         act when is_map(act) -> act["id"]
         act when is_binary(act) -> act
+        # Status ID is null sometimes.
+        _ -> nil
       end)
+      |> Enum.reject(&is_nil/1)
 
     new_data = put_in(activity.data, ["object"], [actor | stripped_activities])
 

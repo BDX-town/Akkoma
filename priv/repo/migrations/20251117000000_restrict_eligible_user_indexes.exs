@@ -19,7 +19,11 @@ defmodule Pleroma.Repo.Migrations.RestrictEligibleUserIndexes do
     # Just used to quickly retrieve all suggested useres
     # (this perhaps should have been a separate table to begin with).
     # This MUST use BTREE, a HASH index will not be used when querying all suggested users!
-    index(:users, [:id], where: "is_suggested", using: :btree, name: :users_where_suggested_index),
+    index(:users, [:id],
+      where: "is_suggested",
+      using: :btree,
+      name: :users_where_suggested_index
+    ),
 
     # Only _local_ users can be admins or moderators and in practice
     # this criteria is only used to query for a "true" setting.

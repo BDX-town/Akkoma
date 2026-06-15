@@ -5,7 +5,10 @@
 defmodule Pleroma.User.Search do
   alias Pleroma.EctoType.ActivityPub.ObjectValidators.Uri, as: UriType
   alias Pleroma.Pagination
+  alias Pleroma.Repo
   alias Pleroma.User
+
+  require Logger
 
   import Ecto.Query
 
@@ -24,18 +27,11 @@ defmodule Pleroma.User.Search do
     # If this returns anything, it should bounce to the top
     maybe_resolved = maybe_resolve(resolve, for_user, query_string)
 
-    top_user_ids =
-      []
-      |> maybe_add_resolved(maybe_resolved)
-      |> maybe_add_ap_id_match(query_string)
-      |> maybe_add_uri_match(query_string)
-
-    results =
-      query_string
-      |> search_query(for_user, following, top_user_ids)
-      |> Pagination.fetch_paginated(%{"offset" => offset, "limit" => result_limit}, :offset)
-
-    results
+    []
+    |> maybe_add_resolved(maybe_resolved)
+    |> maybe_add_ap_id_match(query_string)
+    |> maybe_add_uri_match(query_string)
+    |> maybe_add_fts_search(query_string, for_user, following, offset, result_limit)
   end
 
   defp maybe_add_resolved(list, {:ok, %User{} = user}) do
@@ -60,6 +56,47 @@ defmodule Pleroma.User.Search do
     else
       _ -> list
     end
+  end
+
+  defp maybe_add_fts_search(top_user_ids, query_string, for_user, following, offset, result_limit) do
+    gin_limit = Pleroma.Config.get([Pleroma.Search.DatabaseSearch, :gin_fuzzy_search_limit])
+
+    if is_integer(gin_limit) do
+      Repo.transact(fn ->
+        # SET LOCAL statement cannot be parametrised it seems; safe because integer
+        Repo.query!("SET LOCAL gin_fuzzy_search_limit TO #{gin_limit}", [])
+
+        {:ok,
+         do_fts_search(top_user_ids, query_string, for_user, following, offset, result_limit)}
+      end)
+      |> then(fn
+        {:ok, result} ->
+          result
+
+        error ->
+          Logger.error("#{__MODULE__}: user search transaction failed: #{inspect(error)}")
+          flake_ids = Enum.map(top_user_ids, &FlakeId.from_string(&1))
+
+          from(u in User,
+            inner_lateral_join:
+              i in fragment(
+                "SELECT * FROM UNNEST(?::uuid[]) WITH ORDINALITY AS i(id, ordinality)",
+                ^flake_ids
+              ),
+            on: u.id == i.id,
+            order_by: [asc: i.ordinality]
+          )
+          |> Repo.all()
+      end)
+    else
+      do_fts_search(top_user_ids, query_string, for_user, following, offset, result_limit)
+    end
+  end
+
+  defp do_fts_search(top_user_ids, query_string, for_user, following, offset, result_limit) do
+    query_string
+    |> search_query(for_user, following, top_user_ids)
+    |> Pagination.fetch_paginated(%{"offset" => offset, "limit" => result_limit}, :offset)
   end
 
   def sanitise_domain(domain) do

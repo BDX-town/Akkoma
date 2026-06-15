@@ -97,6 +97,9 @@ defmodule Pleroma.Pagination do
   defp do_unwrap([], acc), do: Enum.reverse(acc)
 
   defp cast_params(params) do
+    # Ecto doesn’t support atom types
+    pfield = params[:pagination_field] || :id
+
     param_types = %{
       min_id: params[:id_type] || :string,
       since_id: params[:id_type] || :string,
@@ -108,54 +111,54 @@ defmodule Pleroma.Pagination do
       order_asc: :boolean
     }
 
-    params = Map.delete(params, :id_type)
+    params = Map.drop(params, [:id_type, :pagination_field])
     changeset = cast({%{}, param_types}, params, Map.keys(param_types))
-    changeset.changes
+    Map.put(changeset.changes, :pagination_field, pfield)
   end
 
-  defp order_statement(query, table_binding, :asc) do
+  defp order_statement(query, table_binding, :asc, %{pagination_field: fname}) do
     order_by(
       query,
       [{u, table_position(query, table_binding)}],
-      fragment("? asc nulls last", u.id)
+      fragment("? asc nulls last", field(u, ^fname))
     )
   end
 
-  defp order_statement(query, table_binding, :desc) do
+  defp order_statement(query, table_binding, :desc, %{pagination_field: fname}) do
     order_by(
       query,
       [{u, table_position(query, table_binding)}],
-      fragment("? desc nulls last", u.id)
+      fragment("? desc nulls last", field(u, ^fname))
     )
   end
 
-  defp restrict(query, :min_id, %{min_id: min_id}, table_binding) do
-    where(query, [{q, table_position(query, table_binding)}], q.id > ^min_id)
+  defp restrict(query, :min_id, %{min_id: min_id, pagination_field: fname}, table_binding) do
+    where(query, [{q, table_position(query, table_binding)}], field(q, ^fname) > ^min_id)
   end
 
-  defp restrict(query, :since_id, %{since_id: since_id}, table_binding) do
-    where(query, [{q, table_position(query, table_binding)}], q.id > ^since_id)
+  defp restrict(query, :since_id, %{since_id: since_id, pagination_field: fname}, table_binding) do
+    where(query, [{q, table_position(query, table_binding)}], field(q, ^fname) > ^since_id)
   end
 
-  defp restrict(query, :max_id, %{max_id: max_id}, table_binding) do
-    where(query, [{q, table_position(query, table_binding)}], q.id < ^max_id)
+  defp restrict(query, :max_id, %{max_id: max_id, pagination_field: fname}, table_binding) do
+    where(query, [{q, table_position(query, table_binding)}], field(q, ^fname) < ^max_id)
   end
 
   defp restrict(query, :order, %{skip_order: true}, _), do: query
 
   defp restrict(%{order_bys: [_ | _]} = query, :order, %{skip_extra_order: true}, _), do: query
 
-  defp restrict(query, :order, %{min_id: _}, table_binding) do
-    order_statement(query, table_binding, :asc)
+  defp restrict(query, :order, %{min_id: _} = options, table_binding) do
+    order_statement(query, table_binding, :asc, options)
   end
 
-  defp restrict(query, :order, %{max_id: _}, table_binding) do
-    order_statement(query, table_binding, :desc)
+  defp restrict(query, :order, %{max_id: _} = options, table_binding) do
+    order_statement(query, table_binding, :desc, options)
   end
 
   defp restrict(query, :order, options, table_binding) do
     dir = if options[:order_asc], do: :asc, else: :desc
-    order_statement(query, table_binding, dir)
+    order_statement(query, table_binding, dir, options)
   end
 
   defp restrict(query, :offset, %{offset: offset}, _table_binding) do

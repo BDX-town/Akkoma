@@ -177,6 +177,16 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
                |> get("/api/v1/accounts/#{user.id}")
                |> json_response_and_validate_schema(:not_found)
     end
+
+    test "returns 404 when the username is not valid utf8" do
+      nick = <<0xC0>>
+      refute String.valid?(nick)
+
+      assert %{"error" => "Can't find user"} =
+               build_conn()
+               |> get("/api/v1/accounts/#{nick}")
+               |> json_response_and_validate_schema(404)
+    end
   end
 
   defp local_and_remote_users do
@@ -1693,7 +1703,10 @@ defmodule Pleroma.Web.MastodonAPI.AccountControllerTest do
     test "returns lists to which the account belongs" do
       %{user: user, conn: conn} = oauth_access(["read:lists"])
       other_user = insert(:user)
-      assert {:ok, %Pleroma.List{id: _list_id} = list} = Pleroma.List.create("Test List", user)
+
+      assert {:ok, %Pleroma.List{id: _list_id} = list} =
+               Pleroma.List.create(%{title: "Test List"}, user)
+
       {:ok, %{following: _following}} = Pleroma.List.follow(list, other_user)
 
       assert [%{"id" => _list_id, "title" => "Test List"}] =

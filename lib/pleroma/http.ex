@@ -61,12 +61,7 @@ defmodule Pleroma.HTTP do
     options = options |> Keyword.delete(:params)
     headers = maybe_add_user_agent(headers)
 
-    client =
-      Tesla.client([
-        Tesla.Middleware.FollowRedirects,
-        Pleroma.HTTP.Middleware.HTTPSignature,
-        Tesla.Middleware.Telemetry
-      ])
+    client = build_client(method)
 
     Logger.debug("Outbound: #{method} #{url}")
 
@@ -84,6 +79,37 @@ defmodule Pleroma.HTTP do
       {:error, :fetch_error}
   end
 
+  defp build_client(method) do
+    # Orders of middlewares matters!
+    # We start construction with the middlewares _last_ to run
+    # on outgoing requests (and first on incoming responses).
+    # This allows using more efficient list prepending.
+    middlewares = [Tesla.Middleware.Telemetry]
+
+    # XXX: just like the user-agent header below, our current mocks can't handle extra headers
+    #      and would break if we used the decompression middleware during tests.
+    #      The :test condition can and should be removed once mocks are fixed.
+    #
+    # HEAD responses won't contain a body to compress anyway and we sometimes use
+    # HEAD requests to determine whether a remote resource is within size limits before fetching it.
+    # If the server would send a compressed response however, Content-Length will be the size of
+    # the _compressed_ response body skewing results.
+    middlewares =
+      if method != :head and @mix_env != :test do
+        [Tesla.Middleware.DecompressResponse | middlewares]
+      else
+        middlewares
+      end
+
+    middlewares = [
+      Tesla.Middleware.FollowRedirects,
+      Pleroma.HTTP.Middleware.HTTPSignature | middlewares
+    ]
+
+    Tesla.client(middlewares)
+  end
+
+  # XXX: our test mocks are (too) strict about headers and cannot handle user-agent atm
   if @mix_env == :test do
     defp maybe_add_user_agent(headers) do
       with true <- Pleroma.Config.get([:http, :send_user_agent]) do

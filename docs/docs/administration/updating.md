@@ -31,6 +31,10 @@ su -s "$SHELL" akkoma
 
 # Update frontend(s). See Frontend Configuration doc for more information.
 ./bin/pleroma_ctl frontend install pleroma-fe --ref stable
+
+# If there were migrations and you now experience degraded db perf
+# force the planner to pick up the changes to resolve it:
+./bin/pleroma_ctl database vacuum analyze
 ```
 
 If you selected an alternate flavour on installation,
@@ -64,4 +68,8 @@ sudo systemctl start akkoma
 
 # Update akkoma-fe frontend to latest stable. For other Frontends see Frontend Configuration doc for more information.
 mix pleroma.frontend install pleroma-fe --ref stable
+
+# If there were migrations and you now experience degraded db perf
+# force the planner to pick up the changes to resolve it:
+mix pleroma.database vacuum analyze
 ```

@@ -128,7 +128,7 @@ defmodule Pleroma.Web.MastodonAPI.MediaControllerTest do
     end
 
     test "Do not allow nested filename", %{conn: conn, image: image} do
-      image = %Plug.Upload{
+      image = %{
         image
         | filename: "../../../../../nested/file.jpg"
       }

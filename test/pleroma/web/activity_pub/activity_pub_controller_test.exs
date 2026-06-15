@@ -31,6 +31,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
   setup do: clear_config([:instance, :federating], true)
   setup do: clear_config([Pleroma.Upload, :uploader], Pleroma.Uploaders.Local)
+  setup :request_host_header
 
   describe "/relay" do
     setup do: clear_config([:instance, :allow_relay], true)
@@ -644,6 +645,20 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
   end
 
   describe "/inbox" do
+    test "on non-federating instance, it returns 405", %{conn: conn} do
+      clear_config([:instance, :federating], false)
+
+      data = File.read!("test/fixtures/mastodon-post-activity.json") |> Jason.decode!()
+      {:ok, actor} = User.get_or_fetch_by_ap_id("http://mastodon.example.org/users/admin")
+
+      conn
+      |> assign(:valid_signature, true)
+      |> assign(:signature_user, actor)
+      |> put_req_header("content-type", "application/activity+json")
+      |> post("/inbox", data)
+      |> json_response(405)
+    end
+
     test "it inserts an incoming activity into the database", %{conn: conn} do
       data = File.read!("test/fixtures/mastodon-post-activity.json") |> Jason.decode!()
       {:ok, actor} = User.get_or_fetch_by_ap_id("http://mastodon.example.org/users/admin")
@@ -1592,7 +1607,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "it returns the followers in a collection", %{conn: conn} do
       user = insert(:user)
       user_two = insert(:user)
-      User.follow(user, user_two)
+      {:ok, user, user_two} = User.follow(user, user_two)
 
       result =
         conn
@@ -1603,10 +1618,10 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert result["first"]["orderedItems"] == [user.ap_id]
     end
 
-    test "it returns a uri if the user has 'hide_followers' set", %{conn: conn} do
+    test "it does not return a page uri if the user has 'hide_followers' set", %{conn: conn} do
       user = insert(:user)
       user_two = insert(:user, hide_followers: true)
-      User.follow(user, user_two)
+      {:ok, user, user_two} = User.follow(user, user_two)
 
       result =
         conn
@@ -1614,7 +1629,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> get("/users/#{user_two.nickname}/followers")
         |> json_response(200)
 
-      assert is_binary(result["first"])
+      refute Map.has_key?(result, "first")
+      refute Map.has_key?(result, "orderedItems")
+      refute Map.has_key?(result, "items")
     end
 
     test "it returns a 403 error on pages, if the user has 'hide_followers' set and the request is from another user",
@@ -1655,6 +1672,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         User.follow(other_user, user)
       end)
 
+      # refresh follow* count
+      user = User.get_cached_by_id(user.id)
+
       result =
         conn
         |> assign(:user, user)
@@ -1688,7 +1708,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
     test "it returns the following in a collection", %{conn: conn} do
       user = insert(:user)
       user_two = insert(:user)
-      User.follow(user, user_two)
+      {:ok, user, user_two} = User.follow(user, user_two)
 
       result =
         conn
@@ -1699,7 +1719,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
       assert result["first"]["orderedItems"] == [user_two.ap_id]
     end
 
-    test "it returns a uri if the user has 'hide_follows' set", %{conn: conn} do
+    test "it does not return a page uri if the user has 'hide_follows' set", %{conn: conn} do
       user = insert(:user)
       user_two = insert(:user, hide_follows: true)
       User.follow(user, user_two)
@@ -1710,7 +1730,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         |> get("/users/#{user_two.nickname}/following")
         |> json_response(200)
 
-      assert is_binary(result["first"])
+      refute Map.has_key?(result, "first")
+      refute Map.has_key?(result, "orderedItems")
+      refute Map.has_key?(result, "items")
     end
 
     test "it returns a 403 error on pages, if the user has 'hide_follows' set and the request is from another user",
@@ -1751,6 +1773,9 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
         other_user = insert(:user)
         User.follow(user, other_user)
       end)
+
+      # refresh follow* count
+      user = User.get_cached_by_id(user.id)
 
       result =
         conn
@@ -1830,6 +1855,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       build_conn()
       |> put_req_header("accept", "application/activity+json")
+      |> with_request_host_header()
       |> assign(:user, other_user)
       |> get(object_path)
       |> json_response(200)
@@ -1854,6 +1880,7 @@ defmodule Pleroma.Web.ActivityPub.ActivityPubControllerTest do
 
       build_conn()
       |> put_req_header("accept", "application/activity+json")
+      |> with_request_host_header()
       |> assign(:user, other_user)
       |> get(activity_path)
       |> json_response(200)

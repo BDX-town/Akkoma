@@ -21,6 +21,7 @@ defmodule Pleroma.Web.OStatus.OStatusControllerTest do
   end
 
   setup do: clear_config([:static_fe, :enabled], false)
+  setup :request_host_header
 
   describe "Mastodon compatibility routes" do
     setup %{conn: conn} do

@@ -1,5 +1,5 @@
 labels:
-  platform: linux/amd64
+  platform: linux/arm64
 
 when:
   event:
@@ -21,8 +21,8 @@ steps:
     image: python:3.10-slim
     commands:
       - apt-get update && apt-get install -y rclone wget git zip
-      - wget https://github.com/scaleway/scaleway-cli/releases/download/v2.5.1/scaleway-cli_2.5.1_linux_amd64
-      - mv scaleway-cli_2.5.1_linux_amd64 scaleway-cli
+      - wget https://github.com/scaleway/scaleway-cli/releases/download/v2.5.1/scaleway-cli_2.5.1_linux_arm64
+      - mv scaleway-cli_2.5.1_linux_arm64 scaleway-cli
       - chmod +x scaleway-cli
       - ./scaleway-cli object config install type=rclone
       - cd docs

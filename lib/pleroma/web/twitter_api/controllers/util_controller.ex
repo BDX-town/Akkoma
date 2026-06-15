@@ -16,7 +16,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
   alias Pleroma.Web.ActivityPub.ActivityPub
   alias Pleroma.Web.CommonAPI
   alias Pleroma.Web.Plugs.OAuthScopesPlug
-  alias Pleroma.Web.WebFinger
+  alias Pleroma.Web.WebFinger.Finger
 
   plug(
     Pleroma.Web.ApiSpec.CastAndValidate
@@ -111,7 +111,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
   end
 
   def remote_subscribe(conn, %{"user" => %{"nickname" => nick, "profile" => profile}}) do
-    with {:ok, %{"subscribe_address" => template}} <- WebFinger.finger(profile),
+    with {:ok, %{"subscribe_address" => template}} <- Finger.finger_raw_data(profile),
          %User{ap_id: ap_id} <- User.get_cached_by_nickname(nick) do
       conn
       |> Phoenix.Controller.redirect(external: String.replace(template, "{uri}", ap_id))
@@ -131,7 +131,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
   end
 
   def remote_subscribe(conn, %{"status" => %{"status_id" => id, "profile" => profile}}) do
-    with {:ok, %{"subscribe_address" => template}} <- WebFinger.finger(profile),
+    with {:ok, %{"subscribe_address" => template}} <- Finger.finger_raw_data(profile),
          %Activity{} = activity <- Activity.get_by_id(id),
          {:ok, ap_id} <- get_ap_id(activity) do
       conn
@@ -155,7 +155,7 @@ defmodule Pleroma.Web.TwitterAPI.UtilController do
         %Plug.Conn{body_params: %{ap_id: ap_id, profile: profile}} = conn,
         _params
       ) do
-    with {:ok, %{"subscribe_address" => template}} <- WebFinger.finger(profile) do
+    with {:ok, %{"subscribe_address" => template}} <- Finger.finger_raw_data(profile) do
       conn
       |> json(%{url: String.replace(template, "{uri}", ap_id)})
     else

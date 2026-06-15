@@ -37,10 +37,10 @@ defmodule Pleroma.Workers.PublisherWorker do
     res = Federator.perform(:publish_one, String.to_existing_atom(module_name), params)
 
     case res do
-      # instance / actor was explicitly deleted; there’s nothing to deliver to anymore
-      # since we don’t know whether the whole instance is gone or just this actor,
-      # do NOT immediately mark the instance as unreachable
-      {:error, {:http_error, 410, _}} ->
+      # instance / actor was explicitly deleted or instance doesn’t support federation
+      # either way there’s nothing to retry so just give up
+      # Marking instances as unreachable if appropriate is already handled in Publisher module
+      {:error, {:http_error, code, _}} when code in [405, 410] ->
         :ok
 
       res ->

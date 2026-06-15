@@ -20,4 +20,18 @@ defmodule Pleroma.Web.MastodonAPI.InstanceController do
   def peers(conn, _params) do
     json(conn, Pleroma.Stats.get_peers())
   end
+
+  @doc "GET /api/v1/instance/translation_languages"
+  def translation_languages(conn, _params) do
+    with {:ok, source_languages, destination_languages} <- Pleroma.Akkoma.Translator.languages() do
+      conn
+      |> render("translation_languages.json", %{
+        source_languages: source_languages,
+        destination_languages: destination_languages
+      })
+    else
+      {:enabled, false} -> json(conn, %{})
+      e -> {:error, e}
+    end
+  end
 end

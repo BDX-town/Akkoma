@@ -4,8 +4,8 @@ defmodule Pleroma.Mixfile do
   def project do
     [
       app: :pleroma,
-      version: version("3.17.0"),
-      elixir: "~> 1.14.1 or ~> 1.15",
+      version: version("3.19.0"),
+      elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
       xref: [exclude: [:eldap]],
@@ -13,7 +13,7 @@ defmodule Pleroma.Mixfile do
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: ["coveralls.html": :test, "mneme.test": :test, "mneme.watch": :test],
+      test_ignore_filters: [~r/_helper.exs$/, ~r/^test\/fixtures\//, ~r/^test\/credo\//],
       # Docs
       name: "Akkoma",
       homepage_url: "https://akkoma.dev/",
@@ -41,6 +41,12 @@ defmodule Pleroma.Mixfile do
       ]
     ]
     |> add_listeners(Mix.env())
+  end
+
+  def cli() do
+    [
+      preferred_cli_env: ["coveralls.html": :test, "mneme.test": :test, "mneme.watch": :test]
+    ]
   end
 
   defp add_listeners(project, :dev), do: Keyword.put(project, :listeners, [Phoenix.CodeReloader])
@@ -126,7 +132,7 @@ defmodule Pleroma.Mixfile do
       {:inet_cidr, "~> 1.0.0"},
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.13.2"},
-      {:postgrex, "~> 0.21.1"},
+      {:postgrex, "~> 0.22.0"},
       {:oban, "~> 2.20.1"},
       {:oban_web, "~> 2.11.0"},
       {:gettext, "~> 0.26 or ~> 1.0"},
@@ -137,10 +143,10 @@ defmodule Pleroma.Mixfile do
       {:phoenix_html_helpers, "~> 1.0"},
       {:calendar, "~> 1.0"},
       {:cachex, "~> 4.1"},
-      {:tesla, "~> 1.7"},
+      {:tesla, "~> 1.16.0"},
       {:castore, "~> 1.0"},
       {:cowlib, "~> 2.12"},
-      {:finch, "~> 0.20.0"},
+      {:finch, "~> 0.21.0"},
       {:jason, "~> 1.4"},
       {:trailing_format_plug, "~> 0.0.7"},
       {:mogrify, "~> 0.9"},
@@ -179,9 +185,7 @@ defmodule Pleroma.Mixfile do
       {:concurrent_limiter,
        git: "https://akkoma.dev/AkkomaGang/concurrent-limiter.git", branch: "main"},
       {:remote_ip, "~> 1.2.0"},
-      {:captcha,
-       git: "https://git.pleroma.social/pleroma/elixir-libraries/elixir-captcha.git",
-       branch: "master"},
+      {:captcha, git: "https://akkoma.dev/AkkomaGang/elixir-captcha.git", branch: "main"},
       {:restarter, path: "./restarter"},
       {:majic, git: "https://akkoma.dev/AkkomaGang/majic.git", branch: "main"},
       {:eblurhash, "~> 1.2.2"},

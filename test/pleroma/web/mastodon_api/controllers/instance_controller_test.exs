@@ -108,4 +108,35 @@ defmodule Pleroma.Web.MastodonAPI.InstanceControllerTest do
 
     assert ["peer1.com", "peer2.com"] == Enum.sort(result)
   end
+
+  test "get translation languages", %{conn: conn} do
+    Tesla.Mock.mock_global(fn
+      %{method: :get, url: "https://api-free.deepl.com/v2/languages?type=source"} ->
+        %Tesla.Env{
+          status: 200,
+          body:
+            Jason.encode!([
+              %{language: "en", name: "English"}
+            ])
+        }
+
+      %{method: :get, url: "https://api-free.deepl.com/v2/languages?type=target"} ->
+        %Tesla.Env{
+          status: 200,
+          body:
+            Jason.encode!([
+              %{language: "ja", name: "Japanese"}
+            ])
+        }
+    end)
+
+    conn =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> get("/api/v1/instance/translation_languages")
+
+    response = json_response_and_validate_schema(conn, 200)
+
+    assert %{"en" => ["ja"]} = response
+  end
 end

@@ -110,7 +110,7 @@ defmodule Pleroma.User.SigningKey do
     {:ok, :public_key.pem_encode([public_key])}
   end
 
-  @spec public_key(__MODULE__) :: {:ok, binary()} | {:error, String.t()}
+  @spec public_key_decoded(__MODULE__) :: {:ok, binary()} | {:error, String.t()}
   @doc """
   Return public key data in binary format.
   """
@@ -124,8 +124,12 @@ defmodule Pleroma.User.SigningKey do
     {:ok, decoded}
   end
 
-  def public_key(_), do: {:error, "key not found"}
+  def public_key_decoded(_), do: {:error, "key not found"}
 
+  @spec public_key_pem(__MODULE__) :: {:ok, binary()} | {:error, String.t()}
+  @doc """
+  Return public key data for user in PEM format
+  """
   def public_key_pem(%User{} = user) do
     case Repo.preload(user, :signing_key) do
       %User{signing_key: %__MODULE__{public_key: public_key_pem}} -> {:ok, public_key_pem}

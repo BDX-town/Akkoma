@@ -95,7 +95,7 @@ defmodule Pleroma.Web.PleromaAPI.EmojiReactionControllerTest do
                "name" => "dinosaur",
                "count" => 1,
                "me" => true,
-               "url" => "http://localhost:4001/emoji/dino walking.gif",
+               "url" => "http://localhost:4001/emoji/dino%20walking.gif",
                "account_ids" => [other_user.id]
              }
            ]

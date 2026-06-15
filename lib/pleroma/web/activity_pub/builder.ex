@@ -57,6 +57,17 @@ defmodule Pleroma.Web.ActivityPub.Builder do
     {:ok, data, []}
   end
 
+  @spec emoji_object!({String.t(), String.t()}) :: map()
+  def emoji_object!({name, url}) do
+    # TODO: we should probably send mtime instead of unix epoch time for updated
+    %{
+      "icon" => %{"url" => "#{URI.encode(url)}", "type" => "Image"},
+      "name" => Emoji.maybe_quote(name),
+      "type" => "Emoji",
+      "updated" => "1970-01-01T00:00:00Z"
+    }
+  end
+
   defp unicode_emoji_react(_object, data, emoji) do
     data
     |> Map.put("content", emoji)
@@ -67,18 +78,7 @@ defmodule Pleroma.Web.ActivityPub.Builder do
     data
     |> Map.put("content", Emoji.maybe_quote(emoji))
     |> Map.put("type", "EmojiReact")
-    |> Map.put("tag", [
-      %{}
-      |> Map.put("id", url)
-      |> Map.put("type", "Emoji")
-      |> Map.put("name", Emoji.maybe_quote(emoji))
-      |> Map.put(
-        "icon",
-        %{}
-        |> Map.put("type", "Image")
-        |> Map.put("url", url)
-      )
-    ])
+    |> Map.put("tag", [emoji_object!({emoji, url})])
   end
 
   defp remote_custom_emoji_react(

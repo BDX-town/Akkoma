@@ -10,6 +10,15 @@ To use built-in search that has no external dependencies, set the search module 
 
 While it has no external dependencies, it has problems with performance and relevancy.
 
+You may choose to limit the set of posts considered during a FTS search for better performance
+in exchange for potentially non-deterministic and less relevant results. See documentation of
+`gin_fuzzy_search_limit` in [PostgreSQL’s docs](https://www.postgresql.org/docs/17/gin.html#GIN-TIPS).
+By default FTS search is exact and considers everything. To enforce a limit only for FTS queries set e.g.:
+
+```elixir
+config :pleroma, Pleroma.Search.DatabaseSearch, gin_fuzzy_search_limit: 10_000
+```
+
 ## Meilisearch
 
 Note that it's quite a bit more memory hungry than PostgreSQL (around 4-5G for ~1.2 million

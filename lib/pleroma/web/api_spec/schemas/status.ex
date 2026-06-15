@@ -347,7 +347,6 @@ defmodule Pleroma.Web.ApiSpec.Schemas.Status do
             "subscribing" => false,
             "notifying" => false
           },
-          "skip_thread_containment" => false,
           "tags" => []
         },
         "source" => %{

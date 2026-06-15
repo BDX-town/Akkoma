@@ -352,14 +352,29 @@ defmodule Pleroma.Object.FetcherTest do
 
     test "does not fetch anything from a rejected instance" do
       clear_config([:mrf_simple, :reject], [{"evil.example.org", "i said so"}])
+      clear_config([:mrf, :policies], [Pleroma.Web.ActivityPub.MRF.SimplePolicy])
 
       assert {:reject, _} =
                Fetcher.fetch_object_from_id("http://evil.example.org/@admin/99541947525187367")
     end
 
+    test "fetches from a rejected instance when mrf_simple is off" do
+      clear_config([:mrf_simple, :reject], [
+        {"mastodon.example.org", "forgot the reason, will disable for now"}
+      ])
+
+      clear_config([:mrf, :policies], [])
+
+      assert {:ok, _object} =
+               Fetcher.fetch_object_from_id(
+                 "http://mastodon.example.org/@admin/99541947525187367"
+               )
+    end
+
     test "does not fetch anything if mrf_simple accept is on" do
       clear_config([:mrf_simple, :accept], [{"mastodon.example.org", "i said so"}])
       clear_config([:mrf_simple, :reject], [])
+      clear_config([:mrf, :policies], [Pleroma.Web.ActivityPub.MRF.SimplePolicy])
 
       assert {:reject, _} =
                Fetcher.fetch_object_from_id(

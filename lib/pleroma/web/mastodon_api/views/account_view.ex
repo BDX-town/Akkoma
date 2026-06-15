@@ -181,10 +181,19 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
   end
 
   def render("instance.json", %{instance: %Pleroma.Instances.Instance{} = instance}) do
+    nodeinfo =
+      if Pleroma.Config.get!([:instance, :filter_embedded_nodeinfo]) and instance.nodeinfo do
+        %{}
+        |> maybe_put_nodeinfo(instance.nodeinfo, "version")
+        |> maybe_put_nodeinfo(instance.nodeinfo, "software")
+      else
+        instance.nodeinfo
+      end
+
     %{
       name: instance.host,
       favicon: instance.favicon |> MediaProxy.url(),
-      nodeinfo: instance.nodeinfo
+      nodeinfo: nodeinfo
     }
   end
 
@@ -207,8 +216,10 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
 
     avatar = User.avatar_url(user) |> MediaProxy.url()
     avatar_static = User.avatar_url(user) |> MediaProxy.preview_url(static: true)
+    avatar_description = User.image_description(user.avatar, "")
     header = User.banner_url(user) |> MediaProxy.url()
     header_static = User.banner_url(user) |> MediaProxy.preview_url(static: true)
+    header_description = User.image_description(user.banner, "")
 
     following_count =
       if !user.hide_follows_count or !user.hide_follows or opts[:for] == user,
@@ -278,8 +289,10 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
       url: user.uri || user.ap_id,
       avatar: avatar,
       avatar_static: avatar_static,
+      avatar_description: avatar_description,
       header: header,
       header_static: header_static,
+      header_description: header_description,
       emojis: emojis,
       fields: user.fields,
       bot: bot,
@@ -313,8 +326,8 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
         hide_follows: user.hide_follows,
         hide_favorites: user.hide_favorites,
         relationship: relationship,
-        skip_thread_containment: user.skip_thread_containment,
         background_image: image_url(user.background) |> MediaProxy.url(),
+        background_image_description: User.image_description(user.background, ""),
         favicon: favicon
       }
     }
@@ -441,6 +454,16 @@ defmodule Pleroma.Web.MastodonAPI.AccountView do
   end
 
   defp maybe_put_email_address(data, _, _), do: data
+
+  defp maybe_put_nodeinfo(map, nodeinfo, key) do
+    val = nodeinfo[key]
+
+    if val do
+      Map.put(map, key, val)
+    else
+      map
+    end
+  end
 
   defp image_url(%{"url" => [%{"href" => href} | _]}), do: href
   defp image_url(_), do: nil

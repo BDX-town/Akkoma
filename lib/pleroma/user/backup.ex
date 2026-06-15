@@ -230,8 +230,7 @@ defmodule Pleroma.User.Backup do
 
     [
       [Pleroma.Constants.as_public(), user.ap_id],
-      User.following(user),
-      Pleroma.List.memberships(user)
+      User.following(user)
     ]
     |> Enum.concat()
     |> ActivityPub.fetch_activities_query(opts)

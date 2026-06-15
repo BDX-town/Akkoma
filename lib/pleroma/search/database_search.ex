@@ -6,6 +6,7 @@ defmodule Pleroma.Search.DatabaseSearch do
   alias Pleroma.Activity
   alias Pleroma.Object.Fetcher
   alias Pleroma.Pagination
+  alias Pleroma.Repo
   alias Pleroma.User
   alias Pleroma.Web.ActivityPub.Visibility
 
@@ -16,28 +17,46 @@ defmodule Pleroma.Search.DatabaseSearch do
   @behaviour Pleroma.Search.SearchBackend
 
   def search(user, search_query, options \\ []) do
+    gin_limit = Pleroma.Config.get([__MODULE__, :gin_fuzzy_search_limit])
+
+    try do
+      if is_integer(gin_limit) do
+        Repo.transact(fn ->
+          # SET LOCAL statement cannot be parametrised it seems; safe since integer
+          Repo.query!("SET LOCAL gin_fuzzy_search_limit TO #{gin_limit}", [])
+          {:ok, do_query(user, search_query, options)}
+        end)
+        |> then(fn
+          {:ok, result} -> result
+          error -> raise "#{__MODULE__}: db search transaction failed: #{inspect(error)}"
+        end)
+      else
+        do_query(user, search_query, options)
+      end
+      |> maybe_fetch(user, search_query)
+    rescue
+      _ -> maybe_fetch([], user, search_query)
+    end
+  end
+
+  def do_query(user, search_query, options) do
     index_type = if Pleroma.Config.get([:database, :rum_enabled]), do: :rum, else: :gin
     limit = Enum.min([Keyword.get(options, :limit), 40])
     offset = Keyword.get(options, :offset, 0)
     author = Keyword.get(options, :author)
 
-    try do
-      Activity
-      |> Activity.with_preloaded_object()
-      |> Activity.restrict_deactivated_users()
-      |> restrict_public()
-      |> query_with(index_type, search_query)
-      |> maybe_restrict_local(user)
-      |> maybe_restrict_author(author)
-      |> maybe_restrict_blocked(user)
-      |> Pagination.fetch_paginated(
-        %{"offset" => offset, "limit" => limit, "skip_order" => index_type == :rum},
-        :offset
-      )
-      |> maybe_fetch(user, search_query)
-    rescue
-      _ -> maybe_fetch([], user, search_query)
-    end
+    Activity
+    |> Activity.with_preloaded_object()
+    |> Activity.restrict_deactivated_users()
+    |> restrict_public()
+    |> query_with(index_type, search_query)
+    |> maybe_restrict_local(user)
+    |> maybe_restrict_author(author)
+    |> maybe_restrict_blocked(user)
+    |> Pagination.fetch_paginated(
+      %{"offset" => offset, "limit" => limit, "skip_order" => index_type == :rum},
+      :offset
+    )
   end
 
   def maybe_restrict_author(query, %User{} = author) do

@@ -10,6 +10,7 @@ defmodule Pleroma.Object.Fetcher do
   alias Pleroma.Object.Containment
   alias Pleroma.Repo
   alias Pleroma.Web.ActivityPub.InternalFetchActor
+  alias Pleroma.Web.ActivityPub.MRF
   alias Pleroma.Web.ActivityPub.ObjectValidator
   alias Pleroma.Web.ActivityPub.Transmogrifier
   alias Pleroma.Web.Federator
@@ -138,10 +139,7 @@ defmodule Pleroma.Object.Fetcher do
          {:valid_uri_scheme, true} <-
            {:valid_uri_scheme, uri.scheme == "http" or uri.scheme == "https"},
          # If we have instance restrictions, apply them here to prevent fetching from unwanted instances
-         {:mrf_reject_check, {:ok, nil}} <-
-           {:mrf_reject_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri)},
-         {:mrf_accept_check, {:ok, _}} <-
-           {:mrf_accept_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri)},
+         {_, {:ok, _}} <- {:mrf_check, maybe_restrict_uri_mrf(uri)},
          {_, nil} <- {:fetch_object, Object.get_cached_by_ap_id(id)},
          {_, true} <- {:allowed_depth, Federator.allowed_thread_distance?(options[:depth])},
          {_, {:ok, data}} <- {:fetch, fetch_and_contain_remote_object_from_id(id)},
@@ -161,11 +159,7 @@ defmodule Pleroma.Object.Fetcher do
         log_fetch_error(id, e)
         {:error, :invalid_uri_scheme}
 
-      {:mrf_reject_check, _} = e ->
-        log_fetch_error(id, e)
-        {:reject, :mrf}
-
-      {:mrf_accept_check, _} = e ->
+      {:mrf_check, _} = e ->
         log_fetch_error(id, e)
         {:reject, :mrf}
 
@@ -211,6 +205,17 @@ defmodule Pleroma.Object.Fetcher do
   defp log_fetch_error(id, error) do
     Logger.metadata(object: id)
     Logger.error("Object rejected while fetching #{id} #{inspect(error)}")
+  end
+
+  defp maybe_restrict_uri_mrf(uri) do
+    with {:enabled, true} <- {:enabled, MRF.SimplePolicy in MRF.get_policies()},
+         {:ok, _} <- MRF.SimplePolicy.check_reject(uri),
+         {:ok, _} <- MRF.SimplePolicy.check_accept(uri) do
+      {:ok, nil}
+    else
+      {:enabled, false} -> {:ok, nil}
+      {:reject, reason} -> {:reject, reason}
+    end
   end
 
   defp prepare_activity_params(data) do
@@ -298,10 +303,7 @@ defmodule Pleroma.Object.Fetcher do
 
     with {:valid_uri_scheme, true} <- {:valid_uri_scheme, String.starts_with?(id, "http")},
          %URI{} = uri <- URI.parse(id),
-         {:mrf_reject_check, {:ok, nil}} <-
-           {:mrf_reject_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_reject(uri)},
-         {:mrf_accept_check, {:ok, _}} <-
-           {:mrf_accept_check, Pleroma.Web.ActivityPub.MRF.SimplePolicy.check_accept(uri)},
+         {_, {:ok, _}} <- {:mrf_check, maybe_restrict_uri_mrf(uri)},
          {:local_fetch, :ok} <- {:local_fetch, Containment.contain_local_fetch(id)},
          {:ok, final_id, body} <- get_object(id),
          # a canonical ID shouldn't be a redirect
@@ -328,11 +330,7 @@ defmodule Pleroma.Object.Fetcher do
           {:error, :id_mismatch}
         end
 
-      {:mrf_reject_check, _} = e ->
-        log_fetch_error(id, e)
-        {:reject, :mrf}
-
-      {:mrf_accept_check, _} = e ->
+      {:mrf_check, _} = e ->
         log_fetch_error(id, e)
         {:reject, :mrf}
 

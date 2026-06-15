@@ -189,7 +189,6 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
         :hide_follows,
         :hide_favorites,
         :show_role,
-        :skip_thread_containment,
         :allow_following_move,
         :also_known_as
       ]
@@ -200,8 +199,14 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
       |> Maps.put_if_present(:bio, params[:note])
       |> Maps.put_if_present(:raw_bio, params[:note])
       |> Maps.put_if_present(:avatar, params[:avatar], user_image_value)
+      |> Maps.put_if_present(:avatar_description, params[:avatar_description])
       |> Maps.put_if_present(:banner, params[:header], user_image_value)
+      |> Maps.put_if_present(:header_description, params[:header_description])
       |> Maps.put_if_present(:background, params[:pleroma_background_image], user_image_value)
+      |> Maps.put_if_present(
+        :background_description,
+        params[:pleroma_background_image_description]
+      )
       |> Maps.put_if_present(
         :raw_fields,
         params[:fields_attributes],
@@ -256,6 +261,7 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
         with_pleroma_settings: true
       )
     else
+      # Map errors to translation string constants
       {:error, %Ecto.Changeset{errors: [avatar: {"file is too large", _}]}} ->
         render_error(conn, :request_entity_too_large, "File is too large")
 
@@ -264,6 +270,62 @@ defmodule Pleroma.Web.MastodonAPI.AccountController do
 
       {:error, %Ecto.Changeset{errors: [background: {"file is too large", _}]}} ->
         render_error(conn, :request_entity_too_large, "File is too large")
+
+      {:error,
+       %Ecto.Changeset{errors: [{:avatar_description, {"avatar_description is too long", _}} | _]}} ->
+        render_error(conn, :request_entity_too_large, "Avatar description is too long")
+
+      {:error,
+       %Ecto.Changeset{
+         errors: [
+           {:avatar_description,
+            {"avatar_description needs avatar to be set before or simultaneously", _}}
+           | _
+         ]
+       }} ->
+        render_error(
+          conn,
+          :unprocessable_entity,
+          "Avatar description needs avatar to be set before or simultaneously"
+        )
+
+      {:error,
+       %Ecto.Changeset{errors: [{:header_description, {"header_description is too long", _}} | _]}} ->
+        render_error(conn, :request_entity_too_large, "Banner description is too long")
+
+      {:error,
+       %Ecto.Changeset{
+         errors: [
+           {:header_description,
+            {"header_description needs banner to be set before or simultaneously", _}}
+           | _
+         ]
+       }} ->
+        render_error(
+          conn,
+          :unprocessable_entity,
+          "Banner description needs banner to be set before or simultaneously"
+        )
+
+      {:error,
+       %Ecto.Changeset{
+         errors: [{:background_description, {"background description is too long", _}} | _]
+       }} ->
+        render_error(conn, :request_entity_too_large, "Background description is too long")
+
+      {:error,
+       %Ecto.Changeset{
+         errors: [
+           {:background_description,
+            {"background_description needs background to be set before or simultaneously", _}}
+           | _
+         ]
+       }} ->
+        render_error(
+          conn,
+          :unprocessable_entity,
+          "Background description needs background to be set before or simultaneously"
+        )
 
       _e ->
         render_error(conn, :forbidden, "Invalid request")

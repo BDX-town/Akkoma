@@ -4,7 +4,111 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## 2026.05
+
+### General note
+- backup restore instructions very slightly changed but in an important way.  
+    It is no longer necessary to force sequential, single-transaction mode.
+    Now indexes can and are recommended to be restored in parallel significantly speeding up the overall process.
+   *(If ignoring instructions and using parallel mode before we got rid of index interdependence, `pg_restore` started restoring some indexes before other indexes they heavily depend on were done. Ironically leading to **much** worse restore times than pure sequential mode)*
+
+### Removed
+- as announced in 2025.12 (3.17) and since no complaints were raised, the semi-broken, seemingly unused and improvement-blocking thread containment feature is now removed. This entails the following API changes:
+    - dropped `PATCH /api/v1/accounts/update_credentials` input parameter `skip_thread_containment`
+    - dropped `GET /api/v1/accounts/:id` response key `pleroma.skip_thread_containment`
+    - dropped `GET /api/v1/pleroma/admin/users/:nickname/credentials` response key `skip_thread_containment`
+    - dropped the `skipThreadContainment` key from nodeinfo’s `metadata` object
+- for the same reason `GET /api/v1/timelines/direct` was removed too
+
+### Added
+- `{POST,PUT} api/v1/lists` now accepts the `exclusive` parameter from Mastodon allowing followed users in the list to be removed from the home timeline
+- User profile media now (can) have federated alt text; to this end:
+  - Mastodon-compatible `avatar_description` and `header_description` parameters are added to account API responses and as input for `PATCH /api/v1/accounts/update_credentials`
+  - `pleroma.background_image_descripption` is added to account API responses
+  - `pleroma_background_image_descripption` is added as a new parameter to `PATCH /api/v1/accounts/update_credentials`
+- `GET /api/v1/statuses/:id` contains the new `poll.akkoma.anonymous` parameter if `poll` is non-null.  
+    It relays if and whether the source instance promised to keep votes anonymous or disclose votes with voter identity.
+    There are no plans to enable creating non-anonymous polls in Akkoma, but some implementations do.
+
+### Fixed
+- fix date-time format in `* /api/v1/markers` to strictly conform to Mastodon’s ISO 8061 subset
+- fix response content-type and styling for the `/embed` endpoint
+- do not crash handler when attempting to refresh remote follow stats for users without follow* addresses
+- list timelines now include reblogs of users in the list matching Mastodon
+- non-federating instances now return a 405 response on inbox `POST`s, matching AP spec
+- fixed `GET /api/v1/statuses/:id/context` omitting most local-only posts for authenticated users
+- fixed nondeterministic API results in endpoints using GIN indexes; e.g. full-text search
+- enforced the host header being present on signatures, and matching our server
+
+### Changed
+- our Docker container now sets a default `nofile` `ulimit` to avoid issues on some systems.
+    Methods to customise this are documented under Configuration - General Optimisation.
+- Add reasonable defaults for `:database_config_whitelist`
+
+
+## 2026.03.1
+
+### Update notes
+- If you experience degraded performance of database queries after upgrading,
+    try running `VACUUM ANALYZE;` either manually with `psql` or via the
+    [database vacuum analyze mix task](https://docs.akkoma.dev/develop/administration/CLI_tasks/database/#analyze).
+    This will force the planner to pick up index changes if it didn’t do so on its own.
+
+### Fixed
+- fix WebFinger validation even more.  
+    While actor consent was now properly taken into account after the previous release, some scenarios still allowed bypassing domain consent
+- fix posts being federated to us with explicit zero extents crashing the status renderer
+- fix pagination parameters being ignored on hashtag timelines
+
+## 2026.03
+
+### BREAKING
+- Elixir 1.14 is no longer suported, and it's EOL! Upgrade to Elixir 1.15+
+- `account` entities in API responses now only contain a cut down version of their servers nodeinfo.
+  TEMPORARILY a config option is provided to serve the full nodeinfo data again.
+  HOWEVER this option WILL be removed soon. If you encounter any issues with third-party clients fixed
+  by using this setting, tell us so we can include all actually needed keys by default.
+
+### REMOVED
+
+### Added
+- Mastodon-compatible translation endpoints are now supported too;
+    the older Akkoma endpoints are deprecated but no immediate plans for removal
+- `GET pleroma/conversation/:id/statuses` now supports `with_muted`
+- `POST /api/v1/statuses` accepts and now prefers the Mastodon-compatible `quoted_status_id` parameter for quoting a post
+- `status` API entities now expose non-shallow quotes in a manner also compatible with Mastodon clients
+- support for WebFinger backlinks in ActivityPub actors (FEP-2c59)
+
+### Fixed
+- pinning, muting or unmuting a status one is not allowed to access no longer leaks its content
+- revoking a favourite on a post one lost access to no longer leaks its content
+- user info updates again are actively federated to other servers;
+  this was accidentally broken in the previous release
+- it is no longer possible to reference posts one cannot access when reporting another user
+- streamed relationship updates no longer leak follow* counts for users who chose to hide their counts
+- WebFinger data and user nicknames no longer allow non-consential associations
+- Correctly setup custom WebFinger domains work again
+- fix paths of emojis added or updated at runtime and remove emoji from runtime when deleting an entire pack without requiring a full emoji reload
+- fix retraction of remote emoji reaction when id is not present or its domain differs from image host
+- fix AP ids declared with the canonical type being ignored in XML WebFinger responses
+- fix many, many bugs in the conversations API family
+- notifications about muted entities are no longer streamed out
+- non-UTF-8 usernames no longer lead to internal server errors in API endpoints
+- when SimplePolicy rules are configured but the MRF not enabled, it’s rules no longer interfere with fetching
+- fixed remote follow counter refresh on user (re)fetch
+- remote users whose follow* counts are private are now actually shown as such in API instead of represeneting them with public zero counters
+- fix local follow* collections counting and including AP IDs of deleted users
+
+### Changed
+- `PATCH /api/v1/pleroma/conversations/:id` now accepts update parameters via JSON body too
+- it is now possible to quote local and one’s own private posts provided a compatible scope is used
+- on final activity failures the error log now includes the afected activity
+- improved performance of `GET api/v1/custom_emoji`
+- outgoing HTTP requests now accept compressed responses
+- the system CA certificate store is now used by default
+- when refreshing remote follow* stats all fetch-related erros are now treated as stats being private;
+    this avoids spurious error logs and better matches the intent of implementations serving fallback HTML responses on the AP collection endpoints
+
 
 ## 2025.12
 
